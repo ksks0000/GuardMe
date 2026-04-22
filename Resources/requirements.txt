@@ -1,0 +1,19 @@
+* RxJS:
+  - functional programming
+  - array operators: map, reduce, filter, forEach
+  - async programming: fetch API, promise
+  - RxJS operations: switchMap, take, takeUntil, zip, merge (at least 1 combinational op)
+* Angular
+  - components and services
+  - input and output params 
+  - dependency injection
+  - ngrx store, ngrx entities
+  - ngrx effects
+  - routing
+* NestJS
+  - connect to database
+  - dockerized database
+  - CRUD operations for entities
+  - passport.js for authentication
+
+quality code, clean code

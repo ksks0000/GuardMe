@@ -1,0 +1,159 @@
+- download node.js
+- > npm init 
+  creates package.json file which is project metadata + dependencies to
+  external resources 
+- bundler config file: webpack.config.js
+- > npm install
+  command for installing all dependencies from package.json
+- add scripts "build" and "watch" in package.json to be able to use 
+  webpack, > npm run <script_name>
+- install ts compiler and ts loader via npm...
+- tsconfig.json in project root and add it in webpack.config.js...
+
+
+Programming paradigms:
+* imperative
+    - procedural
+    - object-oriented
+* declarative
+    - functional
+    - reactive
+
+Reactive programming
+Consists of operations applied on data streams
+Focuses on WHAT (not how) needs to be done when something notable happens
+
+
+RxJS combinational operators:
+- forkJoin([stream1, stream2]).subscribe((x) => console.log(x));
+  // the most similar to promiseAll, waiting for ALL streams to finish
+     before emiting the last values from streams
+- zip(stream1, stream2).subscribe((x) => console.log(x));
+  // shows the array of values of ALL streams while ALL streams emiting
+- combineLatest(stream1, stream2).subscribe((x) => console.log(x));
+  // shows the array of letest values from ALL streams while ANY stream emits
+- merge(stream1, stream2).subscribe((x) => console.log(x));
+  // merges streams in ONE stream and emits on timeline when streams emit
+
+
+Angular CLI:
+- > ng new <project_name>
+  > cd <project_name>
+  > ng serve
+- > ng generate component components/<component-name>
+- structure:
+  app
+    components
+      specific component
+        sc.component.html
+        sc.component.scss
+        sc.component.spec?.ts // for testing
+        sc.component.ts
+    models
+      specificmodel.ts
+    services
+    ...
+    store
+    ...
+
+2 directions of binding view <-> source:
+* source (component.ts) -> view (component.html - template)
+  <element [...] = "<variable-from-source>"></element>
+* view (component.html - template) -> source (component.ts)
+  <element (...) = "<function-from-source>"></element>
+
+in parent container in component.html directive *ngIf="<object>"
+   this prevents rendering error of properties of the object if it doesnt
+   exist or if it is null (instead of making in constructor dummy object)
+   in component.ts example:
+   @Input movie: Movie | null = null;
+   rate() {
+    if (this.movie) {
+      this.movie.score += 0.1;
+    }
+   }
+
+In store folder:
+store
+  app-state.ts
+  movies.actions.ts
+  movies.effects.ts
+  movies.redcer.ts
+  movies.selector.ts
+
+Reducer:
+- EntityState<Type> instead of for example saving only Movies[], it saves 
+  list of Ids fast to search and also dictionary with whole objects
+  Additional properties can be added...
+  Adapter is used for setting initial state
+- Example of reducer:
+  export interface MovieState extends EntityState<Movie> {
+    selectedMovieId: string;
+  }
+  const adapter = createEntityAdapter<Movie>();
+  const initialState: MoviesState = adapter.getInitialState({
+    selectedMovieId: ""
+  });
+  export const moviesReducer = createReducer(initialState,
+    on(Actions/namespace/.changeRaiting, (state, {movieId, rating}) => {
+      const targetMovie = state.entities[movieId];
+      if(targetMovie)
+        return adapter.setOne({...targetMovie, score: rating}, state);
+      else return state;
+    }),
+    on(Actions.loadMoviesSuccess, (state, {movies}) => adapter.SetAll(movies, state)
+    )
+  )
+
+
+NestJS CLI:
+- > nest new <project_name>
+  > cd <project_name>
+  > npm run start
+- > nest generate controller <controller-name>
+- structure:
+  src
+    songs
+      models
+        song.dto.ts
+        song.entity.ts
+      songs.controller.ts
+      songs.module.ts
+      songs.service.ts
+    app.controller.spec.ts
+    app.controller.ts
+    app.module.ts
+    app.service.ts
+    main.ts
+  Dockerfile
+  package-lock.json
+  package.json
+  tsconfig.build.json
+  tsconfig.json
+  ...
+     
+
+Docker:
+- install docker on the machine
+- pull docker image from docker hub
+  > docker pull postgres
+  > docker image ls
+  > docker run --name postgres -e POSTGRES_PASSWORD=mysecret -e
+    POSTGRES_USER=postgres -d -p 5432:5432 /external port:internal container port/
+    postgres /<image_from_which_to_create_container>/
+  > docker ps 
+- Beekeeper to connect to db:
+  user: postgres, password: mysecret, default database: postgres
+Put existing project into docker conatiner:
+- create Dockerfile
+  example:
+    FROM node:18-alpine3.14
+    WORKDIR /usr/src/app   // working directorium
+    COPY package*.json ./  // copy to working dir just list of packets for instalation
+    RUN npm install
+    COPY . .               // copy all from current dir to working dir in container
+    RUN npm run build
+    CMD ["npm", "run", "start:dev"]
+- > docker build -t nest-container .
+  > docker run -dp 4000:3000 nest-container
+
