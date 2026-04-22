@@ -1,0 +1,197 @@
+GitHub Repository Structure 
+
+personal-secure-web-gateway/
+│
+│── apps/
+│   │── gateway-backend/          # NestJS application
+│   └── dashboard-frontend/     # Angular application
+│
+│── infrastructure/
+│   │── docker/
+│   │   │── docker-compose.yml
+│   │   └── postgres/
+│   │── vmware/
+│   │   │── network-diagram.md
+│   │   └── setup-guide.md
+│   └── proxy-config/
+│       └── browser-proxy.md
+│
+│── docs/
+│   │── architecture.md
+│   │── threat-model.md
+│   │── api-spec.md
+│   └── screenshots/
+│
+│── scripts/
+│   │── start-dev.sh
+│   └── seed-db.ts
+│
+│── .env.example
+│── README.md
+└── LICENSE
+
+
+Backend Folder Structure (NestJS)
+
+gateway-backend/
+│ ── src/
+│   │ ── main.ts
+│   │ ── app.module.ts
+│   │
+│   │ ── common/
+│   │   │ ── guards/
+│   │   │ ── interceptors/
+│   │   │ ── filters/
+│   │   └── utils/
+│   │
+│   │ ── modules/
+│   │   │ ── auth/                 # login, JWT, session verification
+│   │   │ ── proxy/               # HTTP forwarding and interception
+│   │   │ ── threat/              # VirusTotal integration
+│   │   │ ── vault/                # encrypted credential storage
+│   │   │ ── siem/                 # logging and event normalization
+│   │   └── websocket/       # real-time dashboard events
+│   │
+│   │ ── prisma/
+│   │   │ ── schema.prisma
+│   │   └── migrations/
+│   │
+│   └── config/
+│       │ ── database.config.ts
+│       └── security.config.ts
+│
+│ ── test/
+└── package.json
+
+/////later/////
+
+src/
+│── main.ts
+│── app.module.ts
+│
+│── config/
+│   │── env.config.ts
+│   └── security.config.ts
+│
+│── database/
+│   │── prisma.service.ts
+│   └── prisma.module.ts
+│
+│── common/
+│   │── guards/                                    # AuthGuard -> checks session, ReAuthGuard -> checks recent 
+│   │── decorators/                                password verification
+│   │── interceptors/                          # logging requests, attaching metadata 
+│   └── utils/                                        # encryption helpers, parsing helpers 
+│
+│── modules/
+│   │── auth/                                          # login, register, password verification (Argon2), issuing 
+│   │    │── auth.controller.ts              # HttpOnly cookie, re-auth verification
+│   │    │── auth.service.ts                   # validateUser(password, hash), issueSession(userId)
+│   │    │── auth.module.ts
+│   │    │── dto/
+│   │    │── strategies/
+│   │    └── guards/
+│   │── users/                                         # user creation, fetching user profile, storing kdfSalt
+│   │── sessions/                                    # session creation, validation, expiration, device fingerprint  
+│   │── vault/                                          # encrypt, decrypt secrets, derive encryption key, re-auth
+│   │     │── vault.controller.ts             # deriveKey(password, salt), encrypt(data, key), decrypt(data, key)
+│   │     │── vault.service.ts
+│   │     │── crypto.service.ts 
+│   │     └── vault.module.ts
+│   │── proxy/                                        # inspect all http traffic, extract identity, call threat analysis
+│   │     │── proxy.controller.ts           # apply policies, forward requests, block requests
+│   │     │── proxy.service.ts                # Controller: @All('*') handleRequest()
+│   │     │── proxy.module.ts               # handle(req): { user = auth result = inspect(url) decision =
+│   │     │── policy.service.ts                   policy(result)  if BLOCK -> return block page else forward req}
+│   │     └── inspection.service.ts
+│   │── threat/                                       # call VirusTotal API, normalize response, return verdict
+│   │     │── threat.service.ts
+│   │     └── providers/
+│   │             └── virustotal.provider.ts
+│   │── siem/                                         # store logs, normalize events, emit events
+│   │     │── siem.service.ts                 # logTraffic(), logSecurityEvent(), emitEvent()
+│   │     └── siem.module.ts
+│   └── websocket/                              # push events to frontend, manage connections 
+│   │     │── gateway.ts                        # this.server.emit("TRAFFIC_LOG", payload);
+│   │     └── websocket.module.ts
+
+Request lifecycle:
+Browser
+  ↓
+ProxyController
+  ↓
+AuthGuard
+  ↓
+ProxyService
+  ↓
+InspectionService
+  ↓
+ThreatService
+  ↓
+PolicyService
+  ↓
+SIEMService (log)
+  ↓
+Forward request OR Block
+  ↓
+WebSocket event
+
+
+Angular Frontend Structure
+
+dashboard-frontend/
+│── src/app/
+│   │── core/
+│   │   │── services/
+│   │   │   │── auth.service.ts
+│   │   │   │── websocket.service.ts
+│   │   │   └── api.service.ts
+│   │   └── guards/
+│   │
+│   │── features/
+│   │   │── dashboard/
+│   │   │── traffic-monitor/
+│   │   │── vault/
+│   │   └── security-events/
+│   │
+│   │── shared/
+│   │   │── components/
+│   │   └── models/
+│   │
+│   └── app-routing.module.ts
+
+RxJS streams: traffic$, securityEvents$, sessionState$ 
+
+Prisma Schema (Initial Example)
+
+model User {
+  id            String   @id @default(uuid())
+  username      String   @unique
+  password_hash String
+  created_at    DateTime @default(now())
+  sessions      Session[]
+}
+
+model Session {
+  id        String   @id @default(uuid())
+  user_id   String
+  jwt_id    String
+  ip        String
+  userAgent String
+  expiresAt DateTime
+
+  user User @relation(fields: [user_id], references: [id])
+}
+
+model TrafficLog {
+  id         String   @id @default(uuid())
+  user_id    String
+  url        String
+  verdict    String
+  risk_score Int
+  timestamp  DateTime @default(now())
+
+  @@index([timestamp])
+  @@index([user_id, timestamp])
+  @@index([verdict])
+}
