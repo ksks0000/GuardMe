@@ -1,0 +1,391 @@
+Phase 0 — Project Bootstrap (Day 1)
+
+Goal: runnable backend skeleton.
+
+> nest new gateway-backend
+> npm install @prisma/client prisma
+> npm install @nestjs/jwt passport passport-jwt
+> npm install argon2
+> npm install axios
+> npm install eventemitter2
+> npm install @nestjs/config
+> npm install @nestjs/websockets @nestjs/platform-socket.io
+> npm install cookie-parser
+> npm install axios http-proxy
+> npm install uuid
+
+Create modules: auth, proxy, threat, vault, siem, websocket
+src/
+ ├── app.module.ts
+ ├── config/
+ ├── database/
+ ├── common/
+
+AppModule
+ ├── AuthModule
+ ├── UserModule
+ ├── SessionModule
+ ├── VaultModule
+ ├── ProxyModule
+ ├── ThreatModule
+ ├── SIEMModule
+ └── WebSocketModule
+
+Dependency flow:
+ProxyModule -> ThreatModule -> SIEMModule -> WebSocketModule
+AuthModule -> SessionModule
+VaultModule -> AuthModule
+All modules -> PrismaService
+
+Backend root folder structure:
+src/
+├── main.ts
+├── app.module.ts
+│
+├── config/
+│   ├── env.config.ts
+│   └── security.config.ts
+│
+├── database/
+│   ├── prisma.service.ts
+│   └── prisma.module.ts
+│
+├── common/
+│   ├── guards/
+│   ├── decorators/
+│   ├── interceptors/
+│   └── utils/
+│
+├── modules/
+│   ├── auth/
+│   ├── users/
+│   ├── sessions/
+│   ├── vault/
+│   ├── proxy/
+│   ├── threat/
+│   ├── siem/
+│   └── websocket/
+
+
+
+Phase 1 — Database First + Prisma
+
+Steps:
+	1. Init prisma (> npx prisma init)
+	2. Define Prisma schema - create models: User, Session..
+	3. Generate client, DB connection module
+	4. Migrate (> npx prisma migrate dev)
+	5. Create PrismaService in NestJS
+
+Phase 2 — Authentication Module
+
+Identity before security logic.
+Modules: auth/, users/, sessions/
+Implement: register, login, Argon2 hashing, JWT cookie, password verification middleware, session table insert
+Result: User logs in → session created → cookie issued
+
+Phase 3 — SIEM Core
+
+Create siem.service.ts with functions:
+	- logTraffic()
+	- logSecurityEvent()
+	- emitEvent()
+
+Phase 4 — Proxy Module
+
+Modules: proxy/, inspection/, policy/
+Proxy flow:
+Request
+ → auth check
+ → threat scan
+ → decision
+ → log
+ → forward
+
+Implement:
+	- HTTP interceptor
+	- forwarding using Axios
+	- block page
+
+Phase 5 — Threat Module
+
+Proxy calls: threatService.scanUrl(url)
+Return: SAFE | SUSPICIOUS | MALICIOUS (| UNVERIFIED)?
+
+Phase 6 — WebSocket Gateway
+
+Emit events from SIEM: this.server.emit("TRAFFIC_LOG", data);
+Angular subscribes.
+
+Phase 7 — Vault Module (Crypto)
+
+Implement:
+	- key derivation (Argon2)
+	- AES-256-GCM encrypt/decrypt
+	- CRUD credentials
+
+Phase 8 — Zero Trust Hardening
+
+Add:
+	- re-auth guard
+	- session freshness
+	- device fingerprint validation
+
+////////////////////////////////////////////////
+
+Proxy implementation 
+
+Operates at layer 7
+Browser -> Gateway proxy (NestJS) -> Inspection engine -> Policy engine -> Destination website
+
+Lifecycle:
+	1. Incoming request
+	GET http://example.com/login
+	Controller:
+	@Controller('*')
+	export class ProxyController {
+	  @All()
+	  async handle(@Req() req, @Res() res) {
+	    return this.proxyService.forward(req, res);
+	  }
+	}
+	2. Identity resolution
+	Proxy extracts session: cookie -> session -> user
+	3. Build inspection context
+	const context = {
+	  userId,
+	  url,
+	  method,
+	  headers,
+	  timestamp
+	};
+	4. Inspection engine
+	Security checks: URL reputation -> Domain policy -> Heuristics -> Cache lookup
+	Service: inspectionService.inspect(context)
+	Returns: 
+	{
+	  verdict: "ALLOW" | "BLOCK" | "WARN",
+	  reason: "malware_detected"
+	}
+	5. Failure behavior
+	VirusTotal timeout: Allow + warning
+	Inspection crash: Block
+	DB unavailable: Block
+	6. Policy engine
+	User policies applied… blocked domains, time restrictions, risk threshold
+	7. Decision
+	Block: custom firewall page
+	Allow: forward request
+	Warn: inject banner
+	8. Forward request
+	Using Node streaming proxy:
+	proxy.web(req, res, {
+	  target: targetUrl,
+	  changeOrigin: true
+	});
+	9. Log event
+	eventBus.emit("TRAFFIC_LOG", log);
+	10. WebSocket broadcast
+	Dashboard updates
+	
+Auth + Vault Crypto Implementation Walkthrough
+
+Server never stores plaintext secrets.
+Even server cannot decrypt without password.
+
+Flow:
+	1. User registers 
+	Provides email and password
+	2. Password hash (authentication)
+	argon2.hash(password)
+	Stored password_hash used only for login verification
+	3. Key derivation (Encryption)
+	masterKey = KDF(password + userSalt)
+	crypto.scryptSync(password, salt, 32); result 32 bytes = AES-256 key
+  #   Login auth - argon2 hash
+       Encryption  - derived AES key
+	4. Vault encryption
+	Saving secret: cipher = AES-256-GCM(masterKey)
+	Stored in DB: ciphertext, iv, auth_tag
+	5. Runtime key handling
+	Password -> derive key and keep in memory, never stored, key destroyed after session expiration
+	Sensitive action reverification: before viewing secrets, changing policy, exporting logs frontend asks for password again, server derives key again and attempts decrypt test value
+
+Event-Based WebSocket Model
+
+Messages: 
+type Event =
+  | SECURITY_EVENT
+  | TRAFFIC_LOG
+  | POLICY_UPDATE
+  | SYSTEM_ALERT;
+
+Prisma 
+
+Prisma Schema
+FIle: prisma/schema.prisma - defines database tables, columns, relations, indexes. Constraints
+
+Prisma Client
+Auto-generated TypeScript API: 
+prisma.user.create()
+prisma.session.findMany()
+
+Migrations
+Schema -> SQL automatically 
+npx prisma migrate dev
+
+Schema.prisma:
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+//////////////////////////////////////////////////
+// USERS
+//////////////////////////////////////////////////
+
+model User {
+  id            String   @id @default(uuid())
+  email         String   @unique
+  passwordHash  String
+  kdfSalt       String   // used for encryption key derivation
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  sessions      Session[]
+  vaultItems    VaultItem[]
+  policies      Policy[]
+  trafficLogs   TrafficLog[]
+  auditLogs     AuditLog[]
+}
+
+//////////////////////////////////////////////////
+// SESSIONS (HttpOnly Cookie Sessions)
+//////////////////////////////////////////////////
+
+model Session {
+  id          String   @id @default(uuid())
+  userId      String
+  expiresAt   DateTime
+  createdAt   DateTime @default(now())
+  lastSeenAt  DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+//////////////////////////////////////////////////
+// VAULT (Encrypted Secrets)
+//////////////////////////////////////////////////
+
+model VaultItem {
+  id          String   @id @default(uuid())
+  userId      String
+  name        String
+
+  ciphertext  Bytes
+  iv          Bytes
+  authTag     Bytes
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+//////////////////////////////////////////////////
+// USER SECURITY POLICIES
+//////////////////////////////////////////////////
+
+model Policy {
+  id          String   @id @default(uuid())
+  userId      String
+
+  blockedDomains String[]
+  riskThreshold  Int     @default(50)
+  enabled        Boolean @default(true)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+//////////////////////////////////////////////////
+// TRAFFIC LOGS (HIGH VOLUME)
+//////////////////////////////////////////////////
+
+model TrafficLog {
+  id         String   @id @default(uuid())
+  userId     String
+
+  url        String
+  method     String
+  verdict    Verdict
+  reason     String?
+
+  statusCode Int?
+  ipAddress  String?
+
+  createdAt  DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([createdAt])
+  @@index([verdict])
+}
+
+enum Verdict {
+  ALLOW
+  BLOCK
+  WARN
+}
+
+//////////////////////////////////////////////////
+// SECURITY / AUDIT EVENTS
+//////////////////////////////////////////////////
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String?
+
+  eventType AuditEvent
+  metadata  Json
+
+  createdAt DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id])
+
+  @@index([createdAt])
+  @@index([eventType])
+}
+
+enum AuditEvent {
+  LOGIN_SUCCESS
+  LOGIN_FAILURE
+  PASSWORD_REVERIFY
+  POLICY_CHANGED
+  VAULT_ACCESS
+  SECURITY_ALERT
+}
+
+
+Example query:
+await prisma.trafficLog.findMany({
+  where: {
+    verdict: "BLOCK"
+  },
+  orderBy: {
+    createdAt: "desc"
+  },
+  take: 50
+});
+
