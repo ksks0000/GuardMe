@@ -1,0 +1,3 @@
+{
+  "typescript.tsconfig": "apps/gateway-backend/tsconfig.json"
+}
