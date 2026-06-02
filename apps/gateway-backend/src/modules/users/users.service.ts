@@ -2,10 +2,19 @@ import { ConflictException, Injectable } from '@nestjs/common';
 import { User } from '@prisma/client';
 import { PrismaService } from '../../database/prisma.service';
 import { hashPassword } from '../../common/utils/password.util';
+import { PublicUserProfileDto } from './dto/public-user-profile.dto';
 
 @Injectable()
 export class UsersService {
   constructor(private readonly prisma: PrismaService) {}
+
+  async usernameExists(username: string): Promise<boolean> {
+    const user = await this.prisma.user.findUnique({
+      where: { username },
+      select: { id: true },
+    });
+    return Boolean(user);
+  }
 
   findByUsername(username: string): Promise<User | null> {
     return this.prisma.user.findUnique({ where: { username } });
@@ -16,8 +25,7 @@ export class UsersService {
   }
 
   async create(username: string, password: string): Promise<User> {
-    const existing = await this.findByUsername(username);
-    if (existing) {
+    if (await this.usernameExists(username)) {
       throw new ConflictException('Username is already taken');
     }
 
@@ -34,7 +42,7 @@ export class UsersService {
     });
   }
 
-  toPublicProfile(user: User) {
+  toPublicProfile(user: User): PublicUserProfileDto {
     return {
       id: user.id,
       username: user.username,
