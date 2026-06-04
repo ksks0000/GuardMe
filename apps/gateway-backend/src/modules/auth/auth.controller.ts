@@ -10,11 +10,12 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { JwtSessionGuard } from '../../common/guards/jwt-session.guard';
+import { AuthenticatedUser } from '../../common/types/auth.types';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
-import { JwtAuthGuard } from './guards/jwt-auth.guard';
-import { AuthenticatedUser } from './strategies/jwt.strategy';
 
 @Controller('auth')
 export class AuthController {
@@ -42,8 +43,8 @@ export class AuthController {
   }
 
   @Get('me')
-  @UseGuards(JwtAuthGuard)
-  me(@Req() req: Request & { user: AuthenticatedUser }) {
-    return this.authService.getProfile(req.user);
+  @UseGuards(JwtSessionGuard)
+  me(@CurrentUser() user: AuthenticatedUser) {
+    return this.authService.getProfile(user);
   }
 }

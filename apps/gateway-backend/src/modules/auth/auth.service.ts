@@ -6,13 +6,17 @@ import { JwtService } from '@nestjs/jwt';
 import { Request, Response } from 'express';
 import { StringValue } from 'ms';
 import { v4 as uuidv4 } from 'uuid';
+import { AuthenticatedUser, JwtPayload } from '../../common/types/auth.types';
+import {
+  extractClientIp,
+  extractUserAgent,
+} from '../../common/utils/request-context.util';
 import { verifyPassword } from '../../common/utils/password.util';
 import { authConfig } from '../../config/auth.config';
 import { SessionsService } from '../sessions/sessions.service';
 import { UsersService } from '../users/users.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
-import { AuthenticatedUser, JwtPayload } from './strategies/jwt.strategy';
 
 @Injectable()
 export class AuthService {
@@ -66,6 +70,7 @@ export class AuthService {
     return {
       id: user.userId,
       username: user.username,
+      fingerprintMatched: user.fingerprintMatched,
     };
   }
 
@@ -81,8 +86,8 @@ export class AuthService {
     await this.sessionsService.create({
       userId,
       jwtId,
-      ipAddress: this.extractIp(req),
-      userAgent: req.headers['user-agent'] ?? 'unknown',
+      ipAddress: extractClientIp(req),
+      userAgent: extractUserAgent(req),
       expiresAt,
     });
 
@@ -117,14 +122,6 @@ export class AuthService {
       domain: authConfig.cookieDomain(),
       path: authConfig.cookiePath(),
     });
-  }
-
-  private extractIp(req: Request): string {
-    const forwarded = req.headers['x-forwarded-for'];
-    if (typeof forwarded === 'string' && forwarded.length > 0) {
-      return forwarded.split(',')[0].trim();
-    }
-    return req.ip ?? req.socket.remoteAddress ?? 'unknown';
   }
 
   private resolveExpiryDate(expiresIn: string): Date {
