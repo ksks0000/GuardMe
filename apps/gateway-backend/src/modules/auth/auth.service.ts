@@ -1,21 +1,22 @@
-import {
-  Injectable,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Request, Response } from 'express';
 import { StringValue } from 'ms';
 import { v4 as uuidv4 } from 'uuid';
 import { AuthenticatedUser, JwtPayload } from '../../common/types/auth.types';
+import { verifyJwtPayload } from '../../common/utils/jwt.util';
 import {
   extractClientIp,
   extractUserAgent,
 } from '../../common/utils/request-context.util';
 import { verifyPassword } from '../../common/utils/password.util';
 import { authConfig } from '../../config/auth.config';
+import { PublicUserProfileDto } from '../users/dto/public-user-profile.dto';
 import { SessionsService } from '../sessions/sessions.service';
 import { UsersService } from '../users/users.service';
+import { AuthProfileDto } from './dto/auth-profile.dto';
 import { LoginDto } from './dto/login.dto';
+import { LogoutResponseDto } from './dto/logout-response.dto';
 import { RegisterDto } from './dto/register.dto';
 
 @Injectable()
@@ -26,12 +27,19 @@ export class AuthService {
     private readonly jwtService: JwtService,
   ) {}
 
-  async register(dto: RegisterDto) {
-    const user = await this.usersService.create(dto.username, dto.password);
+  async register(dto: RegisterDto): Promise<PublicUserProfileDto> {
+    const user = await this.usersService.create({
+      username: dto.username,
+      password: dto.password,
+    });
     return this.usersService.toPublicProfile(user);
   }
 
-  async login(dto: LoginDto, req: Request, res: Response) {
+  async login(
+    dto: LoginDto,
+    req: Request,
+    res: Response,
+  ): Promise<PublicUserProfileDto> {
     const user = await this.usersService.findByUsername(dto.username);
     if (!user) {
       throw new UnauthorizedException('Invalid username or password');
@@ -51,14 +59,14 @@ export class AuthService {
     });
   }
 
-  async logout(req: Request, res: Response) {
+  async logout(req: Request, res: Response): Promise<LogoutResponseDto> {
     const token = req.cookies?.[authConfig.cookieName()];
     if (token) {
-      try {
-        const payload = await this.jwtService.verifyAsync<JwtPayload>(token);
+      const payload = await verifyJwtPayload(this.jwtService, token, {
+        ignoreExpiration: true,
+      });
+      if (payload?.jti) {
         await this.sessionsService.revokeByJwtId(payload.jti);
-      } catch {
-        // Token may be expired or invalid; still clear the cookie.
       }
     }
 
@@ -66,7 +74,7 @@ export class AuthService {
     return { message: 'Logged out successfully' };
   }
 
-  getProfile(user: AuthenticatedUser) {
+  getProfile(user: AuthenticatedUser): AuthProfileDto {
     return {
       id: user.userId,
       username: user.username,

@@ -2,6 +2,7 @@ import { ConflictException, Injectable } from '@nestjs/common';
 import { User } from '@prisma/client';
 import { PrismaService } from '../../database/prisma.service';
 import { hashPassword } from '../../common/utils/password.util';
+import { CreateUserInput } from './dto/create-user.input';
 import { PublicUserProfileDto } from './dto/public-user-profile.dto';
 
 @Injectable()
@@ -24,14 +25,14 @@ export class UsersService {
     return this.prisma.user.findUnique({ where: { id } });
   }
 
-  async create(username: string, password: string): Promise<User> {
-    if (await this.usernameExists(username)) {
+  async create(input: CreateUserInput): Promise<User> {
+    if (await this.usernameExists(input.username)) {
       throw new ConflictException('Username is already taken');
     }
 
-    const passwordHash = await hashPassword(password);
+    const passwordHash = await hashPassword(input.password);
     return this.prisma.user.create({
-      data: { username, passwordHash },
+      data: { username: input.username, passwordHash },
     });
   }
 

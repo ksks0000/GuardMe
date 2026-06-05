@@ -8,18 +8,8 @@ import {
   extractUserAgent,
 } from '../../common/utils/request-context.util';
 import { PrismaService } from '../../database/prisma.service';
-
-export interface CreateSessionInput {
-  userId: string;
-  jwtId: string;
-  ipAddress: string;
-  userAgent: string;
-  expiresAt: Date;
-}
-
-export interface SessionVerificationResult {
-  fingerprintMatched: boolean;
-}
+import { CreateSessionInput } from './dto/create-session.input';
+import { SessionVerificationResult } from './dto/session-verification.result';
 
 @Injectable()
 export class SessionsService {
@@ -100,7 +90,7 @@ export class SessionsService {
     });
   }
 
-  async touchLastVerifiedAt(sessionId: string): Promise<void> {
+  async updateLastVerifiedAt(sessionId: string): Promise<void> {
     await this.prisma.session.update({
       where: { id: sessionId },
       data: { lastVerifiedAt: new Date() },

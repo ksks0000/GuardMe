@@ -41,7 +41,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       throw new UnauthorizedException('User not found');
     }
 
-    await this.sessionsService.touchLastVerifiedAt(session.id);
+    await this.sessionsService.updateLastVerifiedAt(session.id);
 
     return {
       userId: user.id,

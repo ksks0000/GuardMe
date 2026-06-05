@@ -25,5 +25,5 @@ export const authConfig = {
   sessionFingerprintStrict: () =>
     parseBoolean(process.env.SESSION_FINGERPRINT_STRICT, true),
   reAuthTimeoutMinutes: () =>
-    Number(process.env.REAUTH_TIMEOUT_MINUTES ?? 20),
+    Number(process.env.REAUTH_TIMEOUT_MINUTES ?? 15),
 };
