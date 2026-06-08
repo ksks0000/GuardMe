@@ -1,0 +1,6 @@
+export enum ThreatVerdict {
+  SAFE = 'SAFE',
+  SUSPICIOUS = 'SUSPICIOUS',
+  MALICIOUS = 'MALICIOUS',
+  UNVERIFIED = 'UNVERIFIED',
+}
