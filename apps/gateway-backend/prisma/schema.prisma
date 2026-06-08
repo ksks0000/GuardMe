@@ -14,7 +14,8 @@ model User {
   createdAt    DateTime  @default(now()) @map("created_at")
   lastAuthAt   DateTime? @map("last_auth_at")
 
-  sessions Session[]
+  sessions    Session[]
+  trafficLogs TrafficLog[]
 
   @@map("users")
 }
@@ -35,4 +36,42 @@ model Session {
   @@index([userId])
   @@index([jwtId])
   @@map("sessions")
+}
+
+model TrafficLog {
+  id              String   @id @default(uuid()) @db.Uuid
+  userId          String   @map("user_id") @db.Uuid
+  clientIp        String   @map("client_ip")
+  url             String
+  destinationHost String   @map("destination_host")
+  destinationPort Int?     @map("destination_port")
+  destinationIp   String?  @map("destination_ip")
+  method          String
+  verdict         String
+  riskScore       Int      @map("risk_score")
+  timestamp       DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([timestamp])
+  @@index([userId, timestamp])
+  @@index([verdict])
+  @@index([riskScore])
+  @@index([clientIp])
+  @@index([destinationHost])
+  @@map("traffic_logs")
+}
+
+model SecurityEvent {
+  id        String   @id @default(uuid()) @db.Uuid
+  type      String
+  severity  String
+  message   String
+  metadata  Json?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([createdAt])
+  @@index([type])
+  @@index([severity])
+  @@map("security_events")
 }
