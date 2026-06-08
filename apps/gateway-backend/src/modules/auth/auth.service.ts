@@ -5,10 +5,7 @@ import { StringValue } from 'ms';
 import { v4 as uuidv4 } from 'uuid';
 import { AuthenticatedUser, JwtPayload } from '../../common/types/auth.types';
 import { verifyJwtPayload } from '../../common/utils/jwt.util';
-import {
-  extractClientIp,
-  extractUserAgent,
-} from '../../common/utils/request-context.util';
+import { extractClientIp, extractUserAgent } from '../../common/utils/request-context.util';
 import { verifyPassword } from '../../common/utils/password.util';
 import { authConfig } from '../../config/auth.config';
 import { PublicUserProfileDto } from '../users/dto/public-user-profile.dto';
