@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'" />
+  <title>GuardMe — Access Blocked</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, -apple-system, Segoe UI, sans-serif;
+      background: #0f1419;
+      color: #e7ecf3;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+    }
+    .card {
+      max-width: 32rem;
+      width: 100%;
+      background: #1a2332;
+      border: 1px solid #3d2028;
+      border-radius: 0.75rem;
+      padding: 1.75rem;
+    }
+    .badge {
+      display: inline-block;
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: #ffb4b4;
+      background: #3d2028;
+      padding: 0.25rem 0.5rem;
+      border-radius: 0.25rem;
+      margin-bottom: 1rem;
+    }
+    h1 { font-size: 1.35rem; margin-bottom: 0.75rem; color: #ff8a8a; }
+    p { line-height: 1.5; color: #b8c5d6; margin-bottom: 0.75rem; }
+    .url {
+      word-break: break-all;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 0.85rem;
+      background: #0f1419;
+      border: 1px solid #2a3544;
+      border-radius: 0.375rem;
+      padding: 0.75rem;
+      margin: 1rem 0;
+      color: #d6dee8;
+    }
+    .meta { font-size: 0.8rem; color: #7d8da1; }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <div class="badge">Blocked</div>
+    <h1>Access denied</h1>
+    <p>{{reason}}</p>
+    <div class="url">{{url}}</div>
+    <p class="meta">Risk score: {{riskScore}} · {{timestamp}}</p>
+    <p class="meta">GuardMe Personal Secure Gateway</p>
+  </main>
+</body>
+</html>
