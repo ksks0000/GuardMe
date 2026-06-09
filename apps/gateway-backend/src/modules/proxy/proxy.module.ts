@@ -1,10 +1,45 @@
+import { HttpModule } from '@nestjs/axios';
 import { Module } from '@nestjs/common';
+import { proxyConfig } from '../../config/proxy.config';
+import { AuthModule } from '../auth/auth.module';
 import { BlockPageService } from './block-page.service';
+import { BypassTokenService } from './bypass-token.service';
+import { ConnectTunnelService } from './connect-tunnel.service';
+import { InspectionService } from './inspection.service';
 import { PolicyService } from './policy.service';
+import { ProxyAuthService } from './proxy-auth.service';
+import { ProxyForwardService } from './proxy-forward.service';
+import { ProxyPipelineService } from './proxy-pipeline.service';
+import { ThreatScanCacheService } from './threat-scan-cache.service';
 import { WarningPageService } from './warning-page.service';
 
 @Module({
-  providers: [PolicyService, BlockPageService, WarningPageService],
-  exports: [PolicyService, BlockPageService, WarningPageService],
+  imports: [
+    AuthModule,
+    HttpModule.register({
+      timeout: proxyConfig.forwardTimeoutMs(),
+      maxRedirects: 5,
+    }),
+  ],
+  providers: [
+    PolicyService,
+    BlockPageService,
+    WarningPageService,
+    InspectionService,
+    ThreatScanCacheService,
+    BypassTokenService,
+    ProxyAuthService,
+    ProxyForwardService,
+    ProxyPipelineService,
+    ConnectTunnelService,
+  ],
+  exports: [
+    PolicyService,
+    BlockPageService,
+    WarningPageService,
+    ProxyAuthService,
+    ProxyPipelineService,
+    ConnectTunnelService,
+  ],
 })
 export class ProxyModule {}

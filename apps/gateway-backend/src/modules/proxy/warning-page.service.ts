@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { WarningPageContext } from './dto/warning-page.context';
-import { buildProceedUrl } from './utils/proceed-url.util';
 import { loadTemplate, renderTemplate } from './utils/template-render.util';
 
 @Injectable()
@@ -23,6 +22,7 @@ export class WarningPageService {
     reason: string;
     threatSummary: string;
     riskScore: number;
+    proceedUrl: string;
     timestamp?: Date;
   }): WarningPageContext {
     return {
@@ -31,7 +31,7 @@ export class WarningPageService {
       threatSummary: input.threatSummary,
       riskScore: input.riskScore,
       timestamp: input.timestamp ?? new Date(),
-      proceedUrl: buildProceedUrl(input.url),
+      proceedUrl: input.proceedUrl,
     };
   }
 }

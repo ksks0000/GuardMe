@@ -1,6 +1,7 @@
-export const GUARDME_BYPASS_TOKEN_PLACEHOLDER = 'GUARDME_BYPASS_TOKEN_PLACEHOLDER';
+export const GUARDME_BYPASS_PARAM = 'guardme_bypass';
 
-export function buildProceedUrl(url: string): string {
-  const separator = url.includes('?') ? '&' : '?';
-  return `${url}${separator}guardme_bypass=${GUARDME_BYPASS_TOKEN_PLACEHOLDER}`;
+export function buildProceedUrl(url: string, bypassToken: string): string {
+  const parsed = new URL(url);
+  parsed.searchParams.set(GUARDME_BYPASS_PARAM, bypassToken);
+  return parsed.toString();
 }
