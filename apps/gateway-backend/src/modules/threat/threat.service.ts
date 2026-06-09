@@ -83,6 +83,7 @@ export class ThreatService {
 
     return (
       error.code === 'ECONNABORTED' ||
+      error.code === 'ETIMEDOUT' ||
       error.message.toLowerCase().includes('timeout')
     );
   }
