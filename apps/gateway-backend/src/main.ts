@@ -6,6 +6,7 @@ import { IncomingMessage } from 'node:http';
 import { Socket } from 'node:net';
 import { AppModule } from './app.module';
 import { proxyConfig } from './config/proxy.config';
+import { websocketConfig } from './config/websocket.config';
 import { ProxyUnauthorizedFilter } from './modules/proxy/filters/proxy-unauthorized.filter';
 import { ConnectTunnelService } from './modules/proxy/connect-tunnel.service';
 import { ProxyAppModule } from './modules/proxy/proxy-app.module';
@@ -13,6 +14,10 @@ import { ProxyAuthService } from './modules/proxy/proxy-auth.service';
 
 async function bootstrapApi(): Promise<void> {
   const app = await NestFactory.create(AppModule);
+  app.enableCors({
+    origin: websocketConfig.corsOrigins(),
+    credentials: true,
+  });
   app.use(cookieParser());
   app.useGlobalPipes(
     new ValidationPipe({

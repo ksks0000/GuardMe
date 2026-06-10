@@ -5,6 +5,7 @@ import { PrismaModule } from './database/prisma.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { SiemModule } from './modules/siem/siem.module';
 import { ThreatModule } from './modules/threat/threat.module';
+import { WebsocketModule } from './modules/websocket/websocket.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { ThreatModule } from './modules/threat/threat.module';
     SiemModule,
     ThreatModule,
     AuthModule,
+    WebsocketModule,
   ],
   controllers: [],
   providers: [],

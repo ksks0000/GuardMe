@@ -1,4 +1,5 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { JwtService } from '@nestjs/jwt';
 import { Request, Response } from 'express';
 import { StringValue } from 'ms';
@@ -15,6 +16,8 @@ import { AuthProfileDto } from './dto/auth-profile.dto';
 import { LoginDto } from './dto/login.dto';
 import { LogoutResponseDto } from './dto/logout-response.dto';
 import { RegisterDto } from './dto/register.dto';
+import { WEBSOCKET_INTERNAL_EVENTS } from '../../config/websocket.config';
+import { SessionEventPayload } from '../websocket/dto/session-event.payload';
 
 @Injectable()
 export class AuthService {
@@ -22,6 +25,7 @@ export class AuthService {
     private readonly usersService: UsersService,
     private readonly sessionsService: SessionsService,
     private readonly jwtService: JwtService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   async register(dto: RegisterDto): Promise<PublicUserProfileDto> {
@@ -49,6 +53,7 @@ export class AuthService {
 
     await this.usersService.updateLastAuthAt(user.id);
     await this.issueSessionCookie(user.id, req, res);
+    this.emitSessionEvent('LOGIN', user.id, user.username);
 
     return this.usersService.toPublicProfile({
       ...user,
@@ -58,6 +63,9 @@ export class AuthService {
 
   async logout(req: Request, res: Response): Promise<LogoutResponseDto> {
     const token = req.cookies?.[authConfig.cookieName()];
+    let logoutUserId: string | null = null;
+    let logoutUsername: string | null = null;
+
     if (token) {
       const payload = await verifyJwtPayload(this.jwtService, token, {
         ignoreExpiration: true,
@@ -65,9 +73,20 @@ export class AuthService {
       if (payload?.jti) {
         await this.sessionsService.revokeByJwtId(payload.jti);
       }
+      if (payload?.sub) {
+        const user = await this.usersService.findById(payload.sub);
+        if (user) {
+          logoutUserId = user.id;
+          logoutUsername = user.username;
+        }
+      }
     }
 
     this.clearSessionCookie(res);
+
+    if (logoutUserId && logoutUsername) {
+      this.emitSessionEvent('LOGOUT', logoutUserId, logoutUsername);
+    }
     return { message: 'Logged out successfully' };
   }
 
@@ -127,6 +146,19 @@ export class AuthService {
       domain: authConfig.cookieDomain(),
       path: authConfig.cookiePath(),
     });
+  }
+
+  private emitSessionEvent(
+    type: SessionEventPayload['type'],
+    userId: string,
+    username: string,
+  ): void {
+    this.eventEmitter.emit(WEBSOCKET_INTERNAL_EVENTS.SESSION_EVENT, {
+      type,
+      userId,
+      username,
+      timestamp: new Date().toISOString(),
+    } satisfies SessionEventPayload);
   }
 
   private resolveExpiryDate(expiresIn: string): Date {
