@@ -19,6 +19,7 @@ import { PolicyDecision } from './dto/policy-decision.enum';
 import { PolicyResult } from './dto/policy.result';
 import { buildThreatSummary } from './utils/threat-summary.util';
 import { buildProceedUrl } from './utils/proceed-url.util';
+import { resolveDestinationIp } from './utils/dns.util';
 
 @Injectable()
 export class ProxyPipelineService {
@@ -220,17 +221,28 @@ export class ProxyPipelineService {
       'decision' | 'reason' | 'riskScore' | 'threatVerdict'
     >,
   ): Promise<void> {
-    void this.siemService.logTraffic({
-      userId,
-      clientIp,
-      url: inspection.normalizedUrl,
-      destinationHost: inspection.destinationHost,
-      destinationPort: inspection.destinationPort,
-      destinationIp: null,
-      method: inspection.method,
-      verdict: policy.decision,
-      riskScore: policy.riskScore,
-    });
+    const timestamp = new Date();
+
+    // Fire-and-forget: DNS resolution and the DB write happen off the
+    // request path so logging never delays or blocks the proxied response.
+    void (async () => {
+      const destinationIp = await resolveDestinationIp(
+        inspection.destinationHost,
+      );
+
+      await this.siemService.logTraffic({
+        userId,
+        clientIp,
+        url: inspection.normalizedUrl,
+        destinationHost: inspection.destinationHost,
+        destinationPort: inspection.destinationPort,
+        destinationIp,
+        method: inspection.method,
+        verdict: policy.decision,
+        riskScore: policy.riskScore,
+        timestamp,
+      });
+    })();
   }
 
   private extractClientIpFromMessage(req: IncomingMessage): string {

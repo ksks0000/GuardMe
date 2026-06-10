@@ -9,8 +9,10 @@ import {
   Res,
   UseGuards,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { Request, Response } from 'express';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { throttleConfig } from '../../config/throttle.config';
 import { JwtSessionGuard } from '../../common/guards/jwt-session.guard';
 import { AuthenticatedUser } from '../../common/types/auth.types';
 import { AuthService } from './auth.service';
@@ -22,11 +24,17 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('register')
+  @Throttle({
+    default: { ttl: throttleConfig.ttlMs(), limit: throttleConfig.authLimit() },
+  })
   register(@Body() dto: RegisterDto) {
     return this.authService.register(dto);
   }
 
   @Post('login')
+  @Throttle({
+    default: { ttl: throttleConfig.ttlMs(), limit: throttleConfig.authLimit() },
+  })
   @HttpCode(HttpStatus.OK)
   login(
     @Body() dto: LoginDto,
