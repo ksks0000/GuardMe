@@ -21,8 +21,8 @@ import {
   websocketConfig,
 } from '../../config/websocket.config';
 import { AuthenticatedUser } from '../../common/types/auth.types';
+import { SystemStatusService } from '../health/system-status.service';
 import { SessionEventPayload } from './dto/session-event.payload';
-import { SystemStatusService } from './system-status.service';
 import { WsAuthService } from './ws-auth.service';
 import {
   toSecurityEventPayload,

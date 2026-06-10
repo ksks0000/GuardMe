@@ -31,12 +31,7 @@ export class ConnectTunnelService {
       );
 
       if (decision !== PolicyDecision.ALLOW) {
-        const status = decision === PolicyDecision.BLOCK ? 403 : 403;
-        const message =
-          decision === PolicyDecision.BLOCK
-            ? 'Forbidden'
-            : 'Forbidden - suspicious destination';
-        this.reject(clientSocket, status, message);
+        this.reject(clientSocket, 403, 'Forbidden');
         return;
       }
 

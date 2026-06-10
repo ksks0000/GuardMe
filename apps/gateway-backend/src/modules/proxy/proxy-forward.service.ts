@@ -1,5 +1,5 @@
 import { HttpService } from '@nestjs/axios';
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { firstValueFrom } from 'rxjs';
 import { proxyConfig } from '../../config/proxy.config';
@@ -11,6 +11,8 @@ import {
 
 @Injectable()
 export class ProxyForwardService {
+  private readonly logger = new Logger(ProxyForwardService.name);
+
   constructor(private readonly httpService: HttpService) {}
 
   async forward(
@@ -30,7 +32,9 @@ export class ProxyForwardService {
         data: this.shouldForwardBody(inspection.method) ? req : undefined,
         responseType: 'stream',
         timeout: proxyConfig.forwardTimeoutMs(),
-        maxRedirects: 5,
+        // Redirects are passed back to the browser instead of being followed
+        // here, so every redirect target goes through threat scanning again.
+        maxRedirects: 0,
         validateStatus: () => true,
       }),
     );
@@ -44,7 +48,16 @@ export class ProxyForwardService {
       res.setHeader(key, value);
     }
 
-    response.data.pipe(res);
+    const upstream = response.data as NodeJS.ReadableStream & {
+      on(event: 'error', listener: (error: Error) => void): void;
+    };
+
+    upstream.on('error', (error: Error) => {
+      this.logger.warn(`Upstream stream error: ${error.message}`);
+      res.destroy(error);
+    });
+
+    upstream.pipe(res);
   }
 
   private shouldForwardBody(method: string): boolean {

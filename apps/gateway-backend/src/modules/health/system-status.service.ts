@@ -5,24 +5,42 @@ import { threatConfig } from '../../config/threat.config';
 import { PrismaService } from '../../database/prisma.service';
 import { HealthState, SystemStatusPayload } from './dto/system-status.payload';
 
+// Short cache so the public /health endpoint and the periodic WebSocket
+// broadcast do not burn VirusTotal quota (free tier: 4 requests/minute).
+const STATUS_CACHE_TTL_MS = 30_000;
+
 @Injectable()
 export class SystemStatusService {
+  private cached: { payload: SystemStatusPayload; expiresAt: number } | null =
+    null;
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly httpService: HttpService,
   ) {}
 
   async getStatus(): Promise<SystemStatusPayload> {
+    if (this.cached && this.cached.expiresAt > Date.now()) {
+      return this.cached.payload;
+    }
+
     const [db, virusTotal] = await Promise.all([
       this.checkDatabase(),
       this.checkVirusTotal(),
     ]);
 
-    return {
+    const payload: SystemStatusPayload = {
       db,
       virusTotal,
       timestamp: new Date().toISOString(),
     };
+
+    this.cached = {
+      payload,
+      expiresAt: Date.now() + STATUS_CACHE_TTL_MS,
+    };
+
+    return payload;
   }
 
   private async checkDatabase(): Promise<HealthState> {
@@ -42,14 +60,17 @@ export class SystemStatusService {
 
     try {
       const response = await firstValueFrom(
-        this.httpService.get(`${threatConfig.virusTotalApiBaseUrl()}/domains/google.com`, {
-          headers: { 'x-apikey': apiKey },
-          timeout: 5_000,
-          validateStatus: () => true,
-        }),
+        this.httpService.get(
+          `${threatConfig.virusTotalApiBaseUrl()}/domains/google.com`,
+          {
+            headers: { 'x-apikey': apiKey },
+            timeout: 5_000,
+            validateStatus: () => true,
+          },
+        ),
       );
 
-      return response.status < 500 ? 'ok' : 'degraded';
+      return response.status === 200 ? 'ok' : 'degraded';
     } catch {
       return 'degraded';
     }

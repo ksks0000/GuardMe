@@ -24,7 +24,7 @@ import { WarningPageService } from './warning-page.service';
     ThreatModule,
     HttpModule.register({
       timeout: proxyConfig.forwardTimeoutMs(),
-      maxRedirects: 5,
+      maxRedirects: 0,
     }),
   ],
   providers: [
