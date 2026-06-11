@@ -1,0 +1,21 @@
+@use 'styles/theme' as theme;
+@use 'styles/overrides';
+
+html {
+  height: 100%;
+  @include theme.guardme-material-theme();
+}
+
+body {
+  color-scheme: dark;
+  background-color: #0f172a;
+  color: #e2e8f0;
+  font: var(--mat-sys-body-medium);
+  margin: 0;
+  height: 100%;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}

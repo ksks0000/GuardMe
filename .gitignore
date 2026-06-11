@@ -1,4 +1,53 @@
+# --- Dependencies ---
 node_modules/
-dist/
+
+# --- Secrets / environment ---
 .env
+.env.*
+!.env.example
 infrastructure/docker/.env
+apps/gateway-backend/.env
+
+# --- Build outputs ---
+dist/
+
+# --- NestJS (gateway-backend) ---
+apps/gateway-backend/coverage/
+
+# --- Angular (dashboard-frontend) ---
+.angular/
+out-tsc/
+apps/dashboard-frontend/tmp/
+apps/dashboard-frontend/bazel-out/
+sass-cache/
+__screenshots__/
+
+# --- Logs ---
+npm-debug.log*
+yarn-error.log*
+testem.log
+libpeerconnection.log
+connect.lock
+
+# --- IDE ---
+.idea/
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+!.vscode/mcp.json
+.history/*
+
+# --- OS ---
+.DS_Store
+Thumbs.db
+
+# --- Misc ---
+typings/

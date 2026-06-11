@@ -1,0 +1,32 @@
+<mat-sidenav-container class="guardme-shell">
+  <mat-sidenav mode="side" opened class="guardme-sidenav">
+    <mat-nav-list>
+      @for (item of navItems; track item.route) {
+        <a
+          mat-list-item
+          [routerLink]="item.route"
+          routerLinkActive="active-nav-item"
+          [routerLinkActiveOptions]="{ exact: true }"
+        >
+          <mat-icon matListItemIcon>{{ item.icon }}</mat-icon>
+          <span matListItemTitle>{{ item.label }}</span>
+        </a>
+      }
+    </mat-nav-list>
+  </mat-sidenav>
+
+  <mat-sidenav-content>
+    <mat-toolbar color="primary" class="guardme-toolbar">
+      <span class="guardme-brand">
+        <mat-icon>shield</mat-icon>
+        GuardMe
+      </span>
+      <span class="spacer"></span>
+      <a mat-button routerLink="/login">Login</a>
+    </mat-toolbar>
+
+    <main class="guardme-content">
+      <router-outlet />
+    </main>
+  </mat-sidenav-content>
+</mat-sidenav-container>

@@ -1,0 +1,82 @@
+.guardme-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.guardme-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+
+  mat-icon {
+    color: #2dd4bf;
+  }
+}
+
+.guardme-sidenav {
+  width: 240px;
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.guardme-content {
+  padding: 1.5rem;
+  min-height: calc(100vh - 115px);
+}
+
+.page-placeholder {
+  max-width: 48rem;
+
+  h1 {
+    margin: 0 0 0.5rem;
+    font-size: 1.75rem;
+    font-weight: 500;
+  }
+
+  p {
+    margin: 0;
+    opacity: 0.75;
+    line-height: 1.6;
+  }
+}
+
+.login-page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background: radial-gradient(ellipse at center, #134e4a 0%, #0f172a 55%, #020617 100%);
+}
+
+.login-card {
+  width: 100%;
+  max-width: 420px;
+  padding: 2rem;
+}
+
+.login-header {
+  text-align: center;
+  margin-bottom: 1.5rem;
+
+  mat-icon {
+    font-size: 2.5rem;
+    width: 2.5rem;
+    height: 2.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  h1 {
+    margin: 0 0 0.25rem;
+    font-size: 1.5rem;
+    font-weight: 500;
+  }
+
+  p {
+    margin: 0;
+    opacity: 0.7;
+    font-size: 0.9rem;
+  }
+}
