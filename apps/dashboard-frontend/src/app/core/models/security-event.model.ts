@@ -1,0 +1,33 @@
+export const SIEM_EVENT_TYPES = {
+  AUTH_FAILURE: 'AUTH_FAILURE',
+  SESSION_REVOKED: 'SESSION_REVOKED',
+  FINGERPRINT_MISMATCH: 'FINGERPRINT_MISMATCH',
+  REAUTH_REQUIRED: 'REAUTH_REQUIRED',
+  THREAT_SCAN_FAILURE: 'THREAT_SCAN_FAILURE',
+  THREAT_SCAN_TIMEOUT: 'THREAT_SCAN_TIMEOUT',
+  THREAT_SCAN_COMPLETED: 'THREAT_SCAN_COMPLETED',
+  SUSPICIOUS_PROCEED: 'SUSPICIOUS_PROCEED',
+  PROXY_ERROR: 'PROXY_ERROR',
+} as const;
+
+export type SiemEventType = (typeof SIEM_EVENT_TYPES)[keyof typeof SIEM_EVENT_TYPES];
+
+export const SIEM_EVENT_SEVERITIES = {
+  LOW: 'LOW',
+  MEDIUM: 'MEDIUM',
+  HIGH: 'HIGH',
+  CRITICAL: 'CRITICAL',
+} as const;
+
+export type SiemEventSeverity =
+  (typeof SIEM_EVENT_SEVERITIES)[keyof typeof SIEM_EVENT_SEVERITIES];
+
+/* Mirrors backend SecurityEventPayload */
+export interface SecurityEvent {
+  id: string;
+  type: string;
+  severity: string;
+  message: string;
+  createdAt: string;
+  metadata?: Record<string, unknown>;
+}
