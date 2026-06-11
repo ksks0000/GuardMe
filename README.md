@@ -28,3 +28,66 @@ The goal is a realistic, implementable security architecture demonstrating defen
 
 HTTPS interception is intentionally excluded to keep implementation feasible while still demonstrating proxy-based protection.
 The first version prioritizes a working MVP security platform that can be incrementally expanded.
+
+## Repository structure
+
+```
+apps/
+├── gateway-backend/     # NestJS API, proxy, SIEM, WebSocket (:3000 / :8080)
+└── dashboard-frontend/  # Angular dashboard (:4200)
+
+infrastructure/
+└── docker/              # PostgreSQL 
+```
+
+## Quick start — backend (gateway)
+
+### 1. Start PostgreSQL
+
+```bash
+cd infrastructure/docker
+cp .env.example .env
+docker compose --profile dev up -d
+```
+
+### 2. Configure and run the API
+
+```bash
+cd apps/gateway-backend
+cp .env.example .env
+npm install
+npm run prisma:migrate
+npm run start:dev
+```
+
+The backend exposes:
+
+| Port | Service |
+|------|---------|
+| `3000` | Management API (`/auth/*`, `/health`, WebSocket `/events`) |
+| `8080` | HTTP forward proxy (requires login session cookie) |
+
+## Quick start — dashboard frontend
+
+Start the backend first then:
+
+```bash
+cd apps/dashboard-frontend
+npm install
+npm start
+```
+
+Open [http://localhost:4200](http://localhost:4200). The app expects the API at `http://localhost:3000` (see `src/environments/environment.ts`).
+
+## Full local stack
+
+```bash
+#  database
+cd infrastructure/docker && docker compose --profile dev up -d
+
+#  backend
+cd apps/gateway-backend && cp .env.example .env && npm install && npm run prisma:migrate && npm run start:dev
+
+#  frontend
+cd apps/dashboard-frontend && npm install && npm start
+```
