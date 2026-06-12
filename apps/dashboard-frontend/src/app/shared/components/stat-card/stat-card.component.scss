@@ -1,0 +1,35 @@
+.stat-card {
+  height: 100%;
+
+  mat-card-content {
+    padding: 1rem 1.25rem;
+  }
+}
+
+.stat-card__header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  opacity: 0.85;
+  font-size: 0.875rem;
+}
+
+.stat-card__value {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.accent-safe .stat-card__value {
+  color: #34d399;
+}
+
+.accent-warn .stat-card__value {
+  color: #fbbf24;
+}
+
+.accent-danger .stat-card__value {
+  color: #f87171;
+}

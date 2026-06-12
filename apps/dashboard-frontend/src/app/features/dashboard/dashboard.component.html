@@ -1,6 +1,70 @@
-<section class="page-placeholder">
-  <h1>Live Dashboard</h1>
-  <p>
-    Real-time traffic feed...
-  </p>
+<section class="dashboard">
+  <header class="dashboard__header">
+    <h1>Live Dashboard</h1>
+    <p>Real-time traffic and security events from your GuardMe gateway</p>
+  </header>
+
+  <div class="dashboard__status">
+    @if (systemStatus$ | async; as status) {
+      <app-status-badge label="Database" [state]="status.db" />
+      <app-status-badge label="VirusTotal" [state]="status.virusTotal" />
+      <span class="dashboard__status-time">
+        Updated {{ status.timestamp | date: 'mediumTime' }}
+      </span>
+    } @else {
+      <span class="dashboard__status-time">Waiting for system status…</span>
+    }
+  </div>
+
+  <div class="dashboard__stats">
+    <app-stat-card
+      label="Allowed"
+      [value]="(allowed$ | async) ?? 0"
+      icon="check_circle"
+      accent="safe"
+    />
+    <app-stat-card
+      label="Blocked"
+      [value]="(blocked$ | async) ?? 0"
+      icon="block"
+      accent="danger"
+    />
+    <app-stat-card
+      label="Traffic events"
+      [value]="(trafficTotal$ | async) ?? 0"
+      icon="language"
+    />
+    <app-stat-card
+      label="Security events"
+      [value]="(securityTotal$ | async) ?? 0"
+      icon="security"
+      accent="warn"
+    />
+  </div>
+
+  <mat-card class="dashboard__verdicts">
+    <mat-card-header>
+      <mat-card-title>Verdict distribution</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <mat-chip-set aria-label="Traffic verdict counts">
+        <mat-chip>Safe {{ verdictStats().safe }}</mat-chip>
+        <mat-chip>Suspicious {{ verdictStats().suspicious }}</mat-chip>
+        <mat-chip>Malicious {{ verdictStats().malicious }}</mat-chip>
+        <mat-chip>Unverified {{ verdictStats().unverified }}</mat-chip>
+      </mat-chip-set>
+    </mat-card-content>
+  </mat-card>
+
+  <mat-card class="dashboard__feed">
+    <mat-card-header>
+      <mat-card-title>Live activity</mat-card-title>
+      <mat-card-subtitle>Merged traffic and security stream</mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content>
+      @if (activityFeed$ | async; as feed) {
+        <app-log-list [items]="feed" />
+      }
+    </mat-card-content>
+  </mat-card>
 </section>

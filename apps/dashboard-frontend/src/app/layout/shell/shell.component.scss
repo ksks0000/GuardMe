@@ -1,6 +1,12 @@
 .guardme-shell {
-  min-height: 100vh;
+  height: 100vh;
   background-color: #0f172a;
+}
+
+.guardme-shell mat-sidenav-content {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .spacer {
@@ -13,6 +19,7 @@
 
 .user-label {
   margin-right: 0.5rem;
-  opacity: 0.9;
+  //opacity: 0.9;
   font-size: 0.9rem;
+  color: #2dd4bf;
 }

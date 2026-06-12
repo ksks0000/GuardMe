@@ -1,0 +1,9 @@
+<mat-card class="stat-card" [class]="'accent-' + accent()">
+  <mat-card-content>
+    <div class="stat-card__header">
+      <mat-icon>{{ icon() }}</mat-icon>
+      <span class="stat-card__label">{{ label() }}</span>
+    </div>
+    <p class="stat-card__value">{{ value() }}</p>
+  </mat-card-content>
+</mat-card>

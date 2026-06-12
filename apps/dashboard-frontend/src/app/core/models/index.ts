@@ -1,3 +1,4 @@
+export * from './activity-item.model';
 export * from './auth-credentials.model';
 export * from './pagination.model';
 export * from './security-event.model';
