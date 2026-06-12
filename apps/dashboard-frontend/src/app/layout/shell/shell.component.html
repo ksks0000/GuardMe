@@ -22,7 +22,10 @@
         GuardMe
       </span>
       <span class="spacer"></span>
-      <a mat-button routerLink="/login">Login</a>
+      @if (username(); as name) {
+        <span class="user-label">{{ name }}</span>
+        <button mat-button type="button" (click)="logout()">Sign out</button>
+      }
     </mat-toolbar>
 
     <main class="guardme-content">
