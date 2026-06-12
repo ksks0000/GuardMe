@@ -1,7 +1,13 @@
 import { AsyncPipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, inject, OnInit } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  inject,
+  OnInit,
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -13,6 +19,7 @@ import {
   normalizeUsername,
   PASSWORD_MAX_LENGTH,
   PASSWORD_MIN_LENGTH,
+  passwordMatchValidator,
   passwordValidators,
   USERNAME_MAX_LENGTH,
   USERNAME_MIN_LENGTH,
@@ -22,7 +29,7 @@ import { AuthActions } from '../../../store/auth/auth.actions';
 import { selectAuthError, selectAuthLoading } from '../../../store/auth/auth.selectors';
 
 @Component({
-  selector: 'app-login',
+  selector: 'app-register',
   imports: [
     ReactiveFormsModule,
     RouterLink,
@@ -34,13 +41,12 @@ import { selectAuthError, selectAuthLoading } from '../../../store/auth/auth.sel
     MatIconModule,
     MatProgressSpinnerModule,
   ],
-  templateUrl: './login.component.html',
+  templateUrl: './register.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class LoginComponent implements OnInit {
+export class RegisterComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly store = inject(Store);
-  private readonly route = inject(ActivatedRoute);
 
   readonly loading$ = this.store.select(selectAuthLoading);
   readonly error$ = this.store.select(selectAuthError);
@@ -53,7 +59,16 @@ export class LoginComponent implements OnInit {
   readonly form = this.fb.nonNullable.group({
     username: ['', usernameValidators],
     password: ['', passwordValidators],
+    confirmPassword: ['', [Validators.required, passwordMatchValidator()]],
   });
+
+  constructor() {
+    this.form.controls.password.valueChanges
+      .pipe(takeUntilDestroyed())
+      .subscribe(() => {
+        this.form.controls.confirmPassword.updateValueAndValidity();
+      });
+  }
 
   ngOnInit(): void {
     this.store.dispatch(AuthActions.clearError());
@@ -66,19 +81,17 @@ export class LoginComponent implements OnInit {
     }
 
     const { username, password } = this.form.getRawValue();
-    const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl') ?? undefined;
 
     this.store.dispatch(
-      AuthActions.login({
+      AuthActions.register({
         credentials: {
           username: normalizeUsername(username),
           password,
         },
-        returnUrl,
       }),
     );
 
-    this.form.patchValue({ password: '' });
+    this.form.patchValue({ password: '', confirmPassword: '' });
   }
 
   protected usernameError(): string | null {
@@ -108,6 +121,20 @@ export class LoginComponent implements OnInit {
     }
     if (control.errors['minlength'] || control.errors['maxlength']) {
       return `Password must be ${PASSWORD_MIN_LENGTH}–${PASSWORD_MAX_LENGTH} characters.`;
+    }
+    return null;
+  }
+
+  protected confirmPasswordError(): string | null {
+    const control = this.form.controls.confirmPassword;
+    if (!control.touched || !control.errors) {
+      return null;
+    }
+    if (control.errors['required']) {
+      return 'Please confirm your password.';
+    }
+    if (control.errors['passwordMismatch']) {
+      return 'Passwords do not match.';
     }
     return null;
   }

@@ -1,5 +1,6 @@
 @use 'styles/theme' as theme;
 @use 'styles/overrides';
+@use 'app/features/auth/auth-form';
 
 html {
   height: 100%;

@@ -1,6 +1,5 @@
 const GENERIC_AUTH_FAILURE = 'Invalid username or password.';
 
-/** Maps API errors to safe user-facing messages (no credential or stack leakage). */
 export function mapAuthError(error: unknown, context: 'login' | 'register' = 'login'): string {
   const message = error instanceof Error ? error.message : '';
 
