@@ -1,6 +1,61 @@
-<section class="page-placeholder">
-  <h1>Security Events</h1>
-  <p>
-    Security event history with severity filters and expandable metadata
-  </p>
+<section class="history-page">
+  <header class="history-page__header">
+    <h1>Security Events</h1>
+    <p>Event history with severity and type filters; expand rows for metadata</p>
+  </header>
+
+  <app-filter-bar [fields]="filterFields" (filtersApply)="onFiltersApply($event)" />
+
+  @if (viewState$ | async; as state) {
+    @if (state.status === 'loading') {
+      <div class="history-page__loading">
+        <mat-spinner diameter="40" />
+        <span>Loading security events…</span>
+      </div>
+    } @else if (state.status === 'error') {
+      <p class="history-page__error" role="alert">{{ state.message }}</p>
+    } @else if (state.items.length === 0) {
+      <app-empty-state
+        message="No security events match your filters."
+        icon="security"
+      />
+    } @else {
+      <mat-accordion class="history-page__accordion">
+        @for (event of state.items; track event.id) {
+          <mat-expansion-panel>
+            <mat-expansion-panel-header>
+              <mat-panel-title>
+                <span class="severity--{{ event.severity | lowercase }}">{{ event.type }}</span>
+              </mat-panel-title>
+              <mat-panel-description>
+                {{ event.createdAt | date: 'medium' }} · {{ event.severity }}
+              </mat-panel-description>
+            </mat-expansion-panel-header>
+
+            <p class="security-event__message">{{ event.message }}</p>
+
+            @if (metadataEntries(event).length > 0) {
+              <dl class="metadata-list">
+                @for (entry of metadataEntries(event); track entry.key) {
+                  <dt>{{ entry.key }}</dt>
+                  <dd>{{ entry.value }}</dd>
+                }
+              </dl>
+            } @else {
+              <p class="security-event__no-meta">No additional metadata.</p>
+            }
+          </mat-expansion-panel>
+        }
+      </mat-accordion>
+
+      <mat-paginator
+        [length]="state.total"
+        [pageSize]="pageSize"
+        [pageIndex]="state.page - 1"
+        [hidePageSize]="true"
+        (page)="onPageChange($event)"
+        aria-label="Security event pages"
+      />
+    }
+  }
 </section>

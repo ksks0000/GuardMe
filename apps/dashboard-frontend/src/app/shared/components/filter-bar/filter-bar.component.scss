@@ -1,0 +1,25 @@
+.filter-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.filter-bar__fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: 0.75rem 1rem;
+}
+
+.filter-bar__field {
+  width: 100%;
+}
+
+.filter-bar__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}

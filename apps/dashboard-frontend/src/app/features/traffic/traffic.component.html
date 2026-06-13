@@ -1,6 +1,86 @@
-<section class="page-placeholder">
-  <h1>Traffic History</h1>
-  <p>
-    Paginated traffic log table with filters
-  </p>
+<section class="history-page">
+  <header class="history-page__header">
+    <h1>Traffic History</h1>
+    <p>Paginated traffic logs with verdict, URL, and time range filters</p>
+  </header>
+
+  <app-filter-bar [fields]="filterFields" (filtersApply)="onFiltersApply($event)" />
+
+  @if (viewState$ | async; as state) {
+    @if (state.status === 'loading') {
+      <div class="history-page__loading">
+        <mat-spinner diameter="40" />
+        <span>Loading traffic logs…</span>
+      </div>
+    } @else if (state.status === 'error') {
+      <p class="history-page__error" role="alert">{{ state.message }}</p>
+    } @else {
+      <div class="history-page__stats">
+        <span>Page stats:</span>
+        <mat-chip-set aria-label="Current page verdict counts">
+          <mat-chip>Safe {{ state.pageStats.safe }}</mat-chip>
+          <mat-chip>Suspicious {{ state.pageStats.suspicious }}</mat-chip>
+          <mat-chip>Malicious {{ state.pageStats.malicious }}</mat-chip>
+          <mat-chip>Unverified {{ state.pageStats.unverified }}</mat-chip>
+        </mat-chip-set>
+      </div>
+
+      @if (state.items.length === 0) {
+        <app-empty-state
+          message="No traffic logs match your filters."
+          icon="travel_explore"
+        />
+      } @else {
+        <div class="history-page__table-wrap">
+          <table mat-table [dataSource]="state.items" class="history-table">
+            <ng-container matColumnDef="timestamp">
+              <th mat-header-cell *matHeaderCellDef>Time</th>
+              <td mat-cell *matCellDef="let row">{{ row.timestamp | date: 'medium' }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="method">
+              <th mat-header-cell *matHeaderCellDef>Method</th>
+              <td mat-cell *matCellDef="let row">{{ row.method }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="url">
+              <th mat-header-cell *matHeaderCellDef>URL</th>
+              <td mat-cell *matCellDef="let row" [title]="row.url">
+                {{ truncateUrl(row.url) }}
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="verdict">
+              <th mat-header-cell *matHeaderCellDef>Verdict</th>
+              <td mat-cell *matCellDef="let row">
+                <span class="verdict verdict--{{ row.verdict | lowercase }}">{{ row.verdict }}</span>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="riskScore">
+              <th mat-header-cell *matHeaderCellDef>Risk</th>
+              <td mat-cell *matCellDef="let row">{{ row.riskScore }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="host">
+              <th mat-header-cell *matHeaderCellDef>Host</th>
+              <td mat-cell *matCellDef="let row">{{ row.destinationHost }}</td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+          </table>
+        </div>
+
+        <mat-paginator
+          [length]="state.total"
+          [pageSize]="pageSize"
+          [pageIndex]="state.page - 1"
+          [hidePageSize]="true"
+          (page)="onPageChange($event)"
+          aria-label="Traffic log pages"
+        />
+      }
+    }
+  }
 </section>

@@ -1,0 +1,44 @@
+@if (form) {
+<form [formGroup]="form" class="filter-bar" (ngSubmit)="apply()">
+  <div class="filter-bar__fields">
+    @for (field of fields(); track field.key) {
+      @if (field.type === 'select') {
+        <mat-form-field appearance="outline" class="filter-bar__field">
+          <mat-label>{{ field.label }}</mat-label>
+          <mat-select [formControlName]="field.key">
+            @for (option of field.options ?? []; track option.value) {
+              <mat-option [value]="option.value">{{ option.label }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      } @else if (field.type === 'datetime') {
+        <mat-form-field appearance="outline" class="filter-bar__field">
+          <mat-label>{{ field.label }}</mat-label>
+          <input
+            matInput
+            type="datetime-local"
+            [formControlName]="field.key"
+            [placeholder]="field.placeholder ?? ''"
+          />
+        </mat-form-field>
+      } @else {
+        <mat-form-field appearance="outline" class="filter-bar__field">
+          <mat-label>{{ field.label }}</mat-label>
+          <input
+            matInput
+            type="text"
+            [formControlName]="field.key"
+            [placeholder]="field.placeholder ?? ''"
+            autocomplete="off"
+          />
+        </mat-form-field>
+      }
+    }
+  </div>
+
+  <div class="filter-bar__actions">
+    <button mat-stroked-button type="button" (click)="clear()">Clear</button>
+    <button mat-flat-button color="primary" type="submit">Apply filters</button>
+  </div>
+</form>
+}
