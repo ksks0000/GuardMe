@@ -7,8 +7,8 @@ import helmet from 'helmet';
 import { IncomingMessage, Server, createServer } from 'node:http';
 import { Socket } from 'node:net';
 import { AppModule } from './app.module';
+import { corsConfig } from './config/cors.config';
 import { proxyConfig } from './config/proxy.config';
-import { websocketConfig } from './config/websocket.config';
 import { ConnectTunnelService } from './modules/proxy/connect-tunnel.service';
 import { ProxyAuthService } from './modules/proxy/proxy-auth.service';
 import { ProxyPipelineService } from './modules/proxy/proxy-pipeline.service';
@@ -31,9 +31,6 @@ function respondProxyAuthRequired(res: Response): void {
 </html>`);
 }
 
-// The proxy listener is a plain Express server that reuses services from the
-// single Nest DI container, so SIEM events emitted by proxied traffic reach
-// the WebSocket gateway running in the same process.
 function createProxyServer(app: INestApplication): Server {
   const proxyAuth = app.get(ProxyAuthService);
   const proxyPipeline = app.get(ProxyPipelineService);
@@ -75,11 +72,9 @@ function createProxyServer(app: INestApplication): Server {
 
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule);
-  // Helmet only on the management API; the proxy listener sets its own
-  // headers and must not alter forwarded upstream responses.
   app.use(helmet());
   app.enableCors({
-    origin: websocketConfig.corsOrigins(),
+    origin: corsConfig.allowedOrigins(),
     credentials: true,
   });
   app.use(cookieParser());

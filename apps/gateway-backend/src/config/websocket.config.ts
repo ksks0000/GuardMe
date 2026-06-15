@@ -1,3 +1,5 @@
+import { corsConfig } from './cors.config';
+
 function parsePositiveNumber(
   value: string | undefined,
   defaultValue: number,
@@ -23,13 +25,7 @@ export const WEBSOCKET_INTERNAL_EVENTS = {
 
 export const websocketConfig = {
   namespace: () => process.env.WS_NAMESPACE ?? '/events',
-  corsOrigins: (): string[] => {
-    const raw = process.env.WS_CORS_ORIGINS ?? 'http://localhost:3000,http://localhost:4200';
-    return raw
-      .split(',')
-      .map((origin) => origin.trim())
-      .filter((origin) => origin.length > 0);
-  },
+  corsOrigins: () => corsConfig.allowedOrigins(),
   systemStatusIntervalMs: () =>
     parsePositiveNumber(process.env.WS_SYSTEM_STATUS_INTERVAL_MS, 60000),
 };

@@ -6,18 +6,19 @@ import { catchError } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import { AuthActions } from '../../store/auth/auth.actions';
 
-/** Dispatches session expiry on 401 from the GuardMe API (except during login/register). */
 export const authErrorInterceptor: HttpInterceptorFn = (req, next) => {
   const store = inject(Store);
   const isApiRequest = req.url.startsWith(environment.apiBaseUrl);
-  const isAuthAttempt =
-    req.url.includes('/auth/login') || req.url.includes('/auth/register');
+  const isAuthBootstrap =
+    req.url.includes('/auth/login') ||
+    req.url.includes('/auth/register') ||
+    req.url.includes('/auth/me');
 
   return next(req).pipe(
     catchError((error: unknown) => {
       if (
         isApiRequest &&
-        !isAuthAttempt &&
+        !isAuthBootstrap &&
         error instanceof HttpErrorResponse &&
         error.status === 401
       ) {
