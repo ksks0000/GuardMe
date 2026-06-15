@@ -1,4 +1,9 @@
 import { THREAT_VERDICTS, TrafficLog } from '../models';
+import {
+  isAllowedTrafficVerdict,
+  isBlockedTrafficVerdict,
+  normalizeTrafficVerdict,
+} from './traffic-verdict.util';
 
 export interface TrafficPageStats {
   safe: number;
@@ -12,7 +17,7 @@ export function computeTrafficPageStats(items: TrafficLog[]): TrafficPageStats {
   return items.reduce(
     (stats, log) => {
       stats.total += 1;
-      switch (log.verdict) {
+      switch (normalizeTrafficVerdict(log.verdict)) {
         case THREAT_VERDICTS.SAFE:
           stats.safe += 1;
           break;
@@ -30,4 +35,12 @@ export function computeTrafficPageStats(items: TrafficLog[]): TrafficPageStats {
     },
     { safe: 0, suspicious: 0, malicious: 0, unverified: 0, total: 0 },
   );
+}
+
+export function countAllowedTrafficLogs(logs: TrafficLog[]): number {
+  return logs.filter((log) => isAllowedTrafficVerdict(log.verdict)).length;
+}
+
+export function countBlockedTrafficLogs(logs: TrafficLog[]): number {
+  return logs.filter((log) => isBlockedTrafficVerdict(log.verdict)).length;
 }

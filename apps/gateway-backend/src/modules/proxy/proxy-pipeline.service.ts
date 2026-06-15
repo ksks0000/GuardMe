@@ -238,7 +238,7 @@ export class ProxyPipelineService {
         destinationPort: inspection.destinationPort,
         destinationIp,
         method: inspection.method,
-        verdict: policy.decision,
+        verdict: policy.threatVerdict,
         riskScore: policy.riskScore,
         timestamp,
       });

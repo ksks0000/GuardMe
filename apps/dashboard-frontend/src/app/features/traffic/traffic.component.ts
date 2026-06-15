@@ -1,4 +1,4 @@
-import { AsyncPipe, DatePipe, LowerCasePipe } from '@angular/common';
+import { AsyncPipe, DatePipe } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -24,6 +24,10 @@ import { THREAT_VERDICTS, TrafficLog } from '../../core/models';
 import { buildTrafficLogQuery } from '../../core/utils/history-query.util';
 import { computeTrafficPageStats, TrafficPageStats } from '../../core/utils/traffic-stats.util';
 import { truncateUrl } from '../../core/utils/url-display.util';
+import {
+  normalizeTrafficVerdict,
+  trafficVerdictCssClass,
+} from '../../core/utils/traffic-verdict.util';
 import { EmptyStateComponent } from '../../shared/components/empty-state/empty-state.component';
 import { FilterBarComponent } from '../../shared/components/filter-bar/filter-bar.component';
 import { FilterFieldConfig, FilterValues } from '../../shared/models/filter-bar.model';
@@ -53,7 +57,6 @@ type TrafficViewState =
   imports: [
     AsyncPipe,
     DatePipe,
-    LowerCasePipe,
     MatTableModule,
     MatPaginatorModule,
     MatProgressSpinnerModule,
@@ -130,6 +133,8 @@ export class TrafficComponent {
   );
 
   protected truncateUrl = truncateUrl;
+  protected verdictCssClass = trafficVerdictCssClass;
+  protected displayVerdict = normalizeTrafficVerdict;
 
   onFiltersApply(filters: FilterValues): void {
     this.page$.next(1);

@@ -4,64 +4,75 @@ GuardMe runs two HTTP listeners:
 
 | Port | Service |
 |------|---------|
-| `3000` | Management API (`/auth/*`, future dashboard) |
+| `3000` | Management API (`/auth/*`, `/siem/*`, WebSocket `/events`) |
 | `8080` | Forward proxy (browser traffic) |
 
 ## Prerequisites
 
-1. PostgreSQL running (`docker compose up -d` in `infrastructure/docker`)
-2. `npx prisma migrate deploy` in `apps/gateway-backend`
+1. PostgreSQL running (Docker or native install)
+2. `npm run prisma:migrate` in `apps/gateway-backend`
 3. `npm run start:dev` in `apps/gateway-backend`
-4. Register and log in via `POST http://localhost:3000/auth/login` (sets HttpOnly session cookie)
+4. Dashboard at `http://localhost:4200` with `useRealAuth: true`
 
 ## Configure browser proxy
 
 ### Local single-machine setup
 
-- **HTTP proxy:** `127.0.0.1`
+- **HTTP proxy:** `localhost`
 - **Port:** `8080`
 - **Use for all protocols** (HTTP and HTTPS)
+- **No proxy for:** `localhost, 127.0.0.1`
 
-### VMware lab (two VMs)
-
-- **HTTP proxy:** `<gateway-vm-ip>` (e.g. `192.168.x.x`)
-- **Port:** `8080`
+Use `localhost` (not `127.0.0.1`) so dashboard cookies and API calls stay consistent.
 
 ### Firefox
 
 1. Settings → Network Settings → Manual proxy configuration
-2. HTTP Proxy: `127.0.0.1`, Port `8080`
+2. HTTP Proxy: `localhost`, Port `8080`
 3. Enable “Also use this proxy for HTTPS”
-4. No proxy for: `localhost, 127.0.0.1`
+4. **No proxy for:** `localhost, 127.0.0.1`
 
-### Chrome / Edge (Windows)
-
-Uses system proxy:
+### Chrome / Edge (Windows system proxy)
 
 1. Settings → Network → Proxy → Manual
-2. Address `127.0.0.1`, Port `8080`
+2. Address `localhost`, Port `8080`
+3. **Bypass:** `localhost;127.0.0.1`
 
-Or launch with:
+## How authentication works (dashboard + browser)
 
-```text
---proxy-server="127.0.0.1:8080"
-```
+Browsers **do not** send the dashboard login cookie on proxied requests to sites like `example.com`. GuardMe uses standard **HTTP proxy authentication** instead:
+
+1. **Sign in** on the dashboard (`http://localhost:4200`) — powers the live feed and history UI.
+2. In **another tab**, open an HTTP site (e.g. `http://example.com`).
+3. The browser shows a **proxy login** dialog (after `407 Proxy Authentication Required`).
+4. Enter the **same username and password** as the dashboard (e.g. `test1` / your password).
+5. Firefox/Chrome **remember** proxy credentials for the session — you usually only enter them once.
+
+The live dashboard WebSocket uses your dashboard session cookie; proxied browsing uses `Proxy-Authorization: Basic`. Both tie traffic to your user account.
 
 ## Expected behavior
 
 | Scenario | Result |
 |----------|--------|
-| Not logged in | `407 Proxy Authentication Required` |
+| Not logged in (no proxy credentials) | `407` + browser auth prompt |
+| Valid proxy credentials | Traffic forwarded and logged |
 | Safe HTTP URL | Forwarded to internet |
 | Malicious URL (VT) | GuardMe block page |
-| Suspicious URL (VT) | Warning interstitial → Proceed link (one-time bypass) |
+| Suspicious URL (VT) | Warning interstitial → Proceed link |
 | VT unavailable | Allowed as `UNVERIFIED`, logged to SIEM |
-| HTTPS (`CONNECT`) | Hostname reputation check; no full URL path without TLS MITM |
+| HTTPS (`CONNECT`) | Hostname reputation check |
+
+## Test URLs
+
+Start with **HTTP** (full URL inspection):
+
+- `http://example.com`
+- `http://neverssl.com`
+
+Then HTTPS:
+
+- `https://example.com`
 
 ## HTTPS note
 
-Without TLS interception, HTTPS tunnels only expose `host:port` to the gateway. VirusTotal scans the hostname. Warning interstitials apply to **HTTP** requests with full URLs. Suspicious HTTPS hosts may be blocked on `CONNECT`.
-
-## Cookies across ports
-
-On `localhost`, login cookie from port `3000` is sent to proxy on `8080` (same site). For separate VMs/hostnames, set `COOKIE_DOMAIN` in `.env` appropriately.
+Without TLS interception, HTTPS tunnels only expose `host:port` to the gateway. VirusTotal scans the hostname. Warning interstitials apply to **HTTP** requests with full URLs.

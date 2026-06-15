@@ -42,6 +42,17 @@ export class SessionsService {
     });
   }
 
+  findLatestActiveForUser(userId: string): Promise<Session | null> {
+    return this.prisma.session.findFirst({
+      where: {
+        userId,
+        revokedAt: null,
+        expiresAt: { gt: new Date() },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
   async verifySessionForRequest(
     session: Session,
     req: Request,

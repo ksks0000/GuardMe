@@ -67,7 +67,9 @@
             <ng-container matColumnDef="verdict">
               <th mat-header-cell *matHeaderCellDef>Verdict</th>
               <td mat-cell *matCellDef="let row">
-                <span class="verdict verdict--{{ row.verdict | lowercase }}">{{ row.verdict }}</span>
+                <span class="verdict verdict--{{ verdictCssClass(row.verdict) }}">
+                  {{ displayVerdict(row.verdict) }}
+                </span>
               </td>
             </ng-container>
 

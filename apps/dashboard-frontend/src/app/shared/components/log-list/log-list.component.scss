@@ -1,3 +1,5 @@
+@use '../../styles/verdict';
+
 :host {
   display: flex;
   flex-direction: column;
@@ -30,4 +32,8 @@
   &:hover {
     background: rgba(255, 255, 255, 0.04);
   }
+}
+
+.log-list__subtitle {
+  display: inline;
 }

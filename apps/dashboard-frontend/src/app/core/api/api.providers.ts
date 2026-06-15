@@ -2,16 +2,13 @@ import { EnvironmentProviders, makeEnvironmentProviders, Type } from '@angular/c
 import { environment } from '../../../environments/environment';
 import { AuthApi } from './auth.api';
 import { HttpAuthApi } from './http/http-auth.api';
+import { HttpSiemApi } from './http/http-siem.api';
+import { SocketRealtimeApi } from './http/socket-realtime.api';
 import { MockAuthApi } from './mock/mock-auth.api';
 import { MockRealtimeApi } from './mock/mock-realtime.api';
 import { MockSiemApi } from './mock/mock-siem.api';
 import { RealtimeApi } from './realtime.api';
 import { SiemApi } from './siem.api';
-import {
-  UnconfiguredAuthApi,
-  UnconfiguredRealtimeApi,
-  UnconfiguredSiemApi,
-} from './unconfigured-api.stubs';
 
 function resolveAuthApi(): Type<AuthApi> {
   if (environment.useRealAuth || !environment.useMocks) {
@@ -22,11 +19,19 @@ function resolveAuthApi(): Type<AuthApi> {
 }
 
 function resolveSiemApi(): Type<SiemApi> {
-  return environment.useMocks ? MockSiemApi : UnconfiguredSiemApi;
+  if (environment.useRealSiem || !environment.useMocks) {
+    return HttpSiemApi;
+  }
+
+  return MockSiemApi;
 }
 
 function resolveRealtimeApi(): Type<RealtimeApi> {
-  return environment.useMocks ? MockRealtimeApi : UnconfiguredRealtimeApi;
+  if (environment.useRealRealtime || !environment.useMocks) {
+    return SocketRealtimeApi;
+  }
+
+  return MockRealtimeApi;
 }
 
 export function provideGuardMeApi(): EnvironmentProviders {

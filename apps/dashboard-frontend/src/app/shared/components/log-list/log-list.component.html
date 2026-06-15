@@ -6,7 +6,15 @@
       <button mat-list-item type="button" class="log-list__item" (click)="onSelect(item)">
         <mat-icon matListItemIcon>{{ iconFor(item) }}</mat-icon>
         <span matListItemTitle>{{ titleFor(item) }}</span>
-        <span matListItemLine>{{ subtitleFor(item) }}</span>
+        <span matListItemLine class="log-list__subtitle">
+          @if (item.kind === 'traffic') {
+            {{ item.data.method }} ·
+            <span [class]="trafficVerdictClass(item)">{{ trafficVerdictLabel(item) }}</span>
+            · risk {{ item.data.riskScore }}
+          } @else {
+            {{ subtitleFor(item) }}
+          }
+        </span>
         <span matListItemMeta>{{ item.timestamp | date: 'HH:mm:ss' }}</span>
       </button>
     }

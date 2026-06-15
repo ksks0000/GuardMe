@@ -1,5 +1,10 @@
 import { createFeatureSelector, createSelector } from '@ngrx/store';
 import { THREAT_VERDICTS } from '../../core/models';
+import {
+  countAllowedTrafficLogs,
+  countBlockedTrafficLogs,
+} from '../../core/utils/traffic-stats.util';
+import { normalizeTrafficVerdict } from '../../core/utils/traffic-verdict.util';
 import { trafficAdapter, trafficFeatureKey, TrafficState } from './traffic.reducer';
 
 export const selectTrafficState = createFeatureSelector<TrafficState>(trafficFeatureKey);
@@ -22,7 +27,7 @@ export const selectTrafficVerdictStats = createSelector(selectAllTrafficLogs, (l
   logs.reduce(
     (stats, log) => {
       stats.total += 1;
-      switch (log.verdict) {
+      switch (normalizeTrafficVerdict(log.verdict)) {
         case THREAT_VERDICTS.SAFE:
           stats.safe += 1;
           break;
@@ -42,12 +47,10 @@ export const selectTrafficVerdictStats = createSelector(selectAllTrafficLogs, (l
   ),
 );
 
-export const selectAllowedCount = createSelector(
-  selectTrafficVerdictStats,
-  (stats) => stats.safe,
+export const selectAllowedCount = createSelector(selectAllTrafficLogs, (logs) =>
+  countAllowedTrafficLogs(logs),
 );
 
-export const selectBlockedCount = createSelector(
-  selectTrafficVerdictStats,
-  (stats) => stats.malicious,
+export const selectBlockedCount = createSelector(selectAllTrafficLogs, (logs) =>
+  countBlockedTrafficLogs(logs),
 );

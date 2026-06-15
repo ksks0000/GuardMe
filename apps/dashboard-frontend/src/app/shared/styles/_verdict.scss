@@ -1,0 +1,21 @@
+.verdict {
+  font-size: 0.8rem;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+}
+
+.verdict--safe {
+  color: #34d399;
+}
+
+.verdict--suspicious {
+  color: #fbbf24;
+}
+
+.verdict--malicious {
+  color: #f87171;
+}
+
+.verdict--unverified {
+  color: #94a3b8;
+}

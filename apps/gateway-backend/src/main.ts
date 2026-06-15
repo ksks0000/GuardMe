@@ -15,10 +15,12 @@ import { ProxyPipelineService } from './modules/proxy/proxy-pipeline.service';
 
 const logger = new Logger('Bootstrap');
 
+const PROXY_AUTH_REALM = 'GuardMe';
+
 function respondProxyAuthRequired(res: Response): void {
   res
     .status(407)
-    .setHeader('Proxy-Authenticate', 'Cookie realm="GuardMe"')
+    .setHeader('Proxy-Authenticate', `Basic realm="${PROXY_AUTH_REALM}"`)
     .setHeader('Content-Type', 'text/html; charset=utf-8')
     .setHeader('X-Content-Type-Options', 'nosniff')
     .send(`<!DOCTYPE html>
@@ -26,7 +28,9 @@ function respondProxyAuthRequired(res: Response): void {
 <head><meta charset="UTF-8" /><title>GuardMe Proxy — Login Required</title></head>
 <body style="font-family:system-ui;background:#0f1419;color:#e7ecf3;padding:2rem;">
   <h1>Proxy authentication required</h1>
-  <p>Log in to GuardMe on the management API port, then retry browsing through the proxy.</p>
+  <p>Your browser should prompt for a username and password.</p>
+  <p>Use the <strong>same GuardMe credentials</strong> as the dashboard (e.g. after signing in at <code>localhost:4200</code>).</p>
+  <p>Firefox and Chrome remember proxy credentials for the rest of the session.</p>
 </body>
 </html>`);
 }
@@ -61,7 +65,10 @@ function createProxyServer(app: INestApplication): Server {
         const user = await proxyAuth.authenticate(req);
         await connectTunnel.handle(req, clientSocket, user);
       } catch {
-        clientSocket.write('HTTP/1.1 407 Proxy Authentication Required\r\n\r\n');
+        clientSocket.write(
+          'HTTP/1.1 407 Proxy Authentication Required\r\n' +
+            `Proxy-Authenticate: Basic realm="${PROXY_AUTH_REALM}"\r\n\r\n`,
+        );
         clientSocket.destroy();
       }
     })();

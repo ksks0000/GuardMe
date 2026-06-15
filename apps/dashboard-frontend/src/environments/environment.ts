@@ -6,4 +6,6 @@ export const environment: Environment = {
   wsUrl: 'http://localhost:3000/events',
   useMocks: true,
   useRealAuth: true,
+  useRealSiem: true,
+  useRealRealtime: true,
 };
