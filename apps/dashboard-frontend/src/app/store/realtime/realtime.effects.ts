@@ -28,8 +28,7 @@ export class RealtimeEffects {
   private readonly store = inject(Store);
   private readonly realtimeApi = inject(RealtimeApi);
 
-  readonly connectOnAuth$ = createEffect(
-    () =>
+  readonly connectOnAuth$ = createEffect(() =>
       this.actions$.pipe(
         ofType(...AUTH_START_EVENTS),
         tap(() => this.realtimeApi.connect()),
@@ -37,8 +36,7 @@ export class RealtimeEffects {
     { dispatch: false },
   );
 
-  readonly disconnectOnLogout$ = createEffect(
-    () =>
+  readonly disconnectOnLogout$ = createEffect(() =>
       this.actions$.pipe(
         ofType(...AUTH_END_EVENTS),
         tap(() => this.realtimeApi.disconnect()),

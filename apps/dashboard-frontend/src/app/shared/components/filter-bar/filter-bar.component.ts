@@ -7,11 +7,21 @@ import {
   output,
 } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { provideNativeDateAdapter } from '@angular/material/core';
 import { MatButtonModule } from '@angular/material/button';
+import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import {
+  combineDateAndTime,
+  dateControlKey,
+  splitIsoToDateTimeParts,
+  timeControlKey,
+} from '../../../core/utils/datetime-filter.util';
 import { FilterFieldConfig, FilterValues } from '../../models/filter-bar.model';
+import { FILTER_DATE_FORMATS_PROVIDER } from './filter-bar-date-formats';
 
 @Component({
   selector: 'app-filter-bar',
@@ -21,7 +31,10 @@ import { FilterFieldConfig, FilterValues } from '../../models/filter-bar.model';
     MatInputModule,
     MatSelectModule,
     MatButtonModule,
+    MatDatepickerModule,
+    MatIconModule,
   ],
+  providers: [provideNativeDateAdapter(), FILTER_DATE_FORMATS_PROVIDER],
   templateUrl: './filter-bar.component.html',
   styleUrl: './filter-bar.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -37,28 +50,63 @@ export class FilterBarComponent implements OnInit {
 
   form!: FormGroup;
 
+  protected readonly dateControlKey = dateControlKey;
+  protected readonly timeControlKey = timeControlKey;
+
   ngOnInit(): void {
-    const controls: Record<string, string> = {};
     const initial = this.initialValues();
+    const controls: Record<string, unknown> = {};
 
     for (const field of this.fields()) {
-      controls[field.key] = initial[field.key] ?? '';
+      if (field.type === 'datetime') {
+        const parts = splitIsoToDateTimeParts(initial[field.key] ?? '');
+        controls[dateControlKey(field.key)] = this.fb.control<Date | null>(parts.date);
+        controls[timeControlKey(field.key)] = this.fb.control(parts.time);
+      } else {
+        controls[field.key] = this.fb.control(initial[field.key] ?? '');
+      }
     }
 
-    this.form = this.fb.nonNullable.group(controls);
+    this.form = this.fb.group(controls);
   }
 
   apply(): void {
-    this.filtersApply.emit(this.form.getRawValue() as FilterValues);
+    this.filtersApply.emit(this.buildFilterValues());
   }
 
   clear(): void {
     const cleared: FilterValues = {};
+
     for (const field of this.fields()) {
+      if (field.type === 'datetime') {
+        this.form.get(dateControlKey(field.key))?.setValue(null);
+        this.form.get(timeControlKey(field.key))?.setValue('');
+      } else {
+        this.form.get(field.key)?.setValue('');
+      }
+
       cleared[field.key] = '';
     }
-    this.form.reset(cleared);
+
     this.filtersClear.emit();
     this.filtersApply.emit(cleared);
+  }
+
+  private buildFilterValues(): FilterValues {
+    const raw = this.form.getRawValue() as Record<string, unknown>;
+    const values: FilterValues = {};
+
+    for (const field of this.fields()) {
+      if (field.type === 'datetime') {
+        values[field.key] = combineDateAndTime(
+          raw[dateControlKey(field.key)] as Date | null,
+          raw[timeControlKey(field.key)] as string,
+        );
+      } else {
+        values[field.key] = String(raw[field.key] ?? '');
+      }
+    }
+
+    return values;
   }
 }

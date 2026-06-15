@@ -15,14 +15,28 @@
     } @else if (state.status === 'error') {
       <p class="history-page__error" role="alert">{{ state.message }}</p>
     } @else {
-      <div class="history-page__stats">
-        <span>Page stats:</span>
-        <mat-chip-set aria-label="Current page verdict counts">
-          <mat-chip>Safe {{ state.pageStats.safe }}</mat-chip>
-          <mat-chip>Suspicious {{ state.pageStats.suspicious }}</mat-chip>
-          <mat-chip>Malicious {{ state.pageStats.malicious }}</mat-chip>
-          <mat-chip>Unverified {{ state.pageStats.unverified }}</mat-chip>
-        </mat-chip-set>
+      <div class="history-page__toolbar">
+        <div class="history-page__stats">
+          <span>Page stats:</span>
+          <mat-chip-set aria-label="Current page verdict counts">
+            <mat-chip>Safe {{ state.pageStats.safe }}</mat-chip>
+            <mat-chip>Suspicious {{ state.pageStats.suspicious }}</mat-chip>
+            <mat-chip>Malicious {{ state.pageStats.malicious }}</mat-chip>
+            <mat-chip>Unverified {{ state.pageStats.unverified }}</mat-chip>
+          </mat-chip-set>
+        </div>
+
+        @if (state.items.length > 0) {
+          <mat-paginator
+            class="history-page__paginator"
+            [length]="state.total"
+            [pageSize]="pageSize"
+            [pageIndex]="state.page - 1"
+            [hidePageSize]="true"
+            (page)="onPageChange($event)"
+            aria-label="Traffic log pages (top)"
+          />
+        }
       </div>
 
       @if (state.items.length === 0) {
@@ -73,12 +87,13 @@
         </div>
 
         <mat-paginator
+          class="history-page__paginator"
           [length]="state.total"
           [pageSize]="pageSize"
           [pageIndex]="state.page - 1"
           [hidePageSize]="true"
           (page)="onPageChange($event)"
-          aria-label="Traffic log pages"
+          aria-label="Traffic log pages (bottom)"
         />
       }
     }

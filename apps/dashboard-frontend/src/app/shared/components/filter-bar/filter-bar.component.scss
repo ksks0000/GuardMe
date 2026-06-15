@@ -18,6 +18,24 @@
   width: 100%;
 }
 
+.filter-bar__datetime {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-start;
+  min-width: 0;
+  width: 100%;
+}
+
+.filter-bar__datetime-date {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.filter-bar__datetime-time {
+  flex: 0 0 5.5rem;
+  width: 5.5rem;
+}
+
 .filter-bar__actions {
   display: flex;
   justify-content: flex-end;

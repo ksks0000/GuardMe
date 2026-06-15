@@ -35,6 +35,14 @@
   color: #fca5a5;
 }
 
+.history-page__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem 1rem;
+}
+
 .history-page__stats {
   display: flex;
   flex-wrap: wrap;
@@ -42,6 +50,13 @@
   gap: 0.75rem;
   font-size: 0.9rem;
   opacity: 0.9;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.history-page__paginator {
+  flex: 0 0 auto;
+  background: transparent;
 }
 
 .history-page__table-wrap {

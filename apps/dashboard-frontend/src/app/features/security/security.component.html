@@ -20,7 +20,17 @@
         icon="security"
       />
     } @else {
-      <mat-accordion class="history-page__accordion">
+      <mat-paginator
+        class="history-page__paginator"
+        [length]="state.total"
+        [pageSize]="pageSize"
+        [pageIndex]="state.page - 1"
+        [hidePageSize]="true"
+        (page)="onPageChange($event)"
+        aria-label="Security event pages (top)"
+      />
+
+      <mat-accordion multi class="history-page__accordion">
         @for (event of state.items; track event.id) {
           <mat-expansion-panel>
             <mat-expansion-panel-header>
@@ -49,12 +59,13 @@
       </mat-accordion>
 
       <mat-paginator
+        class="history-page__paginator"
         [length]="state.total"
         [pageSize]="pageSize"
         [pageIndex]="state.page - 1"
         [hidePageSize]="true"
         (page)="onPageChange($event)"
-        aria-label="Security event pages"
+        aria-label="Security event pages (bottom)"
       />
     }
   }
