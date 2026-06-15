@@ -1,9 +1,9 @@
 @if (items().length === 0) {
   <p class="log-list-empty">{{ emptyMessage() }}</p>
 } @else {
-  <mat-nav-list class="log-list" aria-label="Live activity feed">
+  <mat-list class="log-list" aria-label="Live activity feed">
     @for (item of items(); track item.id) {
-      <button mat-list-item type="button" class="log-list__item" (click)="onSelect(item)">
+      <mat-list-item class="log-list__item">
         <mat-icon matListItemIcon>{{ iconFor(item) }}</mat-icon>
         <span matListItemTitle>{{ titleFor(item) }}</span>
         <span matListItemLine class="log-list__subtitle">
@@ -16,7 +16,7 @@
           }
         </span>
         <span matListItemMeta>{{ item.timestamp | date: 'HH:mm:ss' }}</span>
-      </button>
+      </mat-list-item>
     }
-  </mat-nav-list>
+  </mat-list>
 }

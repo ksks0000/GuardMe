@@ -1,0 +1,13 @@
+/**
+ * Parses an environment value as a positive number, falling back to a default.
+ * Shared by config modules so parsing rules stay consistent.
+ */
+export function parsePositiveNumber(
+  value: string | undefined,
+  defaultValue: number,
+): number {
+  const parsed = Number(value);
+  const safeDefault =
+    Number.isFinite(defaultValue) && defaultValue > 0 ? defaultValue : 1;
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : safeDefault;
+}

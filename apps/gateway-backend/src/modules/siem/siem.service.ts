@@ -195,7 +195,7 @@ export class SiemService {
       error instanceof Error ? error.message : 'Unknown database error';
 
     this.logger.warn(
-      `Failed to persist ${label}; falling back to console. ${message}`,
+      `Failed to persist ${label}: ${message}`,
       JSON.stringify(payload),
     );
   }

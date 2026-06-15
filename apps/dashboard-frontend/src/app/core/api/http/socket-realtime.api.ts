@@ -2,9 +2,13 @@ import { Injectable, OnDestroy } from '@angular/core';
 import { Observable, share, Subject } from 'rxjs';
 import { io, Socket } from 'socket.io-client';
 import { environment } from '../../../../environments/environment';
-import { SecurityEvent, SessionEvent, SystemStatus, TrafficLog } from '../../models';
+import { SecurityEvent, SystemStatus, TrafficLog } from '../../models';
 import { RealtimeApi } from '../realtime.api';
 import { WEBSOCKET_CLIENT_EVENTS } from './websocket-events';
+
+const RECONNECTION_ATTEMPTS = Infinity;
+const RECONNECTION_DELAY_MS = 1000;
+const RECONNECTION_DELAY_MAX_MS = 15000;
 
 @Injectable()
 export class SocketRealtimeApi extends RealtimeApi implements OnDestroy {
@@ -13,7 +17,6 @@ export class SocketRealtimeApi extends RealtimeApi implements OnDestroy {
   private readonly trafficSubject = new Subject<TrafficLog>();
   private readonly securitySubject = new Subject<SecurityEvent>();
   private readonly statusSubject = new Subject<SystemStatus>();
-  private readonly sessionSubject = new Subject<SessionEvent>();
 
   readonly trafficLogs$: Observable<TrafficLog> = this.trafficSubject
     .asObservable()
@@ -27,10 +30,6 @@ export class SocketRealtimeApi extends RealtimeApi implements OnDestroy {
     .asObservable()
     .pipe(share());
 
-  readonly sessionEvents$: Observable<SessionEvent> = this.sessionSubject
-    .asObservable()
-    .pipe(share());
-
   connect(): void {
     if (this.socket?.connected) {
       return;
@@ -38,10 +37,16 @@ export class SocketRealtimeApi extends RealtimeApi implements OnDestroy {
 
     this.disconnect();
 
+    // Socket.IO retries with exponential backoff (delay → delayMax) and
+    // re-sends the session cookie via withCredentials on each reconnect.
     const socket = io(environment.wsUrl, {
       withCredentials: true,
       autoConnect: true,
       transports: ['websocket', 'polling'],
+      reconnection: true,
+      reconnectionAttempts: RECONNECTION_ATTEMPTS,
+      reconnectionDelay: RECONNECTION_DELAY_MS,
+      reconnectionDelayMax: RECONNECTION_DELAY_MAX_MS,
     });
 
     socket.on(WEBSOCKET_CLIENT_EVENTS.TRAFFIC_LOG, (payload: TrafficLog) => {
@@ -54,10 +59,6 @@ export class SocketRealtimeApi extends RealtimeApi implements OnDestroy {
 
     socket.on(WEBSOCKET_CLIENT_EVENTS.SYSTEM_STATUS, (payload: SystemStatus) => {
       this.statusSubject.next(payload);
-    });
-
-    socket.on(WEBSOCKET_CLIENT_EVENTS.SESSION_EVENT, (payload: SessionEvent) => {
-      this.sessionSubject.next(payload);
     });
 
     this.socket = socket;
@@ -78,6 +79,5 @@ export class SocketRealtimeApi extends RealtimeApi implements OnDestroy {
     this.trafficSubject.complete();
     this.securitySubject.complete();
     this.statusSubject.complete();
-    this.sessionSubject.complete();
   }
 }

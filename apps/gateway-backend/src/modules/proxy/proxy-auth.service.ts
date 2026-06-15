@@ -5,12 +5,14 @@ import { IncomingMessage } from 'node:http';
 import { Request } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import { authConfig } from '../../config/auth.config';
+import { SIEM_EVENT_TYPES } from '../../config/siem.config';
 import { AuthenticatedUser, JwtPayload } from '../../common/types/auth.types';
 import { verifyPassword } from '../../common/utils/password.util';
 import {
   extractClientIp,
   extractUserAgent,
 } from '../../common/utils/request-context.util';
+import { SiemService } from '../siem/siem.service';
 import { SessionsService } from '../sessions/sessions.service';
 import { UsersService } from '../users/users.service';
 import { parseProxyAuthorizationBasic } from './utils/proxy-basic-auth.util';
@@ -23,6 +25,7 @@ export class ProxyAuthService {
     private readonly jwtService: JwtService,
     private readonly sessionsService: SessionsService,
     private readonly usersService: UsersService,
+    private readonly siemService: SiemService,
   ) {}
 
   async authenticate(req: Request | IncomingMessage): Promise<AuthenticatedUser> {
@@ -88,6 +91,7 @@ export class ProxyAuthService {
   ): Promise<AuthenticatedUser> {
     const user = await this.usersService.findByUsername(credentials.username);
     if (!user) {
+      this.logProxyAuthFailure(credentials.username, req, 'unknown_user');
       throw new UnauthorizedException(GENERIC_PROXY_AUTH_FAILURE);
     }
 
@@ -96,6 +100,7 @@ export class ProxyAuthService {
       user.passwordHash,
     );
     if (!passwordValid) {
+      this.logProxyAuthFailure(credentials.username, req, 'invalid_password');
       throw new UnauthorizedException(GENERIC_PROXY_AUTH_FAILURE);
     }
 
@@ -114,6 +119,27 @@ export class ProxyAuthService {
       username: user.username,
       fingerprintMatched: true,
     };
+  }
+
+  // Fire-and-forget so a failed credential check still returns 407 promptly.
+  // Only invalid presented credentials are logged, not the normal browser
+  // 407 handshake (missing Proxy-Authorization), to avoid log flooding.
+  private logProxyAuthFailure(
+    attemptedUsername: string,
+    req: Request | IncomingMessage,
+    reason: 'unknown_user' | 'invalid_password',
+  ): void {
+    const expressReq = req as Request;
+    void this.siemService.logSecurityEvent({
+      type: SIEM_EVENT_TYPES.AUTH_FAILURE,
+      message: 'Proxy authentication failed',
+      metadata: {
+        reason,
+        attemptedUsername,
+        clientIp: extractClientIp(expressReq),
+        userAgent: extractUserAgent(expressReq),
+      },
+    });
   }
 
   private async createProxySession(

@@ -2,7 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 
 const GENERIC_AUTH_FAILURE = 'Invalid username or password.';
 
-export function extractHttpErrorMessage(error: unknown): string {
+function extractHttpErrorMessage(error: unknown): string {
   if (error instanceof HttpErrorResponse) {
     const body = error.error;
 

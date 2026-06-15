@@ -11,7 +11,7 @@ import {
   timer,
 } from 'rxjs';
 import { RealtimeApi } from '../realtime.api';
-import { SecurityEvent, SessionEvent, SystemStatus, TrafficLog } from '../../models';
+import { SecurityEvent, SystemStatus, TrafficLog } from '../../models';
 import { createSecurityEvent, createSystemStatus, createTrafficLog } from './mock-data.util';
 
 @Injectable()
@@ -22,7 +22,6 @@ export class MockRealtimeApi extends RealtimeApi implements OnDestroy {
   readonly trafficLogs$: Observable<TrafficLog>;
   readonly securityEvents$: Observable<SecurityEvent>;
   readonly systemStatus$: Observable<SystemStatus>;
-  readonly sessionEvents$: Observable<SessionEvent>;
 
   constructor() {
     super();
@@ -30,7 +29,6 @@ export class MockRealtimeApi extends RealtimeApi implements OnDestroy {
     this.trafficLogs$ = this.gatedInterval(1500, 2500, () => createTrafficLog());
     this.securityEvents$ = this.gatedInterval(6000, 9000, () => createSecurityEvent());
     this.systemStatus$ = this.gatedInterval(0, 30_000, () => createSystemStatus());
-    this.sessionEvents$ = EMPTY;
   }
 
   connect(): void {

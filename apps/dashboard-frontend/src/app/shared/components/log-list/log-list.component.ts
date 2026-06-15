@@ -1,10 +1,5 @@
 import { DatePipe } from '@angular/common';
-import {
-  ChangeDetectionStrategy,
-  Component,
-  input,
-  output,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 import { MatListModule } from '@angular/material/list';
 import { ActivityItem } from '../../../core/models';
@@ -24,8 +19,6 @@ import {
 export class LogListComponent {
   readonly items = input.required<ActivityItem[]>();
   readonly emptyMessage = input('No live activity yet. Browse via the proxy to generate traffic.');
-
-  readonly itemSelected = output<ActivityItem>();
 
   protected truncateUrl = truncateUrl;
 
@@ -57,9 +50,5 @@ export class LogListComponent {
     return item.kind === 'traffic'
       ? `verdict verdict--${trafficVerdictCssClass(item.data.verdict)}`
       : '';
-  }
-
-  protected onSelect(item: ActivityItem): void {
-    this.itemSelected.emit(item);
   }
 }

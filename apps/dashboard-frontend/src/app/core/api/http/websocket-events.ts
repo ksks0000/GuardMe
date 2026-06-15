@@ -1,10 +1,6 @@
-// Mirrors backend WEBSOCKET_CLIENT_EVENTS
+// Mirrors the backend WEBSOCKET_CLIENT_EVENTS the dashboard subscribes to.
 export const WEBSOCKET_CLIENT_EVENTS = {
   TRAFFIC_LOG: 'TRAFFIC_LOG',
   SECURITY_EVENT: 'SECURITY_EVENT',
   SYSTEM_STATUS: 'SYSTEM_STATUS',
-  SESSION_EVENT: 'SESSION_EVENT',
 } as const;
-
-export type WebSocketClientEvent =
-  (typeof WEBSOCKET_CLIENT_EVENTS)[keyof typeof WEBSOCKET_CLIENT_EVENTS];

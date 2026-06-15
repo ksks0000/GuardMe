@@ -8,11 +8,3 @@ export const selectSystemStatus = createSelector(
   selectSystemStatusState,
   (state) => state.current,
 );
-
-export const selectIsSystemHealthy = createSelector(selectSystemStatus, (status) => {
-  if (!status) {
-    return null;
-  }
-
-  return status.db === 'ok' && status.virusTotal === 'ok';
-});

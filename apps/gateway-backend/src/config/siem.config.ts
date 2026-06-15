@@ -40,6 +40,3 @@ export const SIEM_EMIT_EVENTS = {
   TRAFFIC_LOG: 'TRAFFIC_LOG',
   SECURITY_EVENT: 'SECURITY_EVENT',
 } as const;
-
-export type SiemEmitEvent =
-  (typeof SIEM_EMIT_EVENTS)[keyof typeof SIEM_EMIT_EVENTS];
