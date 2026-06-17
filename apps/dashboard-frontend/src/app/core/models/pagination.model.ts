@@ -8,7 +8,8 @@ export interface PaginatedResult<T> {
 export interface TrafficLogQuery {
   page: number;
   pageSize: number;
-  verdict?: string;
+  threatVerdict?: string;
+  policyDecision?: string;
   urlSearch?: string;
   from?: string;
   to?: string;

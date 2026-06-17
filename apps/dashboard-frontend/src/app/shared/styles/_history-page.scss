@@ -69,7 +69,17 @@
 
 .history-table {
   width: 100%;
-  min-width: 40rem;
+  min-width: 56rem;
+}
+
+.history-table__mono {
+  font-family: monospace;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+.history-page__active-filters {
+  margin-top: -0.5rem;
 }
 
 .severity--low {

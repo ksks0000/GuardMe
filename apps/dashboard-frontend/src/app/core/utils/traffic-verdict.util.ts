@@ -1,36 +1,43 @@
-import { THREAT_VERDICTS, ThreatVerdict } from '../models';
-
-/** Legacy proxy pipeline stored policy decisions in the verdict column. */
-const POLICY_DECISION_VERDICT: Record<string, ThreatVerdict> = {
-  ALLOW: THREAT_VERDICTS.SAFE,
-  WARN: THREAT_VERDICTS.SUSPICIOUS,
-  BLOCK: THREAT_VERDICTS.MALICIOUS,
-};
+import { POLICY_DECISIONS, PolicyDecision, THREAT_VERDICTS, ThreatVerdict, TrafficLog } from '../models';
 
 const THREAT_VERDICT_VALUES = new Set<string>(Object.values(THREAT_VERDICTS));
 
-export function normalizeTrafficVerdict(verdict: string): ThreatVerdict {
-  const upper = verdict.toUpperCase();
+export function normalizeThreatVerdict(value: string): ThreatVerdict {
+  const upper = value.toUpperCase();
+  return THREAT_VERDICT_VALUES.has(upper)
+    ? (upper as ThreatVerdict)
+    : THREAT_VERDICTS.UNVERIFIED;
+}
 
-  if (THREAT_VERDICT_VALUES.has(upper)) {
-    return upper as ThreatVerdict;
+export function threatVerdictCssClass(value: string): string {
+  return normalizeThreatVerdict(value).toLowerCase();
+}
+
+export function isBlockedPolicyDecision(decision: string): boolean {
+  return decision === POLICY_DECISIONS.BLOCK;
+}
+
+export function isAllowedPolicyDecision(decision: string): boolean {
+  return decision === POLICY_DECISIONS.ALLOW;
+}
+
+export function normalizePolicyDecision(value: string): PolicyDecision {
+  const upper = value.toUpperCase();
+  if (upper === POLICY_DECISIONS.BLOCK || upper === POLICY_DECISIONS.WARN || upper === POLICY_DECISIONS.ALLOW) {
+    return upper as PolicyDecision;
   }
 
-  return POLICY_DECISION_VERDICT[upper] ?? THREAT_VERDICTS.UNVERIFIED;
+  return POLICY_DECISIONS.ALLOW;
 }
 
-/** CSS modifier suffix for `.verdict--{suffix}` (safe, suspicious, malicious, unverified). */
-export function trafficVerdictCssClass(verdict: string): string {
-  return normalizeTrafficVerdict(verdict).toLowerCase();
-}
-
-export function isBlockedTrafficVerdict(verdict: string): boolean {
-  return normalizeTrafficVerdict(verdict) === THREAT_VERDICTS.MALICIOUS;
-}
-
-export function isAllowedTrafficVerdict(verdict: string): boolean {
-  const normalized = normalizeTrafficVerdict(verdict);
-  return (
-    normalized === THREAT_VERDICTS.SAFE || normalized === THREAT_VERDICTS.UNVERIFIED
-  );
+export function policyDecisionCssClass(decision: string): string {
+  switch (normalizePolicyDecision(decision)) {
+    case POLICY_DECISIONS.BLOCK:
+      return 'malicious';
+    case POLICY_DECISIONS.WARN:
+      return 'suspicious';
+    case POLICY_DECISIONS.ALLOW:
+    default:
+      return 'safe';
+  }
 }

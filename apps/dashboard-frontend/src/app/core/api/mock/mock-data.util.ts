@@ -3,6 +3,8 @@ import {
   SIEM_EVENT_SEVERITIES,
   SIEM_EVENT_TYPES,
   SystemStatus,
+  POLICY_DECISIONS,
+  PolicyDecision,
   THREAT_VERDICTS,
   ThreatVerdict,
   TrafficLog,
@@ -57,10 +59,21 @@ function uuid(): string {
   return crypto.randomUUID();
 }
 
+function policyDecisionForVerdict(verdict: ThreatVerdict): PolicyDecision {
+  switch (verdict) {
+    case THREAT_VERDICTS.MALICIOUS:
+      return POLICY_DECISIONS.BLOCK;
+    case THREAT_VERDICTS.SUSPICIOUS:
+      return POLICY_DECISIONS.WARN;
+    default:
+      return POLICY_DECISIONS.ALLOW;
+  }
+}
+
 export function createTrafficLog(overrides: Partial<TrafficLog> = {}): TrafficLog {
   const host = randomItem(SAMPLE_HOSTS);
   const path = randomItem(SAMPLE_PATHS);
-  const verdict = randomItem(VERDICT_WEIGHTS);
+  const threatVerdict = randomItem(VERDICT_WEIGHTS);
   const url = `http://${host}${path}`;
 
   return {
@@ -70,9 +83,12 @@ export function createTrafficLog(overrides: Partial<TrafficLog> = {}): TrafficLo
     url,
     destinationHost: host,
     destinationPort: host.includes('malware') ? 8080 : 80,
+    destinationIp: null,
     method: randomItem(METHODS),
-    verdict,
-    riskScore: riskScoreForVerdict(verdict),
+    policyDecision: policyDecisionForVerdict(threatVerdict),
+    threatVerdict,
+    matchedRuleId: null,
+    riskScore: riskScoreForVerdict(threatVerdict),
     timestamp: new Date().toISOString(),
     ...overrides,
   };
@@ -85,10 +101,16 @@ const SECURITY_EVENT_TEMPLATES: Array<{
   metadata?: Record<string, unknown>;
 }> = [
   {
-    type: SIEM_EVENT_TYPES.THREAT_SCAN_COMPLETED,
-    severity: SIEM_EVENT_SEVERITIES.LOW,
-    message: 'VirusTotal scan completed for http://example.com',
-    metadata: { url: 'http://example.com', verdict: THREAT_VERDICTS.SAFE },
+    type: SIEM_EVENT_TYPES.MALICIOUS_BLOCKED,
+    severity: SIEM_EVENT_SEVERITIES.HIGH,
+    message: 'Proxy blocked malicious URL',
+    metadata: { url: 'http://malware.wicar.org', threatVerdict: THREAT_VERDICTS.MALICIOUS },
+  },
+  {
+    type: SIEM_EVENT_TYPES.RULE_MATCH,
+    severity: SIEM_EVENT_SEVERITIES.MEDIUM,
+    message: 'Firewall rule matched: block phishing domains',
+    metadata: { action: 'BLOCK', pattern: '*.phishing-test.example' },
   },
   {
     type: SIEM_EVENT_TYPES.SUSPICIOUS_PROCEED,

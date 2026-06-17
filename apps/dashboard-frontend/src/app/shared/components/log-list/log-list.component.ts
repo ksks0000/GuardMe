@@ -5,8 +5,8 @@ import { MatListModule } from '@angular/material/list';
 import { ActivityItem } from '../../../core/models';
 import { truncateUrl } from '../../../core/utils/url-display.util';
 import {
-  normalizeTrafficVerdict,
-  trafficVerdictCssClass,
+  normalizeThreatVerdict,
+  threatVerdictCssClass,
 } from '../../../core/utils/traffic-verdict.util';
 
 @Component({
@@ -43,12 +43,14 @@ export class LogListComponent {
   }
 
   protected trafficVerdictLabel(item: ActivityItem): string {
-    return item.kind === 'traffic' ? normalizeTrafficVerdict(item.data.verdict) : '';
+    return item.kind === 'traffic'
+      ? normalizeThreatVerdict(item.data.threatVerdict)
+      : '';
   }
 
   protected trafficVerdictClass(item: ActivityItem): string {
     return item.kind === 'traffic'
-      ? `verdict verdict--${trafficVerdictCssClass(item.data.verdict)}`
+      ? `verdict verdict--${threatVerdictCssClass(item.data.threatVerdict)}`
       : '';
   }
 }

@@ -9,4 +9,5 @@ export const environment: Environment = {
   useRealAuth: true,
   useRealSiem: true,
   useRealRealtime: true,
+  useRealRules: true,
 };

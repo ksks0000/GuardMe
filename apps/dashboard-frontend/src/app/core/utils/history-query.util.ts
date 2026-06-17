@@ -37,7 +37,8 @@ export function buildTrafficLogQuery(
   return {
     page,
     pageSize,
-    verdict: optionalFilter(filters['verdict']),
+    threatVerdict: optionalFilter(filters['threatVerdict']),
+    policyDecision: optionalFilter(filters['policyDecision']),
     urlSearch: sanitizeSearchTerm(filters['urlSearch']),
     from: toIsoOrUndefined(filters['from']),
     to: toIsoOrUndefined(filters['to']),

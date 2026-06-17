@@ -1,0 +1,44 @@
+<h2 mat-dialog-title>{{ title }}</h2>
+
+<mat-dialog-content>
+  <form [formGroup]="form" class="rule-form" (ngSubmit)="submit()">
+    <mat-form-field appearance="outline" class="rule-form__field">
+      <mat-label>Name (optional)</mat-label>
+      <input matInput formControlName="name" maxlength="100" autocomplete="off" />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="rule-form__field">
+      <mat-label>Rule type</mat-label>
+      <mat-select formControlName="ruleType">
+        @for (type of ruleTypes; track type) {
+          <mat-option [value]="type">{{ type }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="rule-form__field">
+      <mat-label>Pattern</mat-label>
+      <input matInput formControlName="pattern" maxlength="253" autocomplete="off" />
+      <mat-hint>{{ patternHint() }}</mat-hint>
+      @if (form.controls.pattern.touched && form.controls.pattern.hasError('required')) {
+        <mat-error>Pattern is required.</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="rule-form__field">
+      <mat-label>Action</mat-label>
+      <mat-select formControlName="action">
+        @for (action of ruleActions; track action) {
+          <mat-option [value]="action">{{ action }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button type="button" (click)="cancel()">Cancel</button>
+  <button mat-flat-button color="primary" type="button" (click)="submit()">
+    {{ data.mode === 'create' ? 'Create rule' : 'Save changes' }}
+  </button>
+</mat-dialog-actions>

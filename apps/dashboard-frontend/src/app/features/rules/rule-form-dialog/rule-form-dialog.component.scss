@@ -1,0 +1,11 @@
+.rule-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: min(24rem, 100%);
+  padding-top: 0.5rem;
+}
+
+.rule-form__field {
+  width: 100%;
+}

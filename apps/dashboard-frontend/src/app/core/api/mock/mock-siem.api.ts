@@ -27,8 +27,12 @@ export class MockSiemApi extends SiemApi {
 
     let filtered = [...this.trafficLogs];
 
-    if (query.verdict) {
-      filtered = filtered.filter((log) => log.verdict === query.verdict);
+    if (query.threatVerdict) {
+      filtered = filtered.filter((log) => log.threatVerdict === query.threatVerdict);
+    }
+
+    if (query.policyDecision) {
+      filtered = filtered.filter((log) => log.policyDecision === query.policyDecision);
     }
 
     if (query.urlSearch) {

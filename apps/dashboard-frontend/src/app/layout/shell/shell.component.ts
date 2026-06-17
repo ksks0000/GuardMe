@@ -49,6 +49,7 @@ export class ShellComponent {
   readonly navItems: NavItem[] = [
     { label: 'Dashboard', route: '/dashboard', icon: 'dashboard' },
     { label: 'Traffic', route: '/traffic', icon: 'language' },
+    { label: 'Rules', route: '/rules', icon: 'rule' },
     { label: 'Security', route: '/security', icon: 'security' },
   ];
 

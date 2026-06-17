@@ -7,6 +7,14 @@ export const THREAT_VERDICTS = {
 
 export type ThreatVerdict = (typeof THREAT_VERDICTS)[keyof typeof THREAT_VERDICTS];
 
+export const POLICY_DECISIONS = {
+  ALLOW: 'ALLOW',
+  BLOCK: 'BLOCK',
+  WARN: 'WARN',
+} as const;
+
+export type PolicyDecision = (typeof POLICY_DECISIONS)[keyof typeof POLICY_DECISIONS];
+
 /* Mirrors backend TrafficLogPayload / WS TRAFFIC_LOG event */
 export interface TrafficLog {
   id: string;
@@ -15,8 +23,11 @@ export interface TrafficLog {
   url: string;
   destinationHost: string;
   destinationPort: number | null;
+  destinationIp: string | null;
   method: string;
-  verdict: string;
+  policyDecision: string;
+  threatVerdict: string;
+  matchedRuleId: string | null;
   riskScore: number;
   timestamp: string;
 }

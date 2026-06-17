@@ -4,6 +4,8 @@ import { provideState, provideStore } from '@ngrx/store';
 import { provideStoreDevtools } from '@ngrx/store-devtools';
 import { AuthEffects } from './auth/auth.effects';
 import { authFeatureKey, authReducer } from './auth/auth.reducer';
+import { RulesEffects } from './rules/rules.effects';
+import { rulesFeatureKey, rulesReducer } from './rules/rules.reducer';
 import { RealtimeEffects } from './realtime/realtime.effects';
 import {
   securityEventsFeatureKey,
@@ -21,8 +23,9 @@ export function provideAppStore(): EnvironmentProviders[] {
     provideState(authFeatureKey, authReducer),
     provideState(trafficFeatureKey, trafficReducer),
     provideState(securityEventsFeatureKey, securityEventsReducer),
+    provideState(rulesFeatureKey, rulesReducer),
     provideState(systemStatusFeatureKey, systemStatusReducer),
-    provideEffects(AuthEffects, RealtimeEffects),
+    provideEffects(AuthEffects, RealtimeEffects, RulesEffects),
     ...(isDevMode()
       ? [
           provideStoreDevtools({

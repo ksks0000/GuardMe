@@ -29,7 +29,8 @@ export class HttpSiemApi extends SiemApi {
         params: toHttpParams({
           page: query.page,
           pageSize: query.pageSize,
-          verdict: query.verdict,
+          threatVerdict: query.threatVerdict,
+          policyDecision: query.policyDecision,
           urlSearch: query.urlSearch,
           from: query.from,
           to: query.to,
