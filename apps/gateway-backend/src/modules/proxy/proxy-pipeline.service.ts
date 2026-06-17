@@ -3,7 +3,10 @@ import { IncomingMessage } from 'node:http';
 import { Request, Response } from 'express';
 import { AuthenticatedUser } from '../../common/types/auth.types';
 import { extractClientIp } from '../../common/utils/request-context.util';
+import { FIREWALL_RULE_ACTIONS } from '../../config/policy.config';
 import { SIEM_EVENT_TYPES } from '../../config/siem.config';
+import { RulesService } from '../rules/rules.service';
+import { RuleMatchResult } from '../rules/utils/rule-matcher.util';
 import { SiemService } from '../siem/siem.service';
 import { ThreatScanResult } from '../threat/dto/threat-scan.result';
 import { ThreatVerdict } from '../threat/dto/threat-verdict.enum';
@@ -30,6 +33,7 @@ export class ProxyPipelineService {
     private readonly threatService: ThreatService,
     private readonly threatScanCache: ThreatScanCacheService,
     private readonly policyService: PolicyService,
+    private readonly rulesService: RulesService,
     private readonly siemService: SiemService,
     private readonly bypassTokenService: BypassTokenService,
     private readonly blockPageService: BlockPageService,
@@ -76,12 +80,32 @@ export class ProxyPipelineService {
         return;
       }
 
+      const userRulePolicy = await this.evaluateUserRules(
+        user.userId,
+        inspection.destinationHost,
+        inspection.normalizedUrl,
+        user.sessionId,
+      );
+      if (userRulePolicy) {
+        await this.logTraffic(user.userId, clientIp, inspection, userRulePolicy);
+        await this.respondForPolicy(
+          res,
+          inspection.normalizedUrl,
+          userRulePolicy,
+          null,
+        );
+        if (userRulePolicy.decision === PolicyDecision.ALLOW) {
+          await this.proxyForwardService.forward(req, res, inspection);
+        }
+        return;
+      }
+
       const threatScan = await this.scanWithCache(inspection.normalizedUrl);
       const fileScan = this.inspectionService.simulateFileScan(inspection);
       const policy = this.policyService.decide(threatScan, fileScan);
 
-      await this.logThreatScan(threatScan, inspection.normalizedUrl);
       await this.logTraffic(user.userId, clientIp, inspection, policy);
+      await this.logMaliciousBlocked(policy, inspection.normalizedUrl, user.userId);
 
       if (policy.decision === PolicyDecision.BLOCK) {
         this.respondHtml(
@@ -160,17 +184,166 @@ export class ProxyPipelineService {
   ): Promise<PolicyDecision> {
     const inspection = this.inspectionService.buildConnectInspection(host, port);
     const clientIp = this.extractClientIpFromMessage(req);
+
+    const userRulePolicy = await this.evaluateUserRules(
+      user.userId,
+      inspection.destinationHost,
+      inspection.normalizedUrl,
+      user.sessionId,
+    );
+    if (userRulePolicy) {
+      await this.logTraffic(user.userId, clientIp, inspection, userRulePolicy);
+      if (userRulePolicy.decision === PolicyDecision.ALLOW) {
+        return PolicyDecision.ALLOW;
+      }
+      return PolicyDecision.BLOCK;
+    }
+
     const threatScan = await this.scanWithCache(inspection.normalizedUrl);
     const policy = this.policyService.decide(threatScan);
 
-    await this.logThreatScan(threatScan, inspection.normalizedUrl);
     await this.logTraffic(user.userId, clientIp, inspection, policy);
+    await this.logMaliciousBlocked(policy, inspection.normalizedUrl, user.userId);
 
     if (policy.decision === PolicyDecision.WARN) {
       return PolicyDecision.BLOCK;
     }
 
     return policy.decision;
+  }
+
+  private async evaluateUserRules(
+    userId: string,
+    destinationHost: string,
+    url: string,
+    sessionId: string,
+  ): Promise<PolicyResult | null> {
+    const match = await this.rulesService.evaluateRules(userId, {
+      destinationHost,
+    });
+
+    if (!match) {
+      return null;
+    }
+
+    this.logRuleMatch(match, url, userId, sessionId);
+    return this.policyFromUserRule(match);
+  }
+
+  private policyFromUserRule(match: RuleMatchResult): PolicyResult {
+    const label = match.ruleName ?? match.pattern;
+
+    if (match.action === FIREWALL_RULE_ACTIONS.BLOCK) {
+      return {
+        decision: PolicyDecision.BLOCK,
+        reason: `Blocked by user rule: ${label}`,
+        riskScore: 100,
+        threatVerdict: ThreatVerdict.UNVERIFIED,
+        matchedRuleId: match.ruleId,
+        metadata: {
+          source: 'user_rule',
+          ruleType: match.ruleType,
+          pattern: match.pattern,
+        },
+      };
+    }
+
+    return {
+      decision: PolicyDecision.ALLOW,
+      reason: `Allowed by user whitelist rule: ${label}`,
+      riskScore: 0,
+      threatVerdict: ThreatVerdict.SAFE,
+      matchedRuleId: match.ruleId,
+      metadata: {
+        source: 'user_rule',
+        ruleType: match.ruleType,
+        pattern: match.pattern,
+        skippedThreatScan: true,
+      },
+    };
+  }
+
+  private logRuleMatch(
+    match: RuleMatchResult,
+    url: string,
+    userId: string,
+    sessionId: string,
+  ): void {
+    void this.siemService.logSecurityEvent({
+      type: SIEM_EVENT_TYPES.RULE_MATCH,
+      message: `User firewall rule matched (${match.action})`,
+      metadata: {
+        url,
+        userId,
+        sessionId,
+        ruleId: match.ruleId,
+        ruleType: match.ruleType,
+        pattern: match.pattern,
+        action: match.action,
+      },
+    });
+  }
+
+  private async logMaliciousBlocked(
+    policy: PolicyResult,
+    url: string,
+    userId: string,
+  ): Promise<void> {
+    if (
+      policy.decision !== PolicyDecision.BLOCK ||
+      policy.threatVerdict !== ThreatVerdict.MALICIOUS ||
+      policy.matchedRuleId
+    ) {
+      return;
+    }
+
+    void this.siemService.logSecurityEvent({
+      type: SIEM_EVENT_TYPES.MALICIOUS_BLOCKED,
+      message: 'Malicious URL blocked by threat intelligence',
+      metadata: {
+        url,
+        userId,
+        riskScore: policy.riskScore,
+        threatVerdict: policy.threatVerdict,
+      },
+    });
+  }
+
+  private async respondForPolicy(
+    res: Response,
+    url: string,
+    policy: PolicyResult,
+    threatScan: ThreatScanResult | null,
+  ): Promise<void> {
+    if (policy.decision === PolicyDecision.BLOCK) {
+      this.respondHtml(
+        res,
+        403,
+        this.blockPageService.render({
+          url,
+          reason: policy.reason,
+          timestamp: new Date(),
+          riskScore: policy.riskScore,
+        }),
+      );
+      return;
+    }
+
+    if (policy.decision === PolicyDecision.WARN && threatScan) {
+      this.respondHtml(
+        res,
+        403,
+        this.warningPageService.render(
+          this.warningPageService.buildContext({
+            url,
+            reason: policy.reason,
+            threatSummary: buildThreatSummary(threatScan),
+            riskScore: policy.riskScore,
+            proceedUrl: url,
+          }),
+        ),
+      );
+    }
   }
 
   private async scanWithCache(url: string): Promise<ThreatScanResult> {
@@ -187,26 +360,6 @@ export class ProxyPipelineService {
     return result;
   }
 
-  private async logThreatScan(
-    threatScan: ThreatScanResult,
-    url: string,
-  ): Promise<void> {
-    if (threatScan.metadata.failSafe) {
-      return;
-    }
-
-    void this.siemService.logSecurityEvent({
-      type: SIEM_EVENT_TYPES.THREAT_SCAN_COMPLETED,
-      message: `Threat scan completed with verdict ${threatScan.verdict}`,
-      metadata: {
-        url,
-        verdict: threatScan.verdict,
-        riskScore: threatScan.riskScore,
-        provider: threatScan.provider,
-      },
-    });
-  }
-
   private async logTraffic(
     userId: string,
     clientIp: string,
@@ -218,13 +371,12 @@ export class ProxyPipelineService {
     },
     policy: Pick<
       PolicyResult,
-      'decision' | 'reason' | 'riskScore' | 'threatVerdict'
+      'decision' | 'reason' | 'riskScore' | 'threatVerdict' | 'matchedRuleId'
     >,
   ): Promise<void> {
     const timestamp = new Date();
+    const threatVerdict = policy.threatVerdict;
 
-    // Fire-and-forget: DNS resolution and the DB write happen off the
-    // request path so logging never delays or blocks the proxied response.
     void (async () => {
       const destinationIp = await resolveDestinationIp(
         inspection.destinationHost,
@@ -238,7 +390,9 @@ export class ProxyPipelineService {
         destinationPort: inspection.destinationPort,
         destinationIp,
         method: inspection.method,
-        verdict: policy.threatVerdict,
+        policyDecision: policy.decision,
+        threatVerdict,
+        matchedRuleId: policy.matchedRuleId ?? null,
         riskScore: policy.riskScore,
         timestamp,
       });

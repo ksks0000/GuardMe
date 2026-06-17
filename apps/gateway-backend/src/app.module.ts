@@ -8,6 +8,7 @@ import { PrismaModule } from './database/prisma.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { HealthModule } from './modules/health/health.module';
 import { ProxyModule } from './modules/proxy/proxy.module';
+import { RulesModule } from './modules/rules/rules.module';
 import { SiemModule } from './modules/siem/siem.module';
 import { ThreatModule } from './modules/threat/threat.module';
 import { WebsocketModule } from './modules/websocket/websocket.module';
@@ -27,6 +28,7 @@ import { WebsocketModule } from './modules/websocket/websocket.module';
     ThreatModule,
     AuthModule,
     HealthModule,
+    RulesModule,
     ProxyModule,
     WebsocketModule,
   ],

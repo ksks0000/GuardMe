@@ -5,8 +5,11 @@ export interface TrafficLogPayload {
   url: string;
   destinationHost: string;
   destinationPort: number | null;
+  destinationIp: string | null;
   method: string;
-  verdict: string;
+  policyDecision: string;
+  threatVerdict: string;
+  matchedRuleId: string | null;
   riskScore: number;
   timestamp: string;
 }

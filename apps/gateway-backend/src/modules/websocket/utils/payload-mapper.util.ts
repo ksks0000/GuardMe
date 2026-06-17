@@ -10,8 +10,11 @@ export function toTrafficLogPayload(row: TrafficLog): TrafficLogPayload {
     url: row.url,
     destinationHost: row.destinationHost,
     destinationPort: row.destinationPort,
+    destinationIp: row.destinationIp,
     method: row.method,
-    verdict: row.verdict,
+    policyDecision: row.policyDecision,
+    threatVerdict: row.threatVerdict,
+    matchedRuleId: row.matchedRuleId,
     riskScore: row.riskScore,
     timestamp: row.timestamp.toISOString(),
   };

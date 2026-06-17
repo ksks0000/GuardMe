@@ -6,5 +6,6 @@ export interface PolicyResult {
   reason: string;
   riskScore: number;
   threatVerdict: ThreatVerdict;
+  matchedRuleId?: string | null;
   metadata?: Record<string, unknown>;
 }

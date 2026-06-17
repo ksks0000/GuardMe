@@ -37,7 +37,9 @@ export class SiemService {
           destinationPort: input.destinationPort ?? null,
           destinationIp: input.destinationIp ?? null,
           method: input.method,
-          verdict: input.verdict,
+          policyDecision: input.policyDecision,
+          threatVerdict: input.threatVerdict,
+          matchedRuleId: input.matchedRuleId ?? null,
           riskScore: input.riskScore,
           timestamp: input.timestamp ?? new Date(),
         },
@@ -135,8 +137,12 @@ export class SiemService {
   ): Prisma.TrafficLogWhereInput {
     const where: Prisma.TrafficLogWhereInput = { userId };
 
-    if (query.verdict) {
-      where.verdict = query.verdict;
+    if (query.threatVerdict) {
+      where.threatVerdict = query.threatVerdict;
+    }
+
+    if (query.policyDecision) {
+      where.policyDecision = query.policyDecision;
     }
 
     const urlSearch = sanitizeSearchTerm(query.urlSearch);

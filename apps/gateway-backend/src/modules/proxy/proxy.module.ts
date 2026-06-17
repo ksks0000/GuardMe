@@ -2,6 +2,7 @@ import { HttpModule } from '@nestjs/axios';
 import { Module } from '@nestjs/common';
 import { proxyConfig } from '../../config/proxy.config';
 import { AuthModule } from '../auth/auth.module';
+import { RulesModule } from '../rules/rules.module';
 import { SessionsModule } from '../sessions/sessions.module';
 import { ThreatModule } from '../threat/threat.module';
 import { UsersModule } from '../users/users.module';
@@ -19,6 +20,7 @@ import { WarningPageService } from './warning-page.service';
 @Module({
   imports: [
     AuthModule,
+    RulesModule,
     SessionsModule,
     UsersModule,
     ThreatModule,
