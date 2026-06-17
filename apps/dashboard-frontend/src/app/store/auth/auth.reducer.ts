@@ -49,10 +49,31 @@ export const authReducer = createReducer(
     status: 'unauthenticated' as const,
     error: mapSessionError(),
     initialized: true,
+    verifyPasswordLoading: false,
+  })),
+
+  on(AuthActions.verifyPassword, (state) => ({
+    ...state,
+    verifyPasswordLoading: true,
+    verifyPasswordError: null,
+  })),
+
+  on(AuthActions.verifyPasswordSuccess, (state, { lastAuthAt }) => ({
+    ...state,
+    verifyPasswordLoading: false,
+    verifyPasswordError: null,
+    user: state.user ? { ...state.user, lastAuthAt } : null,
+  })),
+
+  on(AuthActions.verifyPasswordFailure, (state, { error }) => ({
+    ...state,
+    verifyPasswordLoading: false,
+    verifyPasswordError: error,
   })),
 
   on(AuthActions.clearError, (state) => ({
     ...state,
     error: null,
+    verifyPasswordError: null,
   })),
 );

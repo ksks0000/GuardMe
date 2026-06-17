@@ -1,6 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 
 const GENERIC_AUTH_FAILURE = 'Invalid username or password.';
+const GENERIC_VERIFY_PASSWORD_FAILURE = 'Invalid password.';
 
 function extractHttpErrorMessage(error: unknown): string {
   if (error instanceof HttpErrorResponse) {
@@ -32,8 +33,15 @@ function extractHttpErrorMessage(error: unknown): string {
   return '';
 }
 
-export function mapAuthError(error: unknown, context: 'login' | 'register' = 'login'): string {
+export function mapAuthError(
+  error: unknown,
+  context: 'login' | 'register' | 'verifyPassword' = 'login',
+): string {
   const message = extractHttpErrorMessage(error);
+
+  if (context === 'verifyPassword') {
+    return GENERIC_VERIFY_PASSWORD_FAILURE;
+  }
 
   if (context === 'register' && /already (exists|taken)/i.test(message)) {
     return 'Username is already taken.';
@@ -52,4 +60,9 @@ export function mapAuthError(error: unknown, context: 'login' | 'register' = 'lo
 
 export function mapSessionError(): string {
   return 'Your session has expired. Please sign in again.';
+}
+
+export function isReAuthRequiredError(error: unknown): boolean {
+  const message = extractHttpErrorMessage(error).toLowerCase();
+  return message.includes('re-authentication required');
 }

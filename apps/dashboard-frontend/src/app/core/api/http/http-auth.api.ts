@@ -5,7 +5,7 @@ import { environment } from '../../../../environments/environment';
 import { LoginCredentials, RegisterCredentials, UserProfile } from '../../models';
 import { AuthApi } from '../auth.api';
 import { mapAuthMeProfile, mapPublicUserProfile } from './auth-api.mapper';
-import { AuthMeResponse, PublicUserProfileResponse } from './auth-api.types';
+import { AuthMeResponse, PublicUserProfileResponse, VerifyPasswordResponse } from './auth-api.types';
 
 @Injectable()
 export class HttpAuthApi extends AuthApi {
@@ -32,5 +32,11 @@ export class HttpAuthApi extends AuthApi {
     return this.http
       .get<AuthMeResponse>(`${this.baseUrl}/me`)
       .pipe(map(mapAuthMeProfile));
+  }
+
+  verifyPassword(password: string): Observable<{ lastAuthAt: string }> {
+    return this.http
+      .post<VerifyPasswordResponse>(`${this.baseUrl}/verify-password`, { password })
+      .pipe(map((response) => ({ lastAuthAt: response.lastAuthAt })));
   }
 }

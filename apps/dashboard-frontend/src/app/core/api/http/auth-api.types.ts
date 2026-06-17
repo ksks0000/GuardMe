@@ -11,4 +11,11 @@ export interface AuthMeResponse {
   id: string;
   username: string;
   fingerprintMatched: boolean;
+  lastAuthAt: string | null;
+}
+
+// Response body from POST /auth/verify-password
+export interface VerifyPasswordResponse {
+  message: string;
+  lastAuthAt: string;
 }

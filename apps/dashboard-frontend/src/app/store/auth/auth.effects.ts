@@ -1,10 +1,13 @@
 import { inject, Injectable } from '@angular/core';
+import { MatDialog } from '@angular/material/dialog';
 import { Router } from '@angular/router';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
-import { catchError, exhaustMap, map, of, switchMap, tap } from 'rxjs';
+import { Store } from '@ngrx/store';
+import { catchError, exhaustMap, filter, map, of, switchMap, tap } from 'rxjs';
 import { AuthApi } from '../../core/api/auth.api';
 import { mapAuthError } from '../../core/utils/auth-error.util';
 import { sanitizeReturnUrl } from '../../core/utils/return-url.util';
+import { ReauthDialogComponent } from '../../shared/components/reauth-dialog/reauth-dialog.component';
 import { AuthActions } from './auth.actions';
 
 @Injectable()
@@ -12,6 +15,8 @@ export class AuthEffects {
   private readonly actions$ = inject(Actions);
   private readonly authApi = inject(AuthApi);
   private readonly router = inject(Router);
+  private readonly dialog = inject(MatDialog);
+  private readonly store = inject(Store);
 
   readonly appInit$ = createEffect(() =>
     this.actions$.pipe(
@@ -71,6 +76,66 @@ export class AuthEffects {
         ),
       ),
     ),
+  );
+
+  readonly verifyPassword$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(AuthActions.verifyPassword),
+      exhaustMap(({ password }) =>
+        this.authApi.verifyPassword(password).pipe(
+          map(({ lastAuthAt }) => AuthActions.verifyPasswordSuccess({ lastAuthAt })),
+          catchError((error) =>
+            of(
+              AuthActions.verifyPasswordFailure({
+                error: mapAuthError(error, 'verifyPassword'),
+              }),
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+
+  readonly verifyPasswordCloseDialog$ = createEffect(
+    () =>
+      this.actions$.pipe(
+        ofType(AuthActions.verifyPasswordSuccess),
+        tap(() => {
+          this.dialog.openDialogs
+            .filter((ref) => ref.componentInstance instanceof ReauthDialogComponent)
+            .forEach((ref) => ref.close(true));
+        }),
+      ),
+    { dispatch: false },
+  );
+
+  readonly openReAuthDialog$ = createEffect(
+    () =>
+      this.actions$.pipe(
+        ofType(AuthActions.reauthRequired),
+        tap(() => this.store.dispatch(AuthActions.clearError())),
+        exhaustMap(() => {
+          const alreadyOpen = this.dialog.openDialogs.some(
+            (ref) => ref.componentInstance instanceof ReauthDialogComponent,
+          );
+          if (alreadyOpen) {
+            return of(false);
+          }
+
+          const dialogRef = this.dialog.open(ReauthDialogComponent, {
+            disableClose: true,
+            width: '26rem',
+            autoFocus: 'first-tabbable',
+          });
+
+          return dialogRef.afterClosed();
+        }),
+        filter((verified): verified is boolean => verified === true),
+        tap(() => {
+          // Dialog closed after successful verify-password; user can retry their action.
+        }),
+      ),
+    { dispatch: false },
   );
 
   readonly loginSuccessNavigate$ = createEffect(

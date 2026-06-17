@@ -1,0 +1,50 @@
+<h2 mat-dialog-title>
+  <mat-icon>lock_clock</mat-icon>
+  Confirm your password
+</h2>
+
+<mat-dialog-content>
+  <p class="reauth-dialog__lead">
+  For your security, enter your password again to continue with sensitive actions.
+  </p>
+
+  @if (error$ | async; as error) {
+    <p class="reauth-dialog__error" role="alert">{{ error }}</p>
+  }
+
+  <form [formGroup]="form" (ngSubmit)="submit()" class="reauth-dialog__form" novalidate>
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Password</mat-label>
+      <input
+        matInput
+        type="password"
+        formControlName="password"
+        autocomplete="current-password"
+        [attr.maxlength]="passwordMax"
+        required
+      />
+      @if (passwordError(); as message) {
+        <mat-error>{{ message }}</mat-error>
+      }
+    </mat-form-field>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button type="button" (click)="cancel()" [disabled]="loading$ | async">
+    Cancel
+  </button>
+  <button
+    mat-flat-button
+    color="primary"
+    type="button"
+    (click)="submit()"
+    [disabled]="loading$ | async"
+  >
+    @if (loading$ | async) {
+      <mat-spinner diameter="20" />
+    } @else {
+      Confirm
+    }
+  </button>
+</mat-dialog-actions>

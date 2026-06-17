@@ -7,6 +7,8 @@ export interface AuthState {
   status: AuthStatus;
   error: string | null;
   initialized: boolean;
+  verifyPasswordLoading: boolean;
+  verifyPasswordError: string | null;
 }
 
 export const initialAuthState: AuthState = {
@@ -14,4 +16,6 @@ export const initialAuthState: AuthState = {
   status: 'idle',
   error: null,
   initialized: false,
+  verifyPasswordLoading: false,
+  verifyPasswordError: null,
 };

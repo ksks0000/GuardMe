@@ -69,4 +69,23 @@ export class MockAuthApi extends AuthApi {
 
     return of(this.currentUser).pipe(delay(LATENCY_MS));
   }
+
+  verifyPassword(password: string): Observable<{ lastAuthAt: string }> {
+    if (!this.currentUser) {
+      return throwError(() => new Error('Not authenticated')).pipe(delay(LATENCY_MS));
+    }
+
+    const entry = [...this.users.values()].find(
+      (candidate) => candidate.profile.id === this.currentUser!.id,
+    );
+    if (!entry || entry.password !== password) {
+      return throwError(() => new Error('Invalid password')).pipe(delay(LATENCY_MS));
+    }
+
+    const lastAuthAt = new Date().toISOString();
+    entry.profile = { ...entry.profile, lastAuthAt };
+    this.currentUser = entry.profile;
+
+    return of({ lastAuthAt }).pipe(delay(LATENCY_MS));
+  }
 }

@@ -10,12 +10,12 @@ export function mapPublicUserProfile(dto: PublicUserProfileResponse): UserProfil
   };
 }
 
-// /auth/me omits profile timestamps; username and id are sufficient for session restore
+// /auth/me omits createdAt; lastAuthAt drives the re-auth stale indicator
 export function mapAuthMeProfile(dto: AuthMeResponse): UserProfile {
   return {
     id: dto.id,
     username: dto.username,
     createdAt: '',
-    lastAuthAt: null,
+    lastAuthAt: dto.lastAuthAt,
   };
 }
