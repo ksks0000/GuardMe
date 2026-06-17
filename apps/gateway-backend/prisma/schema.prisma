@@ -14,10 +14,29 @@ model User {
   createdAt    DateTime  @default(now()) @map("created_at")
   lastAuthAt   DateTime? @map("last_auth_at")
 
-  sessions    Session[]
-  trafficLogs TrafficLog[]
+  sessions      Session[]
+  trafficLogs   TrafficLog[]
+  firewallRules FirewallRule[]
 
   @@map("users")
+}
+
+model FirewallRule {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  name      String?  @db.VarChar(100)
+  ruleType  String   @map("rule_type") @db.VarChar(16)
+  pattern   String   @db.VarChar(253)
+  action    String   @db.VarChar(16)
+  enabled   Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([userId, enabled])
+  @@map("firewall_rules")
 }
 
 model Session {
@@ -47,7 +66,9 @@ model TrafficLog {
   destinationPort Int?     @map("destination_port")
   destinationIp   String?  @map("destination_ip")
   method          String
-  verdict         String
+  policyDecision  String   @map("policy_decision")
+  threatVerdict   String   @map("threat_verdict")
+  matchedRuleId   String?  @map("matched_rule_id") @db.Uuid
   riskScore       Int      @map("risk_score")
   timestamp       DateTime @default(now())
 
@@ -55,7 +76,8 @@ model TrafficLog {
 
   @@index([timestamp])
   @@index([userId, timestamp])
-  @@index([verdict])
+  @@index([policyDecision])
+  @@index([threatVerdict])
   @@index([riskScore])
   @@index([clientIp])
   @@index([destinationHost])
