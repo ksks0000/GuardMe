@@ -18,6 +18,7 @@ import { AuthenticatedUser } from '../../common/types/auth.types';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
+import { VerifyPasswordDto } from './dto/verify-password.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -54,5 +55,19 @@ export class AuthController {
   @UseGuards(JwtSessionGuard)
   me(@CurrentUser() user: AuthenticatedUser) {
     return this.authService.getProfile(user);
+  }
+
+  @Post('verify-password')
+  @UseGuards(JwtSessionGuard)
+  @Throttle({
+    default: { ttl: throttleConfig.ttlMs(), limit: throttleConfig.authLimit() },
+  })
+  @HttpCode(HttpStatus.OK)
+  verifyPassword(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: VerifyPasswordDto,
+    @Req() req: Request,
+  ) {
+    return this.authService.verifyPassword(user, dto.password, req);
   }
 }

@@ -9,15 +9,20 @@ import { verifyJwtPayload } from '../../common/utils/jwt.util';
 import { extractClientIp, extractUserAgent } from '../../common/utils/request-context.util';
 import { verifyPassword } from '../../common/utils/password.util';
 import { authConfig } from '../../config/auth.config';
+import { SIEM_EVENT_TYPES } from '../../config/siem.config';
 import { PublicUserProfileDto } from '../users/dto/public-user-profile.dto';
+import { SiemService } from '../siem/siem.service';
 import { SessionsService } from '../sessions/sessions.service';
 import { UsersService } from '../users/users.service';
 import { AuthProfileDto } from './dto/auth-profile.dto';
 import { LoginDto } from './dto/login.dto';
 import { LogoutResponseDto } from './dto/logout-response.dto';
 import { RegisterDto } from './dto/register.dto';
+import { VerifyPasswordResponseDto } from './dto/verify-password-response.dto';
 import { WEBSOCKET_INTERNAL_EVENTS } from '../../config/websocket.config';
 import { SessionEventPayload } from '../websocket/dto/session-event.payload';
+
+const GENERIC_PASSWORD_FAILURE = 'Invalid password';
 
 @Injectable()
 export class AuthService {
@@ -26,6 +31,7 @@ export class AuthService {
     private readonly sessionsService: SessionsService,
     private readonly jwtService: JwtService,
     private readonly eventEmitter: EventEmitter2,
+    private readonly siemService: SiemService,
   ) {}
 
   async register(dto: RegisterDto): Promise<PublicUserProfileDto> {
@@ -90,11 +96,48 @@ export class AuthService {
     return { message: 'Logged out successfully' };
   }
 
-  getProfile(user: AuthenticatedUser): AuthProfileDto {
+  async getProfile(user: AuthenticatedUser): Promise<AuthProfileDto> {
+    const dbUser = await this.usersService.findById(user.userId);
+
     return {
       id: user.userId,
       username: user.username,
       fingerprintMatched: user.fingerprintMatched,
+      lastAuthAt: dbUser?.lastAuthAt?.toISOString() ?? null,
+    };
+  }
+
+  async verifyPassword(
+    user: AuthenticatedUser,
+    password: string,
+    req: Request,
+  ): Promise<VerifyPasswordResponseDto> {
+    const dbUser = await this.usersService.findById(user.userId);
+    if (!dbUser) {
+      throw new UnauthorizedException(GENERIC_PASSWORD_FAILURE);
+    }
+
+    const passwordValid = await verifyPassword(password, dbUser.passwordHash);
+    if (!passwordValid) {
+      void this.siemService.logSecurityEvent({
+        type: SIEM_EVENT_TYPES.REAUTH_FAILURE,
+        message: 'Re-authentication failed',
+        metadata: {
+          userId: user.userId,
+          username: user.username,
+          clientIp: extractClientIp(req),
+          userAgent: extractUserAgent(req),
+        },
+      });
+      throw new UnauthorizedException(GENERIC_PASSWORD_FAILURE);
+    }
+
+    const lastAuthAt = new Date();
+    await this.usersService.updateLastAuthAt(user.userId);
+
+    return {
+      message: 'Password verified',
+      lastAuthAt: lastAuthAt.toISOString(),
     };
   }
 

@@ -6,12 +6,19 @@ import {
 } from '@nestjs/common';
 import { Request } from 'express';
 import { authConfig } from '../../config/auth.config';
+import { SIEM_EVENT_TYPES } from '../../config/siem.config';
 import { AuthenticatedUser } from '../types/auth.types';
+import { SiemService } from '../../modules/siem/siem.service';
 import { UsersService } from '../../modules/users/users.service';
+
+const REAUTH_REQUIRED_MESSAGE = 'Re-authentication required';
 
 @Injectable()
 export class ReAuthGuard implements CanActivate {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(
+    private readonly usersService: UsersService,
+    private readonly siemService: SiemService,
+  ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context
@@ -25,16 +32,34 @@ export class ReAuthGuard implements CanActivate {
 
     const user = await this.usersService.findById(authUser.userId);
     if (!user?.lastAuthAt) {
-      throw new UnauthorizedException('Re-authentication required');
+      this.logReAuthRequired(authUser, null);
+      throw new UnauthorizedException(REAUTH_REQUIRED_MESSAGE);
     }
 
     const timeoutMs = authConfig.reAuthTimeoutMinutes() * 60 * 1000;
     const elapsed = Date.now() - user.lastAuthAt.getTime();
 
     if (elapsed > timeoutMs) {
-      throw new UnauthorizedException('Re-authentication required');
+      this.logReAuthRequired(authUser, elapsed);
+      throw new UnauthorizedException(REAUTH_REQUIRED_MESSAGE);
     }
 
     return true;
+  }
+
+  private logReAuthRequired(
+    authUser: AuthenticatedUser,
+    elapsedMs: number | null,
+  ): void {
+    void this.siemService.logSecurityEvent({
+      type: SIEM_EVENT_TYPES.REAUTH_REQUIRED,
+      message: 'Re-authentication required for sensitive action',
+      metadata: {
+        userId: authUser.userId,
+        username: authUser.username,
+        elapsedMs,
+        timeoutMinutes: authConfig.reAuthTimeoutMinutes(),
+      },
+    });
   }
 }

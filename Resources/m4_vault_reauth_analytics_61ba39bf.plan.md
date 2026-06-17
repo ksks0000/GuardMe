@@ -1,6 +1,6 @@
 ---
 name: M4 Vault Reauth Analytics
-overview: "M4 completes the remaining MVP from the spec: master-password re-authentication, encrypted password vault (backend crypto + CRUD + dashboard UI), a lightweight security analytics view, and lab/documentation polish — delivered one feature at a time with backend-then-frontend integration per feature."
+overview: "M4 completes the remaining MVP: re-authentication, encrypted password vault (full CRUD), user-defined firewall rules (policy engine UI), traffic log clarity, security analytics, SIEM hygiene, and lab docs — one todo at a time with pre-implementation discussion."
 todos:
   - id: m4-reauth-backend
     content: "M4.1: Backend re-auth — POST /auth/verify-password, update last_auth_at, SIEM events, document ReAuthGuard usage"
@@ -8,48 +8,149 @@ todos:
   - id: m4-reauth-frontend
     content: "M4.1b: Frontend re-auth — VerifyPassword API, ReauthDialog, stale-session handling"
     status: pending
+  - id: m4-rules-backend
+    content: "M4.2: Rules engine backend — FirewallRule model, RulesService, extend PolicyService pipeline, traffic_logs policyDecision field, no THREAT_SCAN_COMPLETED events"
+    status: pending
+  - id: m4-rules-traffic-ui
+    content: "M4.2b: Rules tab UI + traffic table columns (decision, source IP, destination IP); ngrx rules CRUD"
+    status: pending
   - id: m4-vault-backend
-    content: "M4.2: Vault backend — Prisma kdfSalt + VaultCredential, CryptoService AES-256-GCM, unlock/lock, CRUD API with guards"
+    content: "M4.3: Vault backend — kdfSalt + VaultCredential, CryptoService, full CRUD API (Create Read Update Delete) with guards"
     status: pending
   - id: m4-vault-frontend
-    content: "M4.3: Vault frontend — VaultApi, ngrx vault feature, /vault routes, unlock banner, CRUD UI integrated with re-auth"
+    content: "M4.3b: Vault frontend — VaultApi, ngrx vault feature, all CRUD operations in UI, re-auth integration"
     status: pending
   - id: m4-analytics-backend
-    content: "M4.4: Analytics backend — GET /siem/analytics/summary with verdict/host/time-bucket aggregations"
+    content: "M4.4: Analytics backend — GET /siem/analytics/summary with aggregations"
     status: pending
   - id: m4-analytics-frontend
-    content: "M4.5: Analytics frontend — /analytics page, ngrx + charts/tables, date range filters"
+    content: "M4.5: Analytics frontend — /analytics page, zip + forEach RxJS operators, charts/tables"
     status: pending
   - id: m4-docs-polish
-    content: "M4.6: Docs (architecture, threat-model, vmware guide), m4-smoke-test.md, README polish, vault lock on logout"
+    content: "M4.6: Docs, m4-smoke-test.md, README, SIEM audit, vault lock on logout"
     status: pending
 isProject: false
 ---
 
-# GuardMe Plan (M4 — Vault, Re-Auth, Analytics, Lab Readiness)
+# GuardMe Plan (M4 — Vault, Rules, Re-Auth, Analytics)
 
 ## What is already done (M1 + M2 + M3)
 
 | Area | Status |
 |------|--------|
 | Auth, sessions, fingerprint, JWT cookie | Done |
-| Proxy (dual-port), VirusTotal, policy, block/warning pages | Done |
+| Proxy (dual-port), VirusTotal, **PolicyService** (verdict → ALLOW/BLOCK/WARN) | Done |
 | SIEM persistence + WebSocket live stream | Done |
 | Health / system status | Done |
-| Angular dashboard: login, live feed, traffic + security history | Done ([m3-smoke-test.md](Documentation/m3-smoke-test.md)) |
-| `ReAuthGuard` class | Exists but **not wired** — no verify-password endpoint, no UI |
+| Angular dashboard: login, live feed, traffic + security history | Done |
+| `ReAuthGuard` class | Exists — needs verify-password endpoint + UI |
 
-## What MVP still requires ([project-specification.txt](Resources/project-specification.txt))
+## What M4 delivers
 
-| Requirement | M4 target |
-|-------------|-----------|
-| Local encrypted password vault | M4.2 backend + M4.3 frontend |
-| Encryption-at-rest AES-256-GCM, KDF from master password | M4.2 `CryptoService` |
-| Re-authentication after inactivity | M4.1 backend + M4.1b frontend |
-| Dashboard security analytics view | M4.4 backend + M4.5 frontend |
-| Evaluation: vault encrypted, re-auth enforced | M4 smoke test |
+| MVP / course item | M4 target |
+|-------------------|-----------|
+| Local encrypted password vault | M4.3 + M4.3b |
+| Full **CRUD** for vault credentials | M4.3 API + M4.3b UI (Create, Read list, Read one/decrypt, Update, Delete) |
+| Re-authentication after inactivity | M4.1 + M4.1b |
+| Allow/Block **policy engine** (spec) | M4.2 — extend with visible system rules + **user custom rules** |
+| Security analytics view | M4.4 + M4.5 |
+| RxJS **zip**, **forEach**, switchMap, merge | M4.5 analytics + existing dashboard merge |
+| SIEM signal quality | No `THREAT_SCAN_COMPLETED` noise in `security_events` |
 
-**Deferred to M5 (optional / Phase 2):** UEBA, behavioral baseline, threat push notifications, password generation, VMware two-VM demo scripts, advanced analytics.
+**Deferred to M5:** UEBA, behavioral baseline, threat push notifications, password generator, VMware deep dive.
+
+---
+
+## Design decisions (user feedback incorporated)
+
+### 1. Do not log `THREAT_SCAN_COMPLETED` to `security_events`
+
+**Agreed — good idea.**
+
+Every proxied request already creates a `traffic_logs` row with verdict, risk score, URL, and destination metadata. VirusTotal outcome lives there (and in scan metadata if needed). Logging `THREAT_SCAN_COMPLETED` per request **duplicates** traffic logs and floods the Security tab.
+
+**Policy for M4:**
+
+| Log to `security_events` | Do not log |
+|--------------------------|------------|
+| `MALICIOUS_BLOCKED`, `AUTH_FAILURE`, `FINGERPRINT_MISMATCH`, `VT_UNAVAILABLE`, `SUSPICIOUS_PROCEED`, `VAULT_*`, `REAUTH_FAILURE`, `PROXY_ERROR`, `RULE_MATCH` (custom rule block) | `THREAT_SCAN_COMPLETED`, routine `SAFE` scans |
+
+**M4.2 action:** Remove/guard any existing `THREAT_SCAN_COMPLETED` emitters in threat/proxy pipeline; document allowed event types in `config/siem.config.ts`.
+
+---
+
+### 2. User-visible policy / rules engine + Rules tab
+
+**Agreed — not overkill; strengthens the spec’s “Allow/Block policy engine” story.**
+
+Today [PolicyService](apps/gateway-backend/src/modules/proxy/policy.service.ts) maps VirusTotal verdict → decision internally but the user cannot see or extend rules. M4 adds:
+
+**System rules (read-only, displayed in UI)** — derived from `PolicyService`:
+
+| Condition | Decision |
+|-----------|----------|
+| Threat verdict `MALICIOUS` | BLOCK |
+| Threat verdict `SUSPICIOUS` | WARN |
+| Threat verdict `SAFE` | ALLOW |
+| Threat verdict `UNVERIFIED` | ALLOW (elevated risk) |
+| `riskScore >= POLICY_BLOCK_RISK_THRESHOLD` (env, e.g. 85) | BLOCK |
+| Simulated file scan `MALICIOUS` | BLOCK |
+
+**User custom rules (CRUD, stored in DB):**
+
+| Field | Example |
+|-------|---------|
+| `ruleType` | `DOMAIN`, `IP` |
+| `pattern` | `ads.example.com`, `203.0.113.50` |
+| `action` | `BLOCK` or `ALLOW` (whitelist exception) |
+| `enabled` | true/false |
+| `name` | optional label (“Block ads domain”) |
+
+**Evaluation order in proxy pipeline:**
+
+```
+1. User BLOCK rules (domain/IP match) → BLOCK immediately, log RULE_MATCH
+2. User ALLOW whitelist rules → ALLOW (skip VT optional — recommend skip for trusted domains)
+3. Threat scan (VirusTotal) + file scan
+4. PolicyService system rules (verdict + risk threshold)
+5. Forward / block / warn page
+```
+
+**Frontend:** New side-nav tab **Rules** (`/rules`) alongside Dashboard, Traffic, Security.
+
+---
+
+### 3. Traffic tab enhancements
+
+**Agreed — data mostly exists; UI + one schema field needed.**
+
+Current `traffic_logs` has `clientIp` (source), `destinationIp`, `destinationHost`, `verdict`. `verdict` mixes concepts today.
+
+**M4.2 schema addition:**
+
+```prisma
+model TrafficLog {
+  // existing fields...
+  policyDecision String @map("policy_decision")  // ALLOW | BLOCK | WARN
+  threatVerdict  String? @map("threat_verdict")   // SAFE | MALICIOUS | ...
+  matchedRuleId  String? @map("matched_rule_id") // if user rule fired
+}
+```
+
+**Traffic table columns (M4.2b):**
+
+| Column | Source |
+|--------|--------|
+| Time | `timestamp` |
+| Method | `method` |
+| URL / Host | `url`, `destinationHost` |
+| **Source IP** | `clientIp` |
+| **Destination IP** | `destinationIp` (resolve when possible) |
+| Threat verdict | `threatVerdict` |
+| **Decision** | `policyDecision` (ALLOW / BLOCK / WARN) |
+| Risk | `riskScore` |
+
+Live dashboard feed can show the same decision chip styling.
 
 ---
 
@@ -57,78 +158,33 @@ isProject: false
 
 ```mermaid
 flowchart LR
-  reauth[M4.1 Re-auth API]
-  vaultBe[M4.2 Vault backend]
-  vaultFe[M4.3 Vault UI]
-  analyticsBe[M4.4 Analytics API]
-  analyticsFe[M4.5 Analytics UI]
-  lab[M4.6 Docs and polish]
+  reauth[M4.1 Re-auth]
+  rulesBe[M4.2 Rules backend]
+  rulesFe[M4.2b Rules plus Traffic UI]
+  vaultBe[M4.3 Vault backend]
+  vaultFe[M4.3b Vault UI]
+  analyticsBe[M4.4 Analytics]
+  analyticsFe[M4.5 Analytics]
+  docs[M4.6 Docs]
 
   reauth --> vaultBe
+  reauth --> rulesBe
+  rulesBe --> rulesFe
   vaultBe --> vaultFe
-  reauth --> vaultFe
+  rulesFe --> analyticsBe
   analyticsBe --> analyticsFe
-  vaultFe --> lab
-  analyticsFe --> lab
+  vaultFe --> docs
+  analyticsFe --> docs
 ```
 
-1. **Re-auth first** — spec ties vault access to fresh password confirmation; `ReAuthGuard` already exists in [re-auth.guard.ts](apps/gateway-backend/src/common/guards/re-auth.guard.ts) but needs `POST /auth/verify-password` to refresh `last_auth_at`.
-2. **Vault backend** — new Prisma model + crypto; no frontend until API is stable.
-3. **Vault UI** — integrates re-auth unlock dialog + CRUD; one vertical slice.
-4. **Analytics** — uses existing `traffic_logs` / `security_events`; no new proxy work.
-5. **Docs + polish** — submission-ready lab story.
+1. **Re-auth first** — vault and sensitive rule changes need fresh password.
+2. **Rules before vault** — core firewall story; independent of crypto; improves demo flow.
+3. **Traffic UI with rules** — immediate visible value from rules work.
+4. **Vault** — largest security feature; full CRUD.
+5. **Analytics** — uses enriched traffic logs.
+6. **Docs** — capture everything.
 
-**Workflow (same as M1–M3):** one todo at a time → agent presents steps + questions + suggestions → you approve → implement → pause for manual commit → **"please continue"**.
-
----
-
-## Cryptography design (M4.2)
-
-Per spec threat model:
-
-```
-Master password + per-user kdfSalt
-        ↓
-Argon2id KDF  →  Vault encryption key (32 bytes, RAM only)
-        ↓
-AES-256-GCM encrypt credential passwords
-        ↓
-DB stores: ciphertext, iv, auth tag (separate columns or combined)
-```
-
-**Security practices:**
-
-- `kdfSalt` — random 16+ bytes per user, stored in `users` table (not secret; salt is public).
-- Vault key lives in `CryptoService` in-memory `Map<userId, { key, derivedAt }>` — cleared on logout and session revoke.
-- Auth password hash (login) and vault KDF use **different contexts** (Argon2 with distinct `associatedData` or separate pepper strings) so DB leak of `password_hash` does not directly yield vault key.
-- Never log master password, derived keys, or plaintext credentials.
-- Vault routes: `JwtSessionGuard` + `ReAuthGuard` + optional explicit unlock step for decrypt operations.
-- Rate-limit verify-password endpoint (reuse existing throttler from auth).
-
-**Prisma additions:**
-
-```prisma
-model User {
-  // existing fields...
-  kdfSalt String @map("kdf_salt")
-  vaultCredentials VaultCredential[]
-}
-
-model VaultCredential {
-  id                String   @id @default(uuid())
-  userId            String   @map("user_id")
-  serviceName       String   @map("service_name")
-  username          String
-  encryptedPassword String   @map("encrypted_password")
-  iv                String
-  authTag           String   @map("auth_tag")
-  createdAt         DateTime @default(now()) @map("created_at")
-  updatedAt         DateTime @updatedAt @map("updated_at")
-  user User @relation(...)
-  @@index([userId])
-  @@map("vault_credentials")
-}
-```
+**Workflow:** one todo → discuss → implement → pause for commit → **"please continue"**.
 
 ---
 
@@ -136,140 +192,131 @@ model VaultCredential {
 
 ### M4.1 — Re-authentication API (backend)
 
-**Goal:** Satisfy evaluation criterion *"re-authentication enforced"* and unblock vault.
+*(unchanged from prior plan)*
 
-**Steps:**
-
-1. Add `POST /auth/verify-password` in [auth.controller.ts](apps/gateway-backend/src/modules/auth/auth.controller.ts):
-   - Body: `{ password: string }` (reuse `LoginDto` shape or new `VerifyPasswordDto`)
-   - Guards: `JwtSessionGuard` only (not `ReAuthGuard` — user is stale by definition)
-   - On success: verify Argon2id against `password_hash`, set `last_auth_at = now()`, return `{ verified: true }`
-   - On failure: generic 401, log `REAUTH_FAILURE` via `SiemService`
-2. Optionally emit `SESSION_EVENT` on success for dashboard toast.
-3. Apply `ReAuthGuard` to a placeholder or document which routes will use it (vault routes in M4.2).
-4. Update [.env.example](apps/gateway-backend/.env.example) if needed (`REAUTH_TIMEOUT_MINUTES` already present).
-
-**Verify:** Login → wait or manually age `last_auth_at` → `POST /auth/verify-password` → `last_auth_at` updated; `ReAuthGuard`-protected test route returns 200.
+1. `POST /auth/verify-password` — JwtSessionGuard, Argon2 verify, update `last_auth_at`
+2. Log `REAUTH_FAILURE` on failure; optional `SESSION_EVENT` on success
+3. Document `ReAuthGuard` usage for vault + rule mutations
 
 ---
 
 ### M4.1b — Re-authentication UI (frontend)
 
-**Goal:** User can confirm password from dashboard without full logout.
+*(unchanged)*
 
-**Steps:**
-
-1. `AuthApi.verifyPassword(password)` — real HTTP + mock stub.
-2. Shared `ReauthDialogComponent` (Material dialog): password field, submit, error handling.
-3. `ReauthService` or auth effect: callable from vault and future sensitive actions; on 401 with "Re-authentication required" from API, auto-open dialog.
-4. Optional: toolbar indicator when session is "stale" (compare `lastAuthAt` from profile vs `REAUTH_TIMEOUT_MINUTES`).
-
-**Verify:** Stale session → open vault or trigger protected action → dialog → success refreshes access.
+1. `AuthApi.verifyPassword`, `ReauthDialogComponent`, stale-session indicator
 
 ---
 
-### M4.2 — Vault backend (crypto + CRUD)
+### M4.2 — Policy rules engine (backend)
 
-**Goal:** Encrypted credential storage; keys never persisted.
+**Goal:** User custom rules + clearer traffic decisions; SIEM hygiene.
 
 **Steps:**
 
-1. Prisma migration: `kdfSalt` on `User`, `VaultCredential` model.
-2. On **register**: generate `kdfSalt`, store on user row.
-3. `modules/vault/crypto.service.ts`:
-   - `deriveVaultKey(masterPassword, kdfSalt): Buffer`
-   - `encrypt(plaintext, key) → { ciphertext, iv, authTag }`
-   - `decrypt(...)` 
-   - In-memory key cache with `unlock(userId, password)` / `lock(userId)` / `clearAll()`
-4. `modules/vault/vault.service.ts` — CRUD scoped to `userId`; encrypt on write, decrypt only when key in memory.
-5. `modules/vault/vault.controller.ts`:
-   - `POST /vault/unlock` — body `{ password }`, derives key into memory, updates `last_auth_at`
-   - `POST /vault/lock` — clear key from memory
-   - `GET /vault/credentials` — list metadata (service, username; **no** password)
-   - `POST /vault/credentials` — create (requires unlock + `ReAuthGuard`)
-   - `GET /vault/credentials/:id` — returns decrypted password (requires unlock + `ReAuthGuard`)
-   - `PATCH /vault/credentials/:id` — update
-   - `DELETE /vault/credentials/:id`
-6. Guards: `JwtSessionGuard` on all; `ReAuthGuard` on mutating + decrypt routes.
-7. SIEM: log `VAULT_UNLOCK`, `VAULT_ACCESS`, `VAULT_CRUD` security events (no secrets in metadata).
+1. Prisma `FirewallRule` model + migration; relation on `User`.
+2. `modules/rules/rules.service.ts` — CRUD scoped to `userId`; `evaluateRules(request, userId): RuleMatchResult | null`
+3. `modules/rules/rules.controller.ts`:
+   - `GET /rules` — list user rules + **system rules** (static JSON from config, not DB)
+   - `POST /rules` — create (JwtSessionGuard + ReAuthGuard)
+   - `PATCH /rules/:id` — update
+   - `DELETE /rules/:id` — delete
+4. Extend [proxy pipeline](apps/gateway-backend/src/modules/proxy/proxy-pipeline.service.ts): evaluate user rules **before** threat scan; pass match into `PolicyService` if needed.
+5. Extend `traffic_logs` with `policyDecision`, `threatVerdict`, `matchedRuleId`; update `SiemService.logTraffic`.
+6. **SIEM hygiene:** remove `THREAT_SCAN_COMPLETED` (and similar per-scan noise) from `security_events`; log `RULE_MATCH` only when a user rule blocks/allows with security relevance.
+7. Env: `POLICY_BLOCK_RISK_THRESHOLD=85` in `.env.example`.
 
-**Verify:** Create credential → inspect DB (ciphertext only) → decrypt via API after unlock → logout clears memory key.
+**Verify:** Custom BLOCK rule for domain → request blocked without VT call; traffic row shows `policyDecision=BLOCK` and `matchedRuleId`; Security tab has no scan-completed spam.
 
 ---
 
-### M4.3 — Vault UI (frontend integration)
+### M4.2b — Rules tab + Traffic table UI (frontend)
 
-**Goal:** Spec Phase 5 vault UI; CRUD satisfies course "CRUD operations for entities."
+**Goal:** Visible policy engine; clearer traffic forensics.
 
 **Steps:**
 
-1. Models: `VaultCredential`, `VaultCredentialDetail`, `VaultUnlockState`.
-2. `VaultApi` abstraction + mock + `HttpVaultApi`.
-3. ngrx `vault` feature: entities adapter, unlock/lock actions, CRUD effects (`switchMap` for save/delete).
-4. Routes: `/vault` in [app.routes.ts](apps/dashboard-frontend/src/app/app.routes.ts); nav link in shell.
-5. Pages/components:
-   - **Vault list** — table/cards: service name, username, actions (view/edit/delete)
-   - **Unlock banner** — if vault locked, prompt master password (calls `/vault/unlock` or verify + unlock flow)
-   - **Add/Edit dialog** — service, username, password fields
-   - **View password** — brief reveal with copy button; requires unlock + re-auth
-6. Wire `ReauthDialog` when API returns re-auth required.
+1. `RulesApi` + mock + HTTP; ngrx `rules` feature (entity adapter, CRUD effects with `switchMap`).
+2. Route `/rules` + shell nav link **Rules**.
+3. **Rules page:**
+   - **System rules** section — read-only cards/table (from `GET /rules` system portion)
+   - **My rules** section — Material table with enable toggle, edit, delete
+   - **Add rule** dialog — type (domain/IP), pattern, action BLOCK/ALLOW, name
+4. **Traffic page updates:**
+   - Columns: source IP (`clientIp`), destination IP (`destinationIp`), **decision** (`policyDecision`), threat verdict
+   - Decision chips: ALLOW green, BLOCK red, WARN amber (match dashboard)
+5. RxJS: use **`forEach`** when building export/filter chip list from active filters (course requirement); **`filter`** + **`map`** on client-side column formatters.
 
-**Verify:** Full CRUD from UI; DB remains encrypted; lock on logout.
+**Verify:** Add rule blocking `example.net` → browse to it → blocked; traffic row shows IPs + decision; rule appears in list.
+
+---
+
+### M4.3 — Vault backend (crypto + full CRUD)
+
+**Goal:** Encrypted credentials; all CRUD operations explicit.
+
+| Operation | Endpoint | Notes |
+|-----------|----------|-------|
+| **Create** | `POST /vault/credentials` | Encrypt password; requires unlock + ReAuthGuard |
+| **Read list** | `GET /vault/credentials` | Metadata only (no passwords) |
+| **Read one** | `GET /vault/credentials/:id` | Decrypted password; requires unlock |
+| **Update** | `PATCH /vault/credentials/:id` | Re-encrypt on password change |
+| **Delete** | `DELETE /vault/credentials/:id` | Hard delete row |
+| Unlock/Lock | `POST /vault/unlock`, `POST /vault/lock` | Key lifecycle |
+
+Plus: `kdfSalt` on register, `CryptoService` Argon2 KDF + AES-256-GCM, in-memory key cache cleared on logout.
+
+**Verify:** DB shows ciphertext only; all five CRUD paths work via API.
+
+---
+
+### M4.3b — Vault UI (full CRUD)
+
+**Goal:** Course CRUD + spec vault UI.
+
+1. ngrx vault entities: load list, create, update, delete effects
+2. UI: list, add dialog, edit dialog, view/copy password, delete confirm
+3. Unlock banner when vault locked
+4. Wire `ReauthDialog` on 401
+
+**Verify:** Full credential lifecycle from UI without plaintext in DB.
 
 ---
 
 ### M4.4 — Security analytics API (backend)
 
-**Goal:** Lightweight analytics from existing logs — **not** full UEBA (Phase 2).
+*(largely unchanged; use `policyDecision` breakdown in summary)*
 
-**Steps:**
-
-1. `GET /siem/analytics/summary?from=&to=` — protected, scoped to current user:
-   - Traffic counts by verdict (`ALLOW`, `BLOCK`, `SAFE`, `MALICIOUS`, etc.)
-   - Top 10 `destinationHost` by request count
-   - Average / max `riskScore` in range
-   - Security event counts by `severity` and `type`
-   - Time-bucketed series (e.g. hourly counts for last 24h) for charts
-2. Implement in [siem.service.ts](apps/gateway-backend/src/modules/siem/siem.service.ts) or dedicated `analytics.service.ts` with efficient Prisma `groupBy` / raw queries using existing indexes.
-3. DTO: `AnalyticsSummaryDto`.
-
-**Verify:** After browsing via proxy, summary reflects real traffic distribution.
+1. `GET /siem/analytics/summary` — verdict + **decision** counts, top hosts, risk stats, time buckets
 
 ---
 
 ### M4.5 — Security analytics UI (frontend)
 
-**Goal:** Spec "Security analytics view" on dashboard.
+**Goal:** Analytics view + explicit RxJS operator coverage.
 
-**Steps:**
+| Operator | Where in M4 |
+|----------|-------------|
+| `switchMap` | Vault save, rules CRUD, analytics date reload |
+| `merge` | Dashboard live feed (M3, retained) |
+| `takeUntil` | WS teardown on logout |
+| **`zip`** | Analytics page: `zip(analyticsSummary$, systemStatus$)` combined load |
+| **`forEach`** | Analytics: build chart series — ` buckets.forEach(b => series.push(...))` inside pipe, or `tap` with forEach on verdict groups |
+| `map`, `filter`, `reduce` | Traffic stats selectors, filter bar |
 
-1. `AnalyticsApi` + mock + HTTP implementation.
-2. ngrx `analytics` slice + effect (`switchMap` on date range filter).
-3. New route `/analytics` or expand dashboard with tab:
-   - Verdict pie/bar (Material or CSS)
-   - Timeline chart (simple bar per hour — avoid heavy chart libs unless you prefer one small dependency)
-   - Top hosts table
-   - Security events breakdown
-4. RxJS: `zip` or `forkJoin` to load summary + existing health status for combined view.
-
-**Verify:** Date range change reloads analytics; numbers match DB/traffic page.
+1. `/analytics` route with verdict/decision charts, top hosts, security event breakdown
+2. Document operators in code comments only where natural (no forced/obvious usage)
 
 ---
 
-### M4.6 — Documentation, lab readiness, polish
+### M4.6 — Documentation and polish
 
-**Goal:** Submission-ready project; optional single-machine + two-VM guides.
-
-**Steps:**
-
-1. `Documentation/architecture.md` — diagram: Browser → Proxy → Threat → SIEM → Dashboard; module map.
-2. `Documentation/threat-model.md` — summarize spec assumptions + what GuardMe protects.
-3. `infrastructure/vmware/setup-guide.md` — two-VM layout (optional) + **single-machine local dev** section (already validated in M3).
-4. `Documentation/m4-smoke-test.md` — vault + re-auth + analytics checklist.
-5. Root [README.md](README.md) — quick start, env vars, demo flow for professor.
-6. Code polish: remove dead mocks if unused, consistent error messages, vault lock on session revoke hook in `AuthService.logout`.
-
-**Verify:** New developer can follow README and complete smoke test in < 30 minutes.
+1. `Documentation/architecture.md` — include **Rules evaluation pipeline** diagram
+2. `Documentation/threat-model.md`
+3. `Documentation/m4-smoke-test.md` — re-auth, rules, vault CRUD, analytics, traffic columns
+4. `config/siem.config.ts` — document allowed `security_events` types (no scan completed)
+5. README demo script: login → show rules → block custom domain → vault CRUD → analytics
+6. Vault lock on logout; remove dead mocks
 
 ---
 
@@ -277,49 +324,39 @@ model VaultCredential {
 
 ```
 apps/gateway-backend/src/modules/
-  vault/           (NEW)
-    crypto.service.ts
-    vault.service.ts
-    vault.controller.ts
-    vault.module.ts
-    dto/
+  rules/              (NEW)
+    rules.module.ts
+    rules.service.ts
+    rules.controller.ts
+  vault/              (NEW)
 
 apps/dashboard-frontend/src/app/
   features/
-    vault/         (NEW)
-    analytics/     (NEW)
+    rules/            (NEW)
+    vault/            (NEW)
+    analytics/        (NEW)
   store/
+    rules/
     vault/
     analytics/
 ```
 
 ---
 
-## Course requirements — M4 coverage
-
-| Requirement | M4 |
-|-------------|-----|
-| NestJS CRUD entities | Vault credentials CRUD |
-| Passport auth | Already done; re-auth extends it |
-| Angular components, DI, routing | Vault + analytics features |
-| ngrx store, entities, effects | Vault + analytics slices |
-| RxJS switchMap, merge/zip | Vault CRUD effects, analytics load |
-
----
-
 ## Manual verification (end of M4)
 
-1. Login → browse via proxy → dashboard still live (regression).
-2. Wait > `REAUTH_TIMEOUT_MINUTES` (or age DB) → vault access prompts re-auth → verify password → access granted.
-3. Add vault entry → confirm DB has only ciphertext/iv/authTag.
-4. Logout → vault key cleared; cannot decrypt until unlock.
-5. Analytics page shows verdict breakdown matching traffic history.
-6. Complete [m4-smoke-test.md](Documentation/m4-smoke-test.md).
+1. Security tab has no per-request `THREAT_SCAN_COMPLETED` noise.
+2. System rules visible on `/rules`; custom domain block works.
+3. Traffic table shows source IP, destination IP, decision.
+4. Vault full CRUD; ciphertext only in DB.
+5. Re-auth enforced for vault and rule changes.
+6. Analytics uses `zip`; course operators demonstrable.
+7. Complete `m4-smoke-test.md`.
 
 ---
 
 ## Execution style
 
-**One todo at a time.** Before each: implementation steps, clarifying questions, suggestions. After each: summary, pause for your commit, continue on **"please continue"**.
+**One todo at a time.** Before each: steps, questions, suggestions. After each: pause for commit → **"please continue"**.
 
-**First step when approved:** **M4.1** — `POST /auth/verify-password` + SIEM events + `ReAuthGuard` wiring plan for vault.
+**First step when approved:** **M4.1** — re-auth API.
