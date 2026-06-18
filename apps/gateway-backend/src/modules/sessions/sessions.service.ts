@@ -71,6 +71,7 @@ export class SessionsService {
       type: SIEM_EVENT_TYPES.FINGERPRINT_MISMATCH,
       message: 'Session device fingerprint mismatch',
       metadata: {
+        userId: session.userId,
         sessionId: session.id,
         jwtId: session.jwtId,
         expectedIp: session.ipAddress,
@@ -85,7 +86,11 @@ export class SessionsService {
       void this.siemService.logSecurityEvent({
         type: SIEM_EVENT_TYPES.SESSION_REVOKED,
         message: 'Session revoked due to fingerprint mismatch',
-        metadata: { sessionId: session.id, jwtId: session.jwtId },
+        metadata: {
+          userId: session.userId,
+          sessionId: session.id,
+          jwtId: session.jwtId,
+        },
       });
       throw new UnauthorizedException(
         'Session invalidated due to device mismatch',

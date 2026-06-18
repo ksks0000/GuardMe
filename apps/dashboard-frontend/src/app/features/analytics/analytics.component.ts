@@ -1,0 +1,148 @@
+import { AsyncPipe, DatePipe } from '@angular/common';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  inject,
+  OnInit,
+} from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { MatCardModule } from '@angular/material/card';
+import { MatChipsModule } from '@angular/material/chips';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatTableModule } from '@angular/material/table';
+import { Store } from '@ngrx/store';
+import { BehaviorSubject, map } from 'rxjs';
+import {
+  blockedSharePercent,
+  chartSegmentWidthPercent,
+  timeBucketHeightPercent,
+} from '../../core/utils/analytics-chart.util';
+import { buildAnalyticsSummaryQuery } from '../../core/utils/analytics-query.util';
+import { buildActiveFilterChips } from '../../core/utils/filter-chips.util';
+import { EmptyStateComponent } from '../../shared/components/empty-state/empty-state.component';
+import { FilterBarComponent } from '../../shared/components/filter-bar/filter-bar.component';
+import { StatCardComponent } from '../../shared/components/stat-card/stat-card.component';
+import { StatusBadgeComponent } from '../../shared/components/status-badge/status-badge.component';
+import { FilterFieldConfig, FilterValues } from '../../shared/models/filter-bar.model';
+import { AnalyticsActions } from '../../store/analytics/analytics.actions';
+import {
+  selectAnalyticsError,
+  selectAnalyticsLoading,
+  selectAnalyticsPeriod,
+  selectAnalyticsRiskStats,
+  selectAnalyticsSecurityTotal,
+  selectAnalyticsSummary,
+  selectAnalyticsSystemStatus,
+  selectAnalyticsTrafficTotal,
+  selectMaxTimeBucketRequests,
+  selectPolicyDecisionSeries,
+  selectSecurityEventTypeSeries,
+  selectSecuritySeveritySeries,
+  selectThreatVerdictSeries,
+  selectTimeBuckets,
+  selectTopDestinationHosts,
+} from '../../store/analytics/analytics.selectors';
+import { selectSystemStatus } from '../../store/system-status/system-status.selectors';
+
+@Component({
+  selector: 'app-analytics',
+  imports: [
+    AsyncPipe,
+    DatePipe,
+    MatCardModule,
+    MatChipsModule,
+    MatProgressSpinnerModule,
+    MatTableModule,
+    FilterBarComponent,
+    EmptyStateComponent,
+    StatCardComponent,
+    StatusBadgeComponent,
+  ],
+  templateUrl: './analytics.component.html',
+  styleUrl: './analytics.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export class AnalyticsComponent implements OnInit {
+  private readonly store = inject(Store);
+
+  readonly filterFields: FilterFieldConfig[] = [
+    { key: 'from', label: 'From', type: 'datetime' },
+    { key: 'to', label: 'To', type: 'datetime' },
+  ];
+
+  private readonly appliedFilters$ = new BehaviorSubject<FilterValues>({
+    from: '',
+    to: '',
+  });
+
+  readonly activeFilterChips$ = this.appliedFilters$.pipe(
+    map((filters) => buildActiveFilterChips(filters, this.filterFields)),
+  );
+
+  readonly loading$ = this.store.select(selectAnalyticsLoading);
+  readonly error$ = this.store.select(selectAnalyticsError);
+  readonly summary$ = this.store.select(selectAnalyticsSummary);
+  readonly systemStatus$ = this.store.select(selectAnalyticsSystemStatus);
+  readonly liveSystemStatus$ = this.store.select(selectSystemStatus);
+  readonly period$ = this.store.select(selectAnalyticsPeriod);
+  readonly trafficTotal$ = this.store.select(selectAnalyticsTrafficTotal);
+  readonly securityTotal$ = this.store.select(selectAnalyticsSecurityTotal);
+  readonly riskStats$ = this.store.select(selectAnalyticsRiskStats);
+  readonly decisionSeries$ = this.store.select(selectPolicyDecisionSeries);
+  readonly verdictSeries$ = this.store.select(selectThreatVerdictSeries);
+  readonly severitySeries$ = this.store.select(selectSecuritySeveritySeries);
+  readonly eventTypeSeries$ = this.store.select(selectSecurityEventTypeSeries);
+  readonly topHosts$ = this.store.select(selectTopDestinationHosts);
+  readonly timeBuckets$ = this.store.select(selectTimeBuckets);
+  readonly maxBucketRequests$ = this.store.select(selectMaxTimeBucketRequests);
+
+  readonly riskStats = toSignal(this.riskStats$, {
+    initialValue: { average: 0, max: 0, highRiskCount: 0 },
+  });
+
+  readonly topHostColumns = ['host', 'count'];
+
+  protected bucketHeight = timeBucketHeightPercent;
+  protected blockedShare = blockedSharePercent;
+  protected segmentWidth = chartSegmentWidthPercent;
+
+  ngOnInit(): void {
+    this.store.dispatch(AnalyticsActions.loadSummary({ query: {} }));
+  }
+
+  onFiltersApply(filters: FilterValues): void {
+    this.appliedFilters$.next(filters);
+    this.store.dispatch(
+      AnalyticsActions.loadSummary({ query: buildAnalyticsSummaryQuery(filters) }),
+    );
+  }
+
+  seriesTotal(values: Array<{ value: number }>): number {
+    return values.reduce((sum, item) => sum + item.value, 0);
+  }
+
+  formatBucketLabel(iso: string, bucketHours: number): string {
+    const date = new Date(iso);
+    if (Number.isNaN(date.getTime())) {
+      return iso;
+    }
+
+    if (bucketHours >= 24) {
+      return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+    }
+
+    return date.toLocaleString(undefined, {
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+    });
+  }
+
+  bucketTooltip(requestCount: number, blockedCount: number): string {
+    if (blockedCount > 0) {
+      return `${requestCount} requests (${blockedCount} blocked)`;
+    }
+
+    return `${requestCount} requests`;
+  }
+}

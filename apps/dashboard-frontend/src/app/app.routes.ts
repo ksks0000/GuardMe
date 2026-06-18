@@ -46,6 +46,11 @@ export const routes: Routes = [
         loadChildren: () =>
           import('./features/vault/vault.routes').then((m) => m.VAULT_ROUTES),
       },
+      {
+        path: 'analytics',
+        loadChildren: () =>
+          import('./features/analytics/analytics.routes').then((m) => m.ANALYTICS_ROUTES),
+      },
     ],
   },
   { path: '**', redirectTo: 'dashboard' },

@@ -1,0 +1,279 @@
+<section class="analytics-page">
+  <header class="analytics-page__header">
+    <h1>Security Analytics</h1>
+    <p>Aggregated traffic decisions, threat verdicts, and security events for your account</p>
+  </header>
+
+  <app-filter-bar [fields]="filterFields" (filtersApply)="onFiltersApply($event)" />
+
+  @if (activeFilterChips$ | async; as chips) {
+    @if (chips.length > 0) {
+      <mat-chip-set aria-label="Active analytics filters" class="analytics-page__active-filters">
+        @for (chip of chips; track chip.key) {
+          <mat-chip>{{ chip.label }}: {{ chip.value }}</mat-chip>
+        }
+      </mat-chip-set>
+    }
+  }
+
+  @if (period$ | async; as period) {
+    <p class="analytics-page__period">
+      Traffic and security events from {{ period.from | date: 'medium' }} to
+      {{ period.to | date: 'medium' }}
+    </p>
+  }
+
+  @if (loading$ | async) {
+    <div class="analytics-page__loading">
+      <mat-spinner diameter="40" />
+      <span>Loading analytics…</span>
+    </div>
+  } @else if (error$ | async; as error) {
+    <p class="analytics-page__error" role="alert">{{ error }}</p>
+  } @else if (summary$ | async; as summary) {
+    <div class="analytics-page__stats">
+      <app-stat-card
+        label="Total requests"
+        [value]="(trafficTotal$ | async) ?? 0"
+        icon="language"
+      />
+      <app-stat-card
+        label="Security events"
+        [value]="(securityTotal$ | async) ?? 0"
+        icon="security"
+        accent="warn"
+      />
+      <app-stat-card
+        label="Avg risk score"
+        [value]="riskStats().average"
+        icon="speed"
+      />
+      <app-stat-card
+        label="High-risk requests"
+        [value]="riskStats().highRiskCount"
+        icon="warning"
+        accent="danger"
+      />
+    </div>
+
+    <div class="analytics-page__grid">
+      <div class="analytics-page__main-col">
+        <mat-card class="analytics-card analytics-card--status">
+          <mat-card-header>
+            <mat-card-title>System status</mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            @if (systemStatus$ | async; as status) {
+              <div class="analytics-page__status">
+                <app-status-badge label="Database" [state]="status.db" />
+                <app-status-badge label="VirusTotal" [state]="status.virusTotal" />
+                <span class="analytics-page__status-time">
+                  Snapshot on: {{ status.timestamp | date: 'medium' }}
+                </span>
+              </div>
+            } @else if (liveSystemStatus$ | async; as status) {
+              <div class="analytics-page__status">
+                <app-status-badge label="Database" [state]="status.db" />
+                <app-status-badge label="VirusTotal" [state]="status.virusTotal" />
+                <span class="analytics-page__status-time">
+                  Live update: {{ status.timestamp | date: 'mediumTime' }}
+                </span>
+              </div>
+            } @else {
+              <p class="analytics-card__empty">Waiting for system status…</p>
+            }
+          </mat-card-content>
+        </mat-card>
+
+        <div class="analytics-page__traffic-row">
+          <mat-card class="analytics-card">
+            <mat-card-header>
+              <mat-card-title>Policy decisions</mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              @if (decisionSeries$ | async; as series) {
+                @if (seriesTotal(series) === 0) {
+                  <p class="analytics-card__empty">No traffic in this period.</p>
+                } @else {
+                  <div class="distribution-chart" role="img" aria-label="Policy decision distribution">
+                    @for (segment of series; track segment.key) {
+                      <div
+                        class="distribution-chart__segment verdict--{{ segment.cssClass }}"
+                        [style.width.%]="segmentWidth(segment, seriesTotal(series))"
+                        [title]="segment.label + ': ' + segment.value"
+                      ></div>
+                    }
+                  </div>
+                  <ul class="distribution-legend">
+                    @for (segment of series; track segment.key) {
+                      @if (segment.value > 0) {
+                        <li>
+                          <span class="distribution-legend__swatch verdict--{{ segment.cssClass }}"></span>
+                          {{ segment.label }} {{ segment.value }}
+                        </li>
+                      }
+                    }
+                  </ul>
+                }
+              }
+            </mat-card-content>
+          </mat-card>
+
+          <mat-card class="analytics-card">
+            <mat-card-header>
+              <mat-card-title>Threat verdicts</mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              @if (verdictSeries$ | async; as series) {
+                @if (seriesTotal(series) === 0) {
+                  <p class="analytics-card__empty">No traffic in this period.</p>
+                } @else {
+                  <div class="distribution-chart" role="img" aria-label="Threat verdict distribution">
+                    @for (segment of series; track segment.key) {
+                      <div
+                        class="distribution-chart__segment verdict--{{ segment.cssClass }}"
+                        [style.width.%]="segmentWidth(segment, seriesTotal(series))"
+                        [title]="segment.label + ': ' + segment.value"
+                      ></div>
+                    }
+                  </div>
+                  <ul class="distribution-legend">
+                    @for (segment of series; track segment.key) {
+                      @if (segment.value > 0) {
+                        <li>
+                          <span class="distribution-legend__swatch verdict--{{ segment.cssClass }}"></span>
+                          {{ segment.label }} {{ segment.value }}
+                        </li>
+                      }
+                    }
+                  </ul>
+                }
+              }
+            </mat-card-content>
+          </mat-card>
+        </div>
+
+        <div class="analytics-page__security-row">
+          <mat-card class="analytics-card analytics-card--severity">
+            <mat-card-header>
+              <mat-card-title>Events severity</mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              @if (severitySeries$ | async; as series) {
+                @if (seriesTotal(series) === 0) {
+                  <p class="analytics-card__empty">No events.</p>
+                } @else {
+                  <ul class="severity-list">
+                    @for (segment of series; track segment.key) {
+                      @if (segment.value > 0) {
+                        <li>
+                          <span class="severity-list__label severity--{{ segment.cssClass }}">
+                            {{ segment.label }}
+                          </span>
+                          <span class="severity-list__value">{{ segment.value }}</span>
+                        </li>
+                      }
+                    }
+                  </ul>
+                }
+              }
+            </mat-card-content>
+          </mat-card>
+
+          <mat-card class="analytics-card analytics-card--event-types">
+            <mat-card-header>
+              <mat-card-title>Security events by type</mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              @if (eventTypeSeries$ | async; as series) {
+                @if (series.length === 0) {
+                  <p class="analytics-card__empty">No security events in this period.</p>
+                } @else {
+                  <div class="event-type-list">
+                    @for (segment of series; track segment.key) {
+                      <div class="event-type-list__row">
+                        <span class="event-type-list__label">{{ segment.label }}</span>
+                        <span class="event-type-list__bar-wrap">
+                          <span
+                            class="event-type-list__bar"
+                            [style.width.%]="segmentWidth(segment, (securityTotal$ | async) ?? 0)"
+                          ></span>
+                        </span>
+                        <span class="event-type-list__value">{{ segment.value }}</span>
+                      </div>
+                    }
+                  </div>
+                }
+              }
+            </mat-card-content>
+          </mat-card>
+        </div>
+      </div>
+
+      <div class="analytics-page__hosts-col">
+        <mat-card class="analytics-card analytics-card--hosts">
+          <mat-card-header>
+            <mat-card-title>Top destination hosts</mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            @if (topHosts$ | async; as hosts) {
+              @if (hosts.length === 0) {
+                <app-empty-state message="No destination hosts in this period." icon="dns" />
+              } @else {
+                <table mat-table [dataSource]="hosts" class="analytics-table">
+                  <ng-container matColumnDef="host">
+                    <th mat-header-cell *matHeaderCellDef>Host</th>
+                    <td mat-cell *matCellDef="let row">{{ row.host }}</td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="count">
+                    <th mat-header-cell *matHeaderCellDef>Requests</th>
+                    <td mat-cell *matCellDef="let row">{{ row.count }}</td>
+                  </ng-container>
+
+                  <tr mat-header-row *matHeaderRowDef="topHostColumns"></tr>
+                  <tr mat-row *matRowDef="let row; columns: topHostColumns"></tr>
+                </table>
+              }
+            }
+          </mat-card-content>
+        </mat-card>
+      </div>
+
+      <mat-card class="analytics-card analytics-card--wide">
+        <mat-card-header>
+          <mat-card-title>Requests over time</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          @if (timeBuckets$ | async; as buckets) {
+            @if (buckets.length === 0) {
+              <p class="analytics-card__empty">No time-series data for this period.</p>
+            } @else {
+              <div class="time-chart" role="img" aria-label="Traffic volume over time">
+                @for (bucket of buckets; track bucket.bucketStart) {
+                  <div
+                    class="time-chart__column"
+                    [title]="bucketTooltip(bucket.requestCount, bucket.blockedCount)"
+                  >
+                    <div
+                      class="time-chart__bar"
+                      [style.height.%]="bucketHeight(bucket.requestCount, (maxBucketRequests$ | async) ?? 0)"
+                    >
+                      <div
+                        class="time-chart__blocked"
+                        [style.height.%]="blockedShare(bucket.requestCount, bucket.blockedCount)"
+                      ></div>
+                    </div>
+                    <span class="time-chart__label">
+                      {{ formatBucketLabel(bucket.bucketStart, summary.period.bucketHours) }}
+                    </span>
+                  </div>
+                }
+              </div>
+            }
+          }
+        </mat-card-content>
+      </mat-card>
+    </div>
+  }
+</section>
