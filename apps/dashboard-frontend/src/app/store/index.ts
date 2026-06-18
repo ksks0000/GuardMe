@@ -6,6 +6,8 @@ import { AuthEffects } from './auth/auth.effects';
 import { authFeatureKey, authReducer } from './auth/auth.reducer';
 import { RulesEffects } from './rules/rules.effects';
 import { rulesFeatureKey, rulesReducer } from './rules/rules.reducer';
+import { VaultEffects } from './vault/vault.effects';
+import { vaultFeatureKey, vaultReducer } from './vault/vault.reducer';
 import { RealtimeEffects } from './realtime/realtime.effects';
 import {
   securityEventsFeatureKey,
@@ -24,8 +26,9 @@ export function provideAppStore(): EnvironmentProviders[] {
     provideState(trafficFeatureKey, trafficReducer),
     provideState(securityEventsFeatureKey, securityEventsReducer),
     provideState(rulesFeatureKey, rulesReducer),
+    provideState(vaultFeatureKey, vaultReducer),
     provideState(systemStatusFeatureKey, systemStatusReducer),
-    provideEffects(AuthEffects, RealtimeEffects, RulesEffects),
+    provideEffects(AuthEffects, RealtimeEffects, RulesEffects, VaultEffects),
     ...(isDevMode()
       ? [
           provideStoreDevtools({
