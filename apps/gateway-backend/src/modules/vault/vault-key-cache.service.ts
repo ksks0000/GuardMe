@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 
-/** In-memory vault key cache — cleared on lock/logout; never persisted. */
 @Injectable()
 export class VaultKeyCacheService {
   private readonly keys = new Map<string, Buffer>();

@@ -1,5 +1,6 @@
 import { ConflictException, Injectable } from '@nestjs/common';
 import { User } from '@prisma/client';
+import { randomBytes } from 'crypto';
 import { PrismaService } from '../../database/prisma.service';
 import { hashPassword } from '../../common/utils/password.util';
 import { CreateUserInput } from './dto/create-user.input';
@@ -31,8 +32,14 @@ export class UsersService {
     }
 
     const passwordHash = await hashPassword(input.password);
+    const kdfSalt = randomBytes(32).toString('base64');
+
     return this.prisma.user.create({
-      data: { username: input.username, passwordHash },
+      data: {
+        username: input.username,
+        passwordHash,
+        kdfSalt,
+      },
     });
   }
 

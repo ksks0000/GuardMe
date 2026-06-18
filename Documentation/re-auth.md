@@ -60,6 +60,7 @@ Planned consumers (M4.2+):
 |--------|--------|
 | `rules` | `POST /rules`, `PATCH /rules/:id`, `DELETE /rules/:id` |
 | `vault` | `POST /vault/credentials`, `PATCH`, `DELETE`, decrypt (`GET :id`) |
+| `vault` | `POST /vault/unlock` (rate-limited; wrong password → `VAULT_UNLOCK_FAILURE`) |
 
 Read-only list endpoints typically need only `JwtSessionGuard`.
 
@@ -69,6 +70,8 @@ Read-only list endpoints typically need only `JwtSessionGuard`.
 |-------|------|
 | `REAUTH_REQUIRED` | `ReAuthGuard` blocks a request (stale or missing `last_auth_at`) |
 | `REAUTH_FAILURE` | Wrong password on `POST /auth/verify-password` |
+| `VAULT_UNLOCKED` | Successful `POST /vault/unlock` |
+| `VAULT_UNLOCK_FAILURE` | Wrong password on `POST /vault/unlock` |
 
 Both are visible on the dashboard Security history page.
 

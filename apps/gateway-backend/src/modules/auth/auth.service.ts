@@ -14,6 +14,7 @@ import { PublicUserProfileDto } from '../users/dto/public-user-profile.dto';
 import { SiemService } from '../siem/siem.service';
 import { SessionsService } from '../sessions/sessions.service';
 import { UsersService } from '../users/users.service';
+import { VaultKeyCacheService } from '../vault/vault-key-cache.service';
 import { AuthProfileDto } from './dto/auth-profile.dto';
 import { LoginDto } from './dto/login.dto';
 import { LogoutResponseDto } from './dto/logout-response.dto';
@@ -32,6 +33,7 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly eventEmitter: EventEmitter2,
     private readonly siemService: SiemService,
+    private readonly vaultKeyCache: VaultKeyCacheService,
   ) {}
 
   async register(dto: RegisterDto): Promise<PublicUserProfileDto> {
@@ -89,6 +91,10 @@ export class AuthService {
     }
 
     this.clearSessionCookie(res);
+
+    if (logoutUserId) {
+      this.vaultKeyCache.clearKey(logoutUserId);
+    }
 
     if (logoutUserId && logoutUsername) {
       this.emitSessionEvent('LOGOUT', logoutUserId, logoutUsername);

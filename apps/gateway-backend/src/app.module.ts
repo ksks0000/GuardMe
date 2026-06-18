@@ -11,6 +11,7 @@ import { ProxyModule } from './modules/proxy/proxy.module';
 import { RulesModule } from './modules/rules/rules.module';
 import { SiemModule } from './modules/siem/siem.module';
 import { ThreatModule } from './modules/threat/threat.module';
+import { VaultModule } from './modules/vault/vault.module';
 import { WebsocketModule } from './modules/websocket/websocket.module';
 
 @Module({
@@ -29,6 +30,7 @@ import { WebsocketModule } from './modules/websocket/websocket.module';
     AuthModule,
     HealthModule,
     RulesModule,
+    VaultModule,
     ProxyModule,
     WebsocketModule,
   ],

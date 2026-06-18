@@ -5,6 +5,7 @@ import { PassportModule } from '@nestjs/passport';
 import { authConfig } from '../../config/auth.config';
 import { SessionsModule } from '../sessions/sessions.module';
 import { UsersModule } from '../users/users.module';
+import { VaultModule } from '../vault/vault.module';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
@@ -13,6 +14,7 @@ import { JwtStrategy } from './strategies/jwt.strategy';
   imports: [
     UsersModule,
     SessionsModule,
+    VaultModule,
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.register({
       secret: authConfig.jwtSecret(),
