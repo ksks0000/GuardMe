@@ -32,8 +32,6 @@ export const VaultActions = createActionGroup({
     'Reveal Credential': props<{ id: string }>(),
     'Reveal Credential Success': props<{ id: string; password: string }>(),
     'Reveal Credential Failure': props<{ error: string }>(),
-    'Clear Revealed Password': props<{ id: string }>(),
-    'Clear All Revealed Passwords': emptyProps(),
     'Clear Error': emptyProps(),
     'Clear Unlock Error': emptyProps(),
   },

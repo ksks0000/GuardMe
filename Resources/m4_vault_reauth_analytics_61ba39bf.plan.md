@@ -22,13 +22,13 @@ todos:
     status: completed
   - id: m4-analytics-backend
     content: "M4.4: Analytics backend — GET /siem/analytics/summary with aggregations"
-    status: pending
+    status: completed
   - id: m4-analytics-frontend
     content: "M4.5: Analytics frontend — /analytics page, zip + forEach RxJS operators, charts/tables (HTTP API only, no mock)"
-    status: pending
+    status: completed
   - id: m4-docs-polish
     content: "M4.6: Docs, m4-smoke-test.md, README, SIEM audit, vault lock on logout"
-    status: pending
+    status: completed
 isProject: false
 ---
 
@@ -56,9 +56,9 @@ Each feature uses an abstract `*Api` class + `Http*Api` (or `SocketRealtimeApi` 
 | M4.1 / M4.1b Re-auth | Done |
 | M4.2 / M4.2b Rules + traffic columns | Done |
 | M4.3 / M4.3b Vault CRUD | Done |
-| M4.4 Analytics API | **Next** |
-| M4.5 Analytics UI | Pending |
-| M4.6 Docs | Pending |
+| M4.4 Analytics API | Done |
+| M4.5 Analytics UI | Done |
+| M4.6 Docs + polish | Done |
 
 ## What M4 delivers
 

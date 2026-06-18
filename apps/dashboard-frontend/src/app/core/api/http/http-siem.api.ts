@@ -32,6 +32,7 @@ export class HttpSiemApi extends SiemApi {
           threatVerdict: query.threatVerdict,
           policyDecision: query.policyDecision,
           urlSearch: query.urlSearch,
+          destinationIp: query.destinationIp,
           from: query.from,
           to: query.to,
         }),

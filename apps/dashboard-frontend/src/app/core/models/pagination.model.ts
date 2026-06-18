@@ -11,6 +11,7 @@ export interface TrafficLogQuery {
   threatVerdict?: string;
   policyDecision?: string;
   urlSearch?: string;
+  destinationIp?: string;
   from?: string;
   to?: string;
 }

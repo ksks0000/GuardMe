@@ -153,6 +153,11 @@ export class SiemService {
       ];
     }
 
+    const destinationIp = sanitizeSearchTerm(query.destinationIp);
+    if (destinationIp) {
+      where.destinationIp = { contains: destinationIp, mode: 'insensitive' };
+    }
+
     if (query.from || query.to) {
       where.timestamp = {};
       if (query.from) {

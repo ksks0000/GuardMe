@@ -13,7 +13,6 @@ export interface VaultState {
   locked: boolean;
   statusLoaded: boolean;
   credentials: EntityState<VaultCredentialSummary>;
-  revealedPasswords: Record<string, string>;
   loading: boolean;
   saving: boolean;
   unlocking: boolean;
@@ -25,7 +24,6 @@ export const initialVaultState: VaultState = {
   locked: true,
   statusLoaded: false,
   credentials: credentialsAdapter.getInitialState(),
-  revealedPasswords: {},
   loading: false,
   saving: false,
   unlocking: false,
@@ -87,7 +85,6 @@ export const vaultReducer = createReducer(
     ...state,
     saving: false,
     locked,
-    revealedPasswords: {},
   })),
 
   on(VaultActions.lockVaultFailure, (state, { error }) => ({
@@ -136,20 +133,19 @@ export const vaultReducer = createReducer(
     ...state,
     saving: false,
     credentials: credentialsAdapter.upsertOne(credential, state.credentials),
-    revealedPasswords: omitKey(state.revealedPasswords, credential.id),
   })),
 
   on(VaultActions.deleteCredentialSuccess, (state, { id }) => ({
     ...state,
     saving: false,
     credentials: credentialsAdapter.removeOne(id, state.credentials),
-    revealedPasswords: omitKey(state.revealedPasswords, id),
   })),
 
-  on(VaultActions.revealCredentialSuccess, (state, { id, password }) => ({
+  // The revealed password is consumed directly from the action payload by the
+  // view dialog; it is intentionally NOT persisted in the store.
+  on(VaultActions.revealCredentialSuccess, (state) => ({
     ...state,
     saving: false,
-    revealedPasswords: { ...state.revealedPasswords, [id]: password },
   })),
 
   on(
@@ -163,16 +159,6 @@ export const vaultReducer = createReducer(
       error,
     }),
   ),
-
-  on(VaultActions.clearRevealedPassword, (state, { id }) => ({
-    ...state,
-    revealedPasswords: omitKey(state.revealedPasswords, id),
-  })),
-
-  on(VaultActions.clearAllRevealedPasswords, (state) => ({
-    ...state,
-    revealedPasswords: {},
-  })),
 
   on(VaultActions.clearError, (state) => ({
     ...state,
@@ -188,11 +174,3 @@ export const vaultReducer = createReducer(
     initialVaultState,
   ),
 );
-
-function omitKey(
-  record: Record<string, string>,
-  key: string,
-): Record<string, string> {
-  const { [key]: _removed, ...rest } = record;
-  return rest;
-}

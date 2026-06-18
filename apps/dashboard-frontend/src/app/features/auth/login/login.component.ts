@@ -78,7 +78,8 @@ export class LoginComponent implements OnInit {
       }),
     );
 
-    this.form.patchValue({ password: '' });
+    // Clear the password without re-triggering "required" validation feedback.
+    this.form.controls.password.reset('');
   }
 
   protected usernameError(): string | null {

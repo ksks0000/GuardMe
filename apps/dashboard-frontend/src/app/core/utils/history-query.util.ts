@@ -40,6 +40,7 @@ export function buildTrafficLogQuery(
     threatVerdict: optionalFilter(filters['threatVerdict']),
     policyDecision: optionalFilter(filters['policyDecision']),
     urlSearch: sanitizeSearchTerm(filters['urlSearch']),
+    destinationIp: sanitizeSearchTerm(filters['destinationIp']),
     from: toIsoOrUndefined(filters['from']),
     to: toIsoOrUndefined(filters['to']),
   };

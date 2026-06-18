@@ -28,11 +28,3 @@ export const selectVaultUnlockError = createSelector(
   selectVaultState,
   (state) => state.unlockError,
 );
-
-export const selectRevealedPasswords = createSelector(
-  selectVaultState,
-  (state) => state.revealedPasswords,
-);
-
-export const selectRevealedPassword = (id: string) =>
-  createSelector(selectRevealedPasswords, (passwords) => passwords[id] ?? null);

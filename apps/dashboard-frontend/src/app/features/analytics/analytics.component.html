@@ -71,14 +71,6 @@
                   Snapshot on: {{ status.timestamp | date: 'medium' }}
                 </span>
               </div>
-            } @else if (liveSystemStatus$ | async; as status) {
-              <div class="analytics-page__status">
-                <app-status-badge label="Database" [state]="status.db" />
-                <app-status-badge label="VirusTotal" [state]="status.virusTotal" />
-                <span class="analytics-page__status-time">
-                  Live update: {{ status.timestamp | date: 'mediumTime' }}
-                </span>
-              </div>
             } @else {
               <p class="analytics-card__empty">Waiting for system status…</p>
             }

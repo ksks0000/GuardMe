@@ -131,7 +131,7 @@ export class VaultComponent implements OnInit {
         takeUntilDestroyed(this.destroyRef),
       )
       .subscribe((action) => {
-        const dialogRef = this.dialog.open<ViewPasswordDialogComponent, ViewPasswordDialogData>(
+        this.dialog.open<ViewPasswordDialogComponent, ViewPasswordDialogData>(
           ViewPasswordDialogComponent,
           {
             width: '26rem',
@@ -142,10 +142,6 @@ export class VaultComponent implements OnInit {
             },
           },
         );
-
-        dialogRef.afterClosed().subscribe(() => {
-          this.store.dispatch(VaultActions.clearRevealedPassword({ id: credential.id }));
-        });
       });
   }
 

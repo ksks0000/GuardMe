@@ -42,7 +42,6 @@ import {
   selectTimeBuckets,
   selectTopDestinationHosts,
 } from '../../store/analytics/analytics.selectors';
-import { selectSystemStatus } from '../../store/system-status/system-status.selectors';
 
 @Component({
   selector: 'app-analytics',
@@ -83,7 +82,6 @@ export class AnalyticsComponent implements OnInit {
   readonly error$ = this.store.select(selectAnalyticsError);
   readonly summary$ = this.store.select(selectAnalyticsSummary);
   readonly systemStatus$ = this.store.select(selectAnalyticsSystemStatus);
-  readonly liveSystemStatus$ = this.store.select(selectSystemStatus);
   readonly period$ = this.store.select(selectAnalyticsPeriod);
   readonly trafficTotal$ = this.store.select(selectAnalyticsTrafficTotal);
   readonly securityTotal$ = this.store.select(selectAnalyticsSecurityTotal);

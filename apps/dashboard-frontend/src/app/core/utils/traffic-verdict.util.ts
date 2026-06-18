@@ -1,4 +1,4 @@
-import { POLICY_DECISIONS, PolicyDecision, THREAT_VERDICTS, ThreatVerdict, TrafficLog } from '../models';
+import { POLICY_DECISIONS, PolicyDecision, THREAT_VERDICTS, ThreatVerdict } from '../models';
 
 const THREAT_VERDICT_VALUES = new Set<string>(Object.values(THREAT_VERDICTS));
 

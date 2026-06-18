@@ -18,7 +18,3 @@ export const selectRulesSaving = createSelector(selectRulesState, (state) => sta
 export const selectRulesLoaded = createSelector(selectRulesState, (state) => state.loaded);
 
 export const selectRulesError = createSelector(selectRulesState, (state) => state.error);
-
-export const selectEnabledUserRulesCount = createSelector(selectAllUserRules, (rules) =>
-  rules.filter((rule) => rule.enabled).length,
-);

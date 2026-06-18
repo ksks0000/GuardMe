@@ -43,6 +43,11 @@ export class TrafficLogsQueryDto {
   urlSearch?: string;
 
   @IsOptional()
+  @IsString()
+  @MaxLength(45)
+  destinationIp?: string;
+
+  @IsOptional()
   @IsISO8601()
   from?: string;
 
