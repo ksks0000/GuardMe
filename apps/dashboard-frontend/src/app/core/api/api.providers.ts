@@ -1,5 +1,7 @@
 import { EnvironmentProviders, makeEnvironmentProviders } from '@angular/core';
+import { AnalyticsApi } from './analytics.api';
 import { AuthApi } from './auth.api';
+import { HttpAnalyticsApi } from './http/http-analytics.api';
 import { HttpAuthApi } from './http/http-auth.api';
 import { HttpRulesApi } from './http/http-rules.api';
 import { HttpSiemApi } from './http/http-siem.api';
@@ -16,6 +18,7 @@ export function provideGuardMeApi(): EnvironmentProviders {
     { provide: SiemApi, useClass: HttpSiemApi },
     { provide: RulesApi, useClass: HttpRulesApi },
     { provide: VaultApi, useClass: HttpVaultApi },
+    { provide: AnalyticsApi, useClass: HttpAnalyticsApi },
     { provide: RealtimeApi, useClass: SocketRealtimeApi },
   ]);
 }

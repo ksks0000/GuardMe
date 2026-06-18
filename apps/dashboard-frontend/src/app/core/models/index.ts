@@ -1,4 +1,5 @@
 export * from './activity-item.model';
+export * from './analytics.model';
 export * from './auth-credentials.model';
 export * from './firewall-rule.model';
 export * from './pagination.model';

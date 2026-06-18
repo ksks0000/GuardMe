@@ -1,5 +1,7 @@
 export * from './api.providers';
+export * from './analytics.api';
 export * from './auth.api';
+export * from './http/http-analytics.api';
 export * from './http/http-auth.api';
 export * from './http/http-rules.api';
 export * from './http/http-siem.api';
