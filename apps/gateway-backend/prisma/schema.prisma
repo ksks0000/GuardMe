@@ -11,12 +11,14 @@ model User {
   id           String    @id @default(uuid()) @db.Uuid
   username     String    @unique
   passwordHash String    @map("password_hash")
+  kdfSalt      String    @map("kdf_salt")
   createdAt    DateTime  @default(now()) @map("created_at")
   lastAuthAt   DateTime? @map("last_auth_at")
 
-  sessions      Session[]
-  trafficLogs   TrafficLog[]
-  firewallRules FirewallRule[]
+  sessions         Session[]
+  trafficLogs      TrafficLog[]
+  firewallRules    FirewallRule[]
+  vaultCredentials VaultCredential[]
 
   @@map("users")
 }
@@ -96,4 +98,22 @@ model SecurityEvent {
   @@index([type])
   @@index([severity])
   @@map("security_events")
+}
+
+model VaultCredential {
+  id                String   @id @default(uuid()) @db.Uuid
+  userId            String   @map("user_id") @db.Uuid
+  serviceName       String   @map("service_name") @db.VarChar(120)
+  username          String   @db.VarChar(255)
+  encryptedPassword String   @map("encrypted_password") @db.Text
+  iv                String   @db.VarChar(32)
+  authTag           String   @map("auth_tag") @db.VarChar(32)
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([userId, serviceName])
+  @@map("vault_credentials")
 }
