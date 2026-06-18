@@ -6,6 +6,15 @@
       <mat-label>Name (optional)</mat-label>
       <input matInput formControlName="name" maxlength="100" autocomplete="off" />
     </mat-form-field>
+    
+    <mat-form-field appearance="outline" class="rule-form__field">
+      <mat-label>Action</mat-label>
+      <mat-select formControlName="action">
+        @for (action of ruleActions; track action) {
+          <mat-option [value]="action">{{ action }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
 
     <mat-form-field appearance="outline" class="rule-form__field">
       <mat-label>Rule type</mat-label>
@@ -23,15 +32,6 @@
       @if (form.controls.pattern.touched && form.controls.pattern.hasError('required')) {
         <mat-error>Pattern is required.</mat-error>
       }
-    </mat-form-field>
-
-    <mat-form-field appearance="outline" class="rule-form__field">
-      <mat-label>Action</mat-label>
-      <mat-select formControlName="action">
-        @for (action of ruleActions; track action) {
-          <mat-option [value]="action">{{ action }}</mat-option>
-        }
-      </mat-select>
     </mat-form-field>
   </form>
 </mat-dialog-content>
