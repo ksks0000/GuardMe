@@ -12,7 +12,7 @@ GuardMe runs two HTTP listeners:
 1. PostgreSQL running (Docker or native install)
 2. `npm run prisma:migrate` in `apps/gateway-backend`
 3. `npm run start:dev` in `apps/gateway-backend`
-4. Dashboard at `http://localhost:4200` with `useRealAuth: true`
+4. Dashboard at `http://localhost:4200` (`npm start` in `apps/dashboard-frontend`)
 
 ## Configure browser proxy
 

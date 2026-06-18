@@ -30,8 +30,8 @@ GuardMe proxy listening on port 8080
 WebSocket gateway ready on namespace /events
 ```
 
-Dashboard runs at `http://localhost:4200`. Integration flags live in
-`src/environments/environment.ts` (`useRealAuth`, `useRealSiem`, `useRealRealtime`).
+Dashboard runs at `http://localhost:4200`. API and WebSocket URLs live in
+`src/environments/environment.ts` (`apiBaseUrl`, `wsUrl`).
 
 ## 1. Auth — register
 

@@ -1,0 +1,157 @@
+<section class="vault-page">
+  <header class="vault-page__header">
+    <div>
+      <h1>Password Vault</h1>
+      <p>Encrypted credentials stored on the server. Unlock with your account password to view secrets.</p>
+    </div>
+    @if ((locked$ | async) === false) {
+      <button mat-stroked-button type="button" (click)="lockVault()">
+        <mat-icon>lock</mat-icon>
+        Lock vault
+      </button>
+    }
+  </header>
+
+  @if (unlockError$ | async; as unlockError) {
+    <p class="vault-page__error" role="alert">
+      {{ unlockError }}
+      <button mat-button type="button" (click)="dismissUnlockError()">Dismiss</button>
+    </p>
+  }
+
+  @if (error$ | async; as error) {
+    <p class="vault-page__error" role="alert">
+      {{ error }}
+      <button mat-button type="button" (click)="dismissError()">Dismiss</button>
+    </p>
+  }
+
+  @if ((locked$ | async) === true) {
+    <section class="vault-banner vault-banner--locked" aria-labelledby="vault-unlock-heading">
+      <div class="vault-banner__content">
+        <mat-icon>lock</mat-icon>
+        <div>
+          <h2 id="vault-unlock-heading">Vault is locked</h2>
+          <p>Enter your account password to decrypt credentials for this session.</p>
+        </div>
+      </div>
+
+      <form class="vault-unlock-form" [formGroup]="unlockForm" (ngSubmit)="submitUnlock()">
+        <mat-form-field appearance="outline" class="vault-unlock-form__field">
+          <mat-label>Account password</mat-label>
+          <input
+            matInput
+            type="password"
+            formControlName="password"
+            autocomplete="current-password"
+          />
+        </mat-form-field>
+        <button
+          mat-flat-button
+          color="primary"
+          type="submit"
+          [disabled]="unlocking$ | async"
+        >
+          @if (unlocking$ | async) {
+            Unlocking…
+          } @else {
+            Unlock vault
+          }
+        </button>
+      </form>
+    </section>
+  } @else if ((locked$ | async) === false) {
+    <section class="vault-banner vault-banner--unlocked" aria-live="polite">
+      <mat-icon>lock_open</mat-icon>
+      <span>Vault unlocked — encryption key is held in server memory until you lock or sign out.</span>
+    </section>
+  }
+
+  @if (loading$ | async) {
+    <div class="vault-page__loading">
+      <mat-spinner diameter="40" />
+      <span>Loading vault…</span>
+    </div>
+  } @else if (ready$ | async) {
+    <div class="vault-page__toolbar">
+      <h2>Credentials</h2>
+      @if ((locked$ | async) === false) {
+        <button
+          mat-flat-button
+          color="primary"
+          type="button"
+          (click)="openCreateDialog()"
+          [disabled]="saving$ | async"
+        >
+          <mat-icon>add</mat-icon>
+          Add credential
+        </button>
+      }
+    </div>
+
+    @if ((credentials$ | async)?.length === 0) {
+      <app-empty-state
+        message="No saved credentials yet. Unlock the vault and add your first entry."
+        icon="key"
+      />
+    } @else {
+      <div class="vault-page__table-wrap">
+        <table mat-table [dataSource]="(credentials$ | async) ?? []" class="vault-table">
+          <ng-container matColumnDef="serviceName">
+            <th mat-header-cell *matHeaderCellDef>Service</th>
+            <td mat-cell *matCellDef="let row">{{ row.serviceName }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="username">
+            <th mat-header-cell *matHeaderCellDef>Username</th>
+            <td mat-cell *matCellDef="let row" class="vault-table__mono">{{ row.username }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="updatedAt">
+            <th mat-header-cell *matHeaderCellDef>Updated</th>
+            <td mat-cell *matCellDef="let row">{{ row.updatedAt | date: 'medium' }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef>Actions</th>
+            <td mat-cell *matCellDef="let row">
+              <button
+                mat-icon-button
+                type="button"
+                aria-label="View password"
+                matTooltip="View password"
+                [disabled]="(locked$ | async) === true || (saving$ | async)"
+                (click)="viewPassword(row)"
+              >
+                <mat-icon>visibility</mat-icon>
+              </button>
+              <button
+                mat-icon-button
+                type="button"
+                aria-label="Edit credential"
+                matTooltip="Edit"
+                [disabled]="(locked$ | async) === true || (saving$ | async)"
+                (click)="openEditDialog(row)"
+              >
+                <mat-icon>edit</mat-icon>
+              </button>
+              <button
+                mat-icon-button
+                type="button"
+                aria-label="Delete credential"
+                matTooltip="Delete"
+                [disabled]="saving$ | async"
+                (click)="deleteCredential(row)"
+              >
+                <mat-icon>delete</mat-icon>
+              </button>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+        </table>
+      </div>
+    }
+  }
+</section>

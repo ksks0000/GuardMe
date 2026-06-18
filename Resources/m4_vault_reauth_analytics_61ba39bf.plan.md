@@ -4,27 +4,27 @@ overview: "M4 completes the remaining MVP: re-authentication, encrypted password
 todos:
   - id: m4-reauth-backend
     content: "M4.1: Backend re-auth — POST /auth/verify-password, update last_auth_at, SIEM events, document ReAuthGuard usage"
-    status: pending
+    status: completed
   - id: m4-reauth-frontend
     content: "M4.1b: Frontend re-auth — VerifyPassword API, ReauthDialog, stale-session handling"
-    status: pending
+    status: completed
   - id: m4-rules-backend
     content: "M4.2: Rules engine backend — FirewallRule model, RulesService, extend PolicyService pipeline, traffic_logs policyDecision field, no THREAT_SCAN_COMPLETED events"
-    status: pending
+    status: completed
   - id: m4-rules-traffic-ui
     content: "M4.2b: Rules tab UI + traffic table columns (decision, source IP, destination IP); ngrx rules CRUD"
-    status: pending
+    status: completed
   - id: m4-vault-backend
     content: "M4.3: Vault backend — kdfSalt + VaultCredential, CryptoService, full CRUD API (Create Read Update Delete) with guards"
-    status: pending
+    status: completed
   - id: m4-vault-frontend
     content: "M4.3b: Vault frontend — VaultApi, ngrx vault feature, all CRUD operations in UI, re-auth integration"
-    status: pending
+    status: completed
   - id: m4-analytics-backend
     content: "M4.4: Analytics backend — GET /siem/analytics/summary with aggregations"
     status: pending
   - id: m4-analytics-frontend
-    content: "M4.5: Analytics frontend — /analytics page, zip + forEach RxJS operators, charts/tables"
+    content: "M4.5: Analytics frontend — /analytics page, zip + forEach RxJS operators, charts/tables (HTTP API only, no mock)"
     status: pending
   - id: m4-docs-polish
     content: "M4.6: Docs, m4-smoke-test.md, README, SIEM audit, vault lock on logout"
@@ -33,6 +33,10 @@ isProject: false
 ---
 
 # GuardMe Plan (M4 — Vault, Rules, Re-Auth, Analytics)
+
+## Frontend API convention
+
+Each feature uses an abstract `*Api` class + `Http*Api` (or `SocketRealtimeApi` for live events), registered directly in `provideGuardMeApi()`. Backend must be running; test against real NestJS endpoints.
 
 ## What is already done (M1 + M2 + M3)
 
@@ -43,7 +47,18 @@ isProject: false
 | SIEM persistence + WebSocket live stream | Done |
 | Health / system status | Done |
 | Angular dashboard: login, live feed, traffic + security history | Done |
-| `ReAuthGuard` class | Exists — needs verify-password endpoint + UI |
+| `ReAuthGuard` class | Done — verify-password + ReauthDialog wired |
+
+## M4 completed (2026-06-18)
+
+| Milestone | Status |
+|-----------|--------|
+| M4.1 / M4.1b Re-auth | Done |
+| M4.2 / M4.2b Rules + traffic columns | Done |
+| M4.3 / M4.3b Vault CRUD | Done |
+| M4.4 Analytics API | **Next** |
+| M4.5 Analytics UI | Pending |
+| M4.6 Docs | Pending |
 
 ## What M4 delivers
 
@@ -236,7 +251,7 @@ flowchart LR
 
 **Steps:**
 
-1. `RulesApi` + mock + HTTP; ngrx `rules` feature (entity adapter, CRUD effects with `switchMap`).
+1. `RulesApi` + HTTP; ngrx `rules` feature (entity adapter, CRUD effects with `switchMap`).
 2. Route `/rules` + shell nav link **Rules**.
 3. **Rules page:**
    - **System rules** section — read-only cards/table (from `GET /rules` system portion)
@@ -316,7 +331,7 @@ Plus: `kdfSalt` on register, `CryptoService` Argon2 KDF + AES-256-GCM, in-memory
 3. `Documentation/m4-smoke-test.md` — re-auth, rules, vault CRUD, analytics, traffic columns
 4. `config/siem.config.ts` — document allowed `security_events` types (no scan completed)
 5. README demo script: login → show rules → block custom domain → vault CRUD → analytics
-6. Vault lock on logout; remove dead mocks
+6. Vault lock on logout
 
 ---
 

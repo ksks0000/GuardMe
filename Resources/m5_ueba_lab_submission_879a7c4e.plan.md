@@ -31,6 +31,10 @@ isProject: false
 
 # GuardMe Plan (M5 — Intelligence, Notifications, Lab & Submission)
 
+## Frontend API convention (inherited from M4)
+
+Implement `Http*Api` + abstract `*Api` only; wire in `provideGuardMeApi()`. Assume backend at `environment.apiBaseUrl` is running.
+
 ## Assumed state after M4 (complete system)
 
 | Milestone | Delivered |
@@ -280,7 +284,7 @@ THREAT_NOTIFICATION: 'THREAT_NOTIFICATION'
 3. `Documentation/screenshots/` — capture: dashboard live, block page, vault, analytics, notification toast, VMware diagram.
 4. `Documentation/m5-smoke-test.md` — full system regression: M3 + M4 + M5 anomaly trigger + notification.
 5. Root README — "Demo script for presentation" (5-minute walkthrough bullets).
-6. Final code polish: env examples for `UEBA_ALERT_THRESHOLD`, `BASELINE_WINDOW_DAYS`; remove unused mocks; consistent naming.
+6. Final code polish: env examples for `UEBA_ALERT_THRESHOLD`, `BASELINE_WINDOW_DAYS`; consistent naming.
 
 **Verify:** Another person can run demo script + gathering-results doc without author help.
 
