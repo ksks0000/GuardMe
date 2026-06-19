@@ -1,0 +1,49 @@
+:root {
+  // Surfaces & chrome
+  --gm-bg: #0f172a;
+  --gm-bg-deep: #020617;
+  --gm-bg-auth-mid: #134e4a;
+  --gm-surface: rgba(255, 255, 255, 0.04);
+  --gm-border: rgba(255, 255, 255, 0.08);
+  --gm-border-strong: rgba(255, 255, 255, 0.12);
+
+  // Text
+  --gm-text: #e2e8f0;
+
+  // Brand / primary teal
+  --gm-primary: #2dd4bf;
+  --gm-primary-subtle: rgba(45, 212, 191, 0.12);
+  --gm-primary-muted: rgba(45, 212, 191, 0.08);
+  --gm-primary-chart: rgba(45, 212, 191, 0.55);
+
+  // Safe / allow – green
+  --gm-safe: #34d399;
+  --gm-safe-muted: rgba(52, 211, 153, 0.08);
+  --gm-safe-chart: rgba(52, 211, 153, 0.75);
+  --gm-safe-text: #a7f3d0; // lighter for text on green-tinted surfaces
+
+  // Warn / suspicious – amber
+  --gm-warn: #fbbf24;
+  --gm-warn-muted: rgba(251, 191, 36, 0.08);
+  --gm-warn-border: rgba(251, 191, 36, 0.55);
+  --gm-warn-chart: rgba(251, 191, 36, 0.8);
+
+  // Danger / block / malicious – red
+  --gm-danger: #f87171;
+  --gm-danger-chart: rgba(248, 113, 113, 0.85);
+
+  // Error state – backgrounds and text
+  --gm-error-bg: rgba(239, 68, 68, 0.12);
+  --gm-error-border: rgba(239, 68, 68, 0.35);
+  --gm-error-text: #fca5a5;
+
+  // Muted / unverified – slate
+  --gm-muted: #94a3b8;
+  --gm-muted-chart: rgba(148, 163, 184, 0.75);
+
+  // Severity – high is orange; low=muted, medium=warn, critical=danger
+  --gm-severity-high: #fb923c;
+
+  // Chart bar accent – blue for event-type bars
+  --gm-chart-bar: rgba(96, 165, 250, 0.75);
+}

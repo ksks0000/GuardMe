@@ -10,14 +10,6 @@
   letter-spacing: 0.04em;
 }
 
-.chip-ok {
-  --mdc-chip-label-text-color: #34d399;
-}
-
-.chip-degraded {
-  --mdc-chip-label-text-color: #fbbf24;
-}
-
-.chip-unknown {
-  --mdc-chip-label-text-color: #94a3b8;
-}
+.chip-ok      { --mdc-chip-label-text-color: var(--gm-safe); }
+.chip-degraded { --mdc-chip-label-text-color: var(--gm-warn); }
+.chip-unknown  { --mdc-chip-label-text-color: var(--gm-muted); }

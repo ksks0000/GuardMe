@@ -22,14 +22,6 @@
   line-height: 1.2;
 }
 
-.accent-safe .stat-card__value {
-  color: #34d399;
-}
-
-.accent-warn .stat-card__value {
-  color: #fbbf24;
-}
-
-.accent-danger .stat-card__value {
-  color: #f87171;
-}
+.accent-safe  .stat-card__value { color: var(--gm-safe); }
+.accent-warn  .stat-card__value { color: var(--gm-warn); }
+.accent-danger .stat-card__value { color: var(--gm-danger); }

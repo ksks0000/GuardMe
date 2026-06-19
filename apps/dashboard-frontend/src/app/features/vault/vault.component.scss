@@ -37,8 +37,8 @@
   margin: 0;
   padding: 1rem;
   border-radius: 0.5rem;
-  background: rgba(239, 68, 68, 0.12);
-  color: #fca5a5;
+  background: var(--gm-error-bg);
+  color: var(--gm-error-text);
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -52,16 +52,16 @@
   gap: 1rem;
   padding: 1rem 1.25rem;
   border-radius: 0.5rem;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--gm-border);
 }
 
 .vault-banner--locked {
-  background: rgba(251, 191, 36, 0.08);
+  background: var(--gm-warn-muted);
 }
 
 .vault-banner--unlocked {
-  background: rgba(52, 211, 153, 0.08);
-  color: #a7f3d0;
+  background: var(--gm-safe-muted);
+  color: var(--gm-safe-text);
 }
 
 .vault-banner__content {
@@ -114,7 +114,7 @@
 .vault-page__table-wrap {
   overflow-x: auto;
   border-radius: 0.5rem;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--gm-border);
 }
 
 .vault-table {

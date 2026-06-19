@@ -35,6 +35,7 @@ import { selectAuthError, selectAuthLoading } from '../../../store/auth/auth.sel
     MatProgressSpinnerModule,
   ],
   templateUrl: './login.component.html',
+  styleUrl: './login.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class LoginComponent implements OnInit {

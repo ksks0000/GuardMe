@@ -4,7 +4,6 @@
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
-  //max-width: 72rem;
 }
 
 .history-page__header {
@@ -33,8 +32,8 @@
   margin: 0;
   padding: 1rem;
   border-radius: 0.5rem;
-  background: rgba(239, 68, 68, 0.12);
-  color: #fca5a5;
+  background: var(--gm-error-bg);
+  color: var(--gm-error-text);
 }
 
 .history-page__toolbar {
@@ -64,7 +63,7 @@
 .history-page__table-wrap {
   overflow-x: auto;
   border-radius: 0.5rem;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--gm-border);
 }
 
 .history-table {
@@ -79,19 +78,19 @@
 }
 
 .severity--low {
-  color: #94a3b8;
+  color: var(--gm-muted);
 }
 
 .severity--medium {
-  color: #fbbf24;
+  color: var(--gm-warn);
 }
 
 .severity--high {
-  color: #fb923c;
+  color: var(--gm-severity-high);
 }
 
 .severity--critical {
-  color: #f87171;
+  color: var(--gm-danger);
 }
 
 .metadata-list {

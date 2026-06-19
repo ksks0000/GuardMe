@@ -3,8 +3,8 @@
   flex-direction: column;
   padding: 1rem;
   border-radius: 0.5rem;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--gm-surface);
+  border: 1px solid var(--gm-border);
 }
 
 .filter-bar__fields {
@@ -53,17 +53,6 @@
 .filter-bar__datetime-time {
   flex: 0 0 5.5rem;
   width: 5.5rem;
-}
-
-.filter-bar__datetime--compact {
-  .filter-bar__datetime-date {
-    width: 11.5rem;
-  }
-
-  .filter-bar__datetime-time {
-    flex: 0 0 5.5rem;
-    width: 5.5rem;
-  }
 }
 
 .filter-bar--compact {

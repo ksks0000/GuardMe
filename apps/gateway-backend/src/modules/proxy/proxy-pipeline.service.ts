@@ -252,7 +252,7 @@ export class ProxyPipelineService {
       decision: PolicyDecision.ALLOW,
       reason: `Allowed by user whitelist rule: ${label}`,
       riskScore: 0,
-      threatVerdict: ThreatVerdict.SAFE,
+      threatVerdict: ThreatVerdict.UNVERIFIED,
       matchedRuleId: match.ruleId,
       metadata: {
         source: 'user_rule',

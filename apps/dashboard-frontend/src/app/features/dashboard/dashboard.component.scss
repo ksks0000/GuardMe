@@ -2,7 +2,6 @@
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
-  //max-width: 72rem;
 }
 
 .dashboard__header {
@@ -24,7 +23,7 @@
   margin-top: 0.75rem !important;
   padding: 0.75rem 1rem;
   border-radius: 0.5rem;
-  background: rgba(45, 212, 191, 0.08);
+  background: var(--gm-primary-muted);
   border: 1px solid rgba(45, 212, 191, 0.2);
   font-size: 0.9rem;
   line-height: 1.5;

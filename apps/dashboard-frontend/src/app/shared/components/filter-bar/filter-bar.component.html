@@ -96,7 +96,7 @@
       <div class="filter-bar__footer">
         <div class="filter-bar__datetime-row">
           @for (field of datetimeFields(); track field.key) {
-            <div class="filter-bar__datetime" [class.filter-bar__datetime--compact]="layout() === 'compact'">
+            <div class="filter-bar__datetime">
               <mat-form-field appearance="outline" class="filter-bar__datetime-date" subscriptSizing="dynamic">
                 <mat-label>{{ field.label }}</mat-label>
                 <input

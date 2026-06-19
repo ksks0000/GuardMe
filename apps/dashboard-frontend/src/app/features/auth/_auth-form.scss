@@ -3,7 +3,12 @@
   align-items: center;
   justify-content: center;
   min-height: 100vh;
-  background: radial-gradient(ellipse at center, #134e4a 0%, #0f172a 70%, #020617 100%);
+  background: radial-gradient(
+    ellipse at center,
+    var(--gm-bg-auth-mid) 0%,
+    var(--gm-bg) 70%,
+    var(--gm-bg-deep) 100%
+  );
 }
 
 .auth-card {
@@ -57,8 +62,8 @@
   margin: 0 0 1rem;
   padding: 0.75rem 1rem;
   border-radius: 0.5rem;
-  background: rgba(239, 68, 68, 0.12);
-  color: #fca5a5;
+  background: var(--gm-error-bg);
+  color: var(--gm-error-text);
   font-size: 0.9rem;
 }
 
@@ -69,7 +74,7 @@
   opacity: 0.85;
 
   a {
-    color: #2dd4bf;
+    color: var(--gm-primary);
     text-decoration: underline;
   }
 }

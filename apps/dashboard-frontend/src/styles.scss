@@ -1,6 +1,5 @@
 @use 'styles/theme' as theme;
-@use 'styles/overrides';
-@use 'app/features/auth/auth-form';
+@use 'styles/tokens';
 
 html {
   height: 100%;
@@ -9,10 +8,9 @@ html {
 
 body {
   color-scheme: dark;
-  background-color: #0f172a;
-  color: #e2e8f0;
+  background-color: var(--gm-bg);
+  color: var(--gm-text);
   font: var(--mat-sys-body-medium);
   margin: 0;
   height: 100%;
 }
-

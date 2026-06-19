@@ -42,6 +42,7 @@ import { selectAuthError, selectAuthLoading } from '../../../store/auth/auth.sel
     MatProgressSpinnerModule,
   ],
   templateUrl: './register.component.html',
+  styleUrl: './register.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RegisterComponent implements OnInit {
