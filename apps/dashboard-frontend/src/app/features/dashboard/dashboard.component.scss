@@ -63,7 +63,7 @@
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  height: 600px;
+  max-height: 600px;
 
   mat-card-header {
     flex-shrink: 0;

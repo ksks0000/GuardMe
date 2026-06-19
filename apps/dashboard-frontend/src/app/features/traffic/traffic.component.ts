@@ -21,7 +21,6 @@ import {
 } from 'rxjs';
 import { SiemApi } from '../../core/api/siem.api';
 import { POLICY_DECISIONS, THREAT_VERDICTS, TrafficLog } from '../../core/models';
-import { buildActiveFilterChips } from '../../core/utils/filter-chips.util';
 import { buildTrafficLogQuery } from '../../core/utils/history-query.util';
 import { formatIpAddress } from '../../core/utils/ip-display.util';
 import { computeTrafficPageStats, TrafficPageStats } from '../../core/utils/traffic-stats.util';
@@ -140,10 +139,6 @@ export class TrafficComponent {
 
   private readonly filters$ = new BehaviorSubject<FilterValues>({ ...EMPTY_FILTERS });
   private readonly page$ = new BehaviorSubject(1);
-
-  readonly activeFilterChips$ = this.filters$.pipe(
-    map((filters) => buildActiveFilterChips(filters, this.filterFields)),
-  );
 
   readonly viewState$ = combineLatest([this.filters$, this.page$]).pipe(
     switchMap(([filters, page]) =>

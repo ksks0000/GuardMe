@@ -4,17 +4,7 @@
     <p>Aggregated traffic decisions, threat verdicts, and security events for your account</p>
   </header>
 
-  <app-filter-bar [fields]="filterFields" (filtersApply)="onFiltersApply($event)" />
-
-  @if (activeFilterChips$ | async; as chips) {
-    @if (chips.length > 0) {
-      <mat-chip-set aria-label="Active analytics filters" class="analytics-page__active-filters">
-        @for (chip of chips; track chip.key) {
-          <mat-chip>{{ chip.label }}: {{ chip.value }}</mat-chip>
-        }
-      </mat-chip-set>
-    }
-  }
+  <app-filter-bar layout="compact" [fields]="filterFields" (filtersApply)="onFiltersApply($event)" />
 
   @if (period$ | async; as period) {
     <p class="analytics-page__period">
@@ -157,14 +147,12 @@
                 } @else {
                   <ul class="severity-list">
                     @for (segment of series; track segment.key) {
-                      @if (segment.value > 0) {
-                        <li>
-                          <span class="severity-list__label severity--{{ segment.cssClass }}">
-                            {{ segment.label }}
-                          </span>
-                          <span class="severity-list__value">{{ segment.value }}</span>
-                        </li>
-                      }
+                      <li>
+                        <span class="severity-list__label severity--{{ segment.cssClass }}">
+                          {{ segment.label }}
+                        </span>
+                        <span class="severity-list__value">{{ segment.value }}</span>
+                      </li>
                     }
                   </ul>
                 }
@@ -178,7 +166,7 @@
             </mat-card-header>
             <mat-card-content>
               @if (eventTypeSeries$ | async; as series) {
-                @if (series.length === 0) {
+                @if ((securityTotal$ | async) === 0) {
                   <p class="analytics-card__empty">No security events in this period.</p>
                 } @else {
                   <div class="event-type-list">
@@ -241,27 +229,47 @@
             @if (buckets.length === 0) {
               <p class="analytics-card__empty">No time-series data for this period.</p>
             } @else {
-              <div class="time-chart" role="img" aria-label="Traffic volume over time">
-                @for (bucket of buckets; track bucket.bucketStart) {
-                  <div
-                    class="time-chart__column"
-                    [title]="bucketTooltip(bucket.requestCount, bucket.blockedCount)"
-                  >
-                    <div
-                      class="time-chart__bar"
-                      [style.height.%]="bucketHeight(bucket.requestCount, (maxBucketRequests$ | async) ?? 0)"
-                    >
-                      <div
-                        class="time-chart__blocked"
-                        [style.height.%]="blockedShare(bucket.requestCount, bucket.blockedCount)"
-                      ></div>
+              @if (maxBucketRequests$ | async; as maxRequests) {
+                @if (yAxisTicks(maxRequests); as ticks) {
+                  <div class="time-chart-wrap">
+                    <div class="time-chart__y-axis" aria-hidden="true">
+                      @for (tick of ticks.slice().reverse(); track tick) {
+                        <span class="time-chart__y-tick">{{ tick }}</span>
+                      }
                     </div>
-                    <span class="time-chart__label">
-                      {{ formatBucketLabel(bucket.bucketStart, summary.period.bucketHours) }}
-                    </span>
+                    <div class="time-chart__body">
+                      <div class="time-chart__grid-lines" aria-hidden="true">
+                        @for (tick of ticks.slice().reverse(); track tick) {
+                          <span class="time-chart__grid-line"></span>
+                        }
+                      </div>
+                      <div class="time-chart" role="img" aria-label="Traffic volume over time">
+                        @for (bucket of buckets; track bucket.bucketStart) {
+                          <div
+                            class="time-chart__column"
+                            [title]="bucketTooltip(bucket.requestCount, bucket.blockedCount)"
+                          >
+                            <div class="time-chart__plot-area">
+                              <div
+                                class="time-chart__bar"
+                                [style.height.%]="bucketHeight(bucket.requestCount, ticks[ticks.length - 1])"
+                              >
+                                <div
+                                  class="time-chart__blocked"
+                                  [style.height.%]="blockedShare(bucket.requestCount, bucket.blockedCount)"
+                                ></div>
+                              </div>
+                            </div>
+                            <span class="time-chart__label">
+                              {{ formatBucketLabel(bucket.bucketStart, summary.period.bucketHours) }}
+                            </span>
+                          </div>
+                        }
+                      </div>
+                    </div>
                   </div>
                 }
-              </div>
+              }
             }
           }
         </mat-card-content>

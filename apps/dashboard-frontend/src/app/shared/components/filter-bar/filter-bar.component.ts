@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   inject,
   input,
   OnInit,
@@ -23,6 +24,8 @@ import {
 import { FilterFieldConfig, FilterValues } from '../../models/filter-bar.model';
 import { FILTER_DATE_FORMATS_PROVIDER } from './filter-bar-date-formats';
 
+export type FilterBarLayout = 'grid' | 'split' | 'compact';
+
 @Component({
   selector: 'app-filter-bar',
   imports: [
@@ -42,6 +45,16 @@ import { FILTER_DATE_FORMATS_PROVIDER } from './filter-bar-date-formats';
 export class FilterBarComponent implements OnInit {
   readonly fields = input.required<FilterFieldConfig[]>();
   readonly initialValues = input<FilterValues>({});
+  /** `grid` = single row (default); `split` = primary row + datetime/actions row; `compact` = narrow datetime + actions */
+  readonly layout = input<FilterBarLayout>('grid');
+
+  readonly primaryFields = computed(() =>
+    this.fields().filter((field) => field.type !== 'datetime'),
+  );
+
+  readonly datetimeFields = computed(() =>
+    this.fields().filter((field) => field.type === 'datetime'),
+  );
 
   readonly filtersApply = output<FilterValues>();
   readonly filtersClear = output<void>();

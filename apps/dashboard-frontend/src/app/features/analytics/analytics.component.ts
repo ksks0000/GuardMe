@@ -7,18 +7,16 @@ import {
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatCardModule } from '@angular/material/card';
-import { MatChipsModule } from '@angular/material/chips';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTableModule } from '@angular/material/table';
 import { Store } from '@ngrx/store';
-import { BehaviorSubject, map } from 'rxjs';
 import {
   blockedSharePercent,
+  buildTimeChartYAxisTicks,
   chartSegmentWidthPercent,
   timeBucketHeightPercent,
 } from '../../core/utils/analytics-chart.util';
 import { buildAnalyticsSummaryQuery } from '../../core/utils/analytics-query.util';
-import { buildActiveFilterChips } from '../../core/utils/filter-chips.util';
 import { EmptyStateComponent } from '../../shared/components/empty-state/empty-state.component';
 import { FilterBarComponent } from '../../shared/components/filter-bar/filter-bar.component';
 import { StatCardComponent } from '../../shared/components/stat-card/stat-card.component';
@@ -49,7 +47,6 @@ import {
     AsyncPipe,
     DatePipe,
     MatCardModule,
-    MatChipsModule,
     MatProgressSpinnerModule,
     MatTableModule,
     FilterBarComponent,
@@ -68,15 +65,6 @@ export class AnalyticsComponent implements OnInit {
     { key: 'from', label: 'From', type: 'datetime' },
     { key: 'to', label: 'To', type: 'datetime' },
   ];
-
-  private readonly appliedFilters$ = new BehaviorSubject<FilterValues>({
-    from: '',
-    to: '',
-  });
-
-  readonly activeFilterChips$ = this.appliedFilters$.pipe(
-    map((filters) => buildActiveFilterChips(filters, this.filterFields)),
-  );
 
   readonly loading$ = this.store.select(selectAnalyticsLoading);
   readonly error$ = this.store.select(selectAnalyticsError);
@@ -103,13 +91,13 @@ export class AnalyticsComponent implements OnInit {
   protected bucketHeight = timeBucketHeightPercent;
   protected blockedShare = blockedSharePercent;
   protected segmentWidth = chartSegmentWidthPercent;
+  protected yAxisTicks = buildTimeChartYAxisTicks;
 
   ngOnInit(): void {
     this.store.dispatch(AnalyticsActions.loadSummary({ query: {} }));
   }
 
   onFiltersApply(filters: FilterValues): void {
-    this.appliedFilters$.next(filters);
     this.store.dispatch(
       AnalyticsActions.loadSummary({ query: buildAnalyticsSummaryQuery(filters) }),
     );

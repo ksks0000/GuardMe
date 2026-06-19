@@ -102,23 +102,63 @@ export function buildSecuritySeveritySeries(
 export function buildSecurityEventTypeSeries(
   counts: Record<string, number>,
 ): AnalyticsChartSegment[] {
-  const series: AnalyticsChartSegment[] = [];
+  const config = Object.values(SIEM_EVENT_TYPES).map((type) => ({
+    key: type,
+    label: SECURITY_EVENT_TYPE_LABELS[type] ?? type,
+    cssClass: 'default',
+  }));
 
-  Object.entries(counts).forEach(([type, value]) => {
-    if (value <= 0) {
-      return;
+  return buildChartSeries(counts, config).sort((left, right) => {
+    if (right.value !== left.value) {
+      return right.value - left.value;
     }
 
-    series.push({
-      key: type,
-      label: SECURITY_EVENT_TYPE_LABELS[type] ?? type,
-      value,
-      cssClass: 'default',
-    });
+    return left.label.localeCompare(right.label);
   });
+}
 
-  series.sort((left, right) => right.value - left.value);
-  return series;
+function niceAxisStep(maxValue: number, targetTicks: number): number {
+  if (maxValue <= 0) {
+    return 1;
+  }
+
+  const rough = maxValue / Math.max(targetTicks - 1, 1);
+  const magnitude = Math.pow(10, Math.floor(Math.log10(rough)));
+  const normalized = rough / magnitude;
+
+  let nice = 10;
+  if (normalized <= 1) {
+    nice = 1;
+  } else if (normalized <= 2) {
+    nice = 2;
+  } else if (normalized <= 5) {
+    nice = 5;
+  }
+
+  return nice * magnitude;
+}
+
+/** Top of the Y-axis scale (rounded ceiling), shared by ticks, grid lines, and bar heights. */
+export function timeChartYAxisCeiling(maxRequestCount: number): number {
+  const ticks = buildTimeChartYAxisTicks(maxRequestCount);
+  return ticks.at(-1) ?? 0;
+}
+
+/** Y-axis tick values from 0 through a rounded ceiling of `maxRequestCount`. */
+export function buildTimeChartYAxisTicks(maxRequestCount: number): number[] {
+  if (maxRequestCount <= 0) {
+    return [0];
+  }
+
+  const step = niceAxisStep(maxRequestCount, 5);
+  const ceiling = Math.ceil(maxRequestCount / step) * step;
+  const ticks: number[] = [];
+
+  for (let value = 0; value <= ceiling; value += step) {
+    ticks.push(value);
+  }
+
+  return ticks;
 }
 
 export function chartSegmentWidthPercent(
@@ -134,13 +174,13 @@ export function chartSegmentWidthPercent(
 
 export function timeBucketHeightPercent(
   requestCount: number,
-  maxRequestCount: number,
+  axisCeiling: number,
 ): number {
-  if (maxRequestCount <= 0 || requestCount <= 0) {
+  if (axisCeiling <= 0 || requestCount <= 0) {
     return 0;
   }
 
-  return Math.max((requestCount / maxRequestCount) * 100, 4);
+  return (requestCount / axisCeiling) * 100;
 }
 
 export function blockedSharePercent(requestCount: number, blockedCount: number): number {

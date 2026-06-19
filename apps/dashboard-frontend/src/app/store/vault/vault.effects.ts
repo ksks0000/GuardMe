@@ -1,6 +1,6 @@
 import { inject, Injectable } from '@angular/core';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
-import { catchError, filter, map, of, switchMap } from 'rxjs';
+import { catchError, map, of, switchMap } from 'rxjs';
 import { VaultApi } from '../../core/api/vault.api';
 import { mapVaultError } from '../../core/utils/vault-error.util';
 import { VaultActions } from './vault.actions';
@@ -24,10 +24,9 @@ export class VaultEffects {
     ),
   );
 
-  readonly loadCredentialsAfterUnlock$ = createEffect(() =>
+  readonly loadCredentialsOnReady$ = createEffect(() =>
     this.actions$.pipe(
-      ofType(VaultActions.unlockVaultSuccess, VaultActions.loadStatusSuccess),
-      filter(({ locked }) => !locked),
+      ofType(VaultActions.loadStatusSuccess, VaultActions.unlockVaultSuccess),
       map(() => VaultActions.loadCredentials()),
     ),
   );

@@ -18,7 +18,6 @@ import { httpInterceptors } from './core/interceptors';
 import { provideAppStore } from './store';
 import { AuthActions } from './store/auth/auth.actions';
 
-// en-GB renders all `date` pipe outputs in 24-hour format (no AM/PM).
 registerLocaleData(localeEnGb);
 
 export const appConfig: ApplicationConfig = {

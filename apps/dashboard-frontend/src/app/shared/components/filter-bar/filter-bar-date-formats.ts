@@ -1,6 +1,5 @@
 import { MAT_DATE_FORMATS } from '@angular/material/core';
 
-/** European-style date display for filter pickers (no AM/PM). */
 export const FILTER_DATE_FORMATS = {
   parse: {
     dateInput: 'dd.MM.yyyy',

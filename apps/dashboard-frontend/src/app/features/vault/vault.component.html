@@ -91,7 +91,7 @@
 
     @if ((credentials$ | async)?.length === 0) {
       <app-empty-state
-        message="No saved credentials yet. Unlock the vault and add your first entry."
+        [message]="(locked$ | async) ? 'No saved credentials yet. Unlock the vault to add entries.' : 'No saved credentials yet. Add your first entry.'"
         icon="key"
       />
     } @else {
@@ -140,7 +140,7 @@
                 type="button"
                 aria-label="Delete credential"
                 matTooltip="Delete"
-                [disabled]="saving$ | async"
+                [disabled]="(locked$ | async) === true || (saving$ | async)"
                 (click)="deleteCredential(row)"
               >
                 <mat-icon>delete</mat-icon>

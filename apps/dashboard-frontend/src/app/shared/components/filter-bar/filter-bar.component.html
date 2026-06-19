@@ -1,61 +1,135 @@
 @if (form) {
-  <form [formGroup]="form" class="filter-bar" (ngSubmit)="apply()">
-    <div class="filter-bar__fields">
-      @for (field of fields(); track field.key) {
-        @if (field.type === 'select') {
-          <mat-form-field appearance="outline" class="filter-bar__field">
-            <mat-label>{{ field.label }}</mat-label>
-            <mat-select [formControlName]="field.key">
-              @for (option of field.options ?? []; track option.value) {
-                <mat-option [value]="option.value">{{ option.label }}</mat-option>
-              }
-            </mat-select>
-          </mat-form-field>
-        } @else if (field.type === 'datetime') {
-          <div class="filter-bar__datetime">
-            <mat-form-field appearance="outline" class="filter-bar__datetime-date" subscriptSizing="dynamic">
+  <form
+    [formGroup]="form"
+    class="filter-bar"
+    [class.filter-bar--split]="layout() === 'split'"
+    [class.filter-bar--compact]="layout() === 'compact'"
+    (ngSubmit)="apply()"
+  >
+    @if (layout() === 'grid') {
+      <div class="filter-bar__fields">
+        @for (field of fields(); track field.key) {
+          @if (field.type === 'select') {
+            <mat-form-field appearance="outline" class="filter-bar__field">
+              <mat-label>{{ field.label }}</mat-label>
+              <mat-select [formControlName]="field.key">
+                @for (option of field.options ?? []; track option.value) {
+                  <mat-option [value]="option.value">{{ option.label }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+          } @else if (field.type === 'datetime') {
+            <div class="filter-bar__datetime">
+              <mat-form-field appearance="outline" class="filter-bar__datetime-date" subscriptSizing="dynamic">
+                <mat-label>{{ field.label }}</mat-label>
+                <input
+                  matInput
+                  [matDatepicker]="datePicker"
+                  [formControlName]="dateControlKey(field.key)"
+                  placeholder="dd.MM.yyyy"
+                  autocomplete="off"
+                />
+                <mat-datepicker-toggle matIconSuffix [for]="datePicker" />
+                <mat-datepicker #datePicker />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="filter-bar__datetime-time" subscriptSizing="dynamic">
+                <input
+                  matInput
+                  [formControlName]="timeControlKey(field.key)"
+                  [attr.aria-label]="field.label + ' time'"
+                  placeholder="HH:mm"
+                  inputmode="numeric"
+                  autocomplete="off"
+                  maxlength="5"
+                />
+              </mat-form-field>
+            </div>
+          } @else {
+            <mat-form-field appearance="outline" class="filter-bar__field">
               <mat-label>{{ field.label }}</mat-label>
               <input
                 matInput
-                [matDatepicker]="datePicker"
-                [formControlName]="dateControlKey(field.key)"
-                placeholder="dd.MM.yyyy"
+                type="text"
+                [formControlName]="field.key"
+                [placeholder]="field.placeholder ?? ''"
                 autocomplete="off"
               />
-              <mat-datepicker-toggle matIconSuffix [for]="datePicker" />
-              <mat-datepicker #datePicker />
             </mat-form-field>
-
-            <mat-form-field appearance="outline" class="filter-bar__datetime-time" subscriptSizing="dynamic">
-              <input
-                matInput
-                [formControlName]="timeControlKey(field.key)"
-                [attr.aria-label]="field.label + ' time'"
-                placeholder="HH:mm"
-                inputmode="numeric"
-                autocomplete="off"
-                maxlength="5"
-              />
-            </mat-form-field>
-          </div>
-        } @else {
-          <mat-form-field appearance="outline" class="filter-bar__field">
-            <mat-label>{{ field.label }}</mat-label>
-            <input
-              matInput
-              type="text"
-              [formControlName]="field.key"
-              [placeholder]="field.placeholder ?? ''"
-              autocomplete="off"
-            />
-          </mat-form-field>
+          }
         }
-      }
-    </div>
+      </div>
 
-    <div class="filter-bar__actions">
-      <button mat-stroked-button type="button" (click)="clear()">Clear</button>
-      <button mat-flat-button color="primary" type="submit">Apply filters</button>
-    </div>
+      <div class="filter-bar__actions">
+        <button mat-stroked-button type="button" (click)="clear()">Clear</button>
+        <button mat-flat-button color="primary" type="submit">Apply filters</button>
+      </div>
+    } @else {
+      @if (primaryFields().length > 0) {
+        <div class="filter-bar__fields filter-bar__fields--primary">
+          @for (field of primaryFields(); track field.key) {
+            @if (field.type === 'select') {
+              <mat-form-field appearance="outline" class="filter-bar__field">
+                <mat-label>{{ field.label }}</mat-label>
+                <mat-select [formControlName]="field.key">
+                  @for (option of field.options ?? []; track option.value) {
+                    <mat-option [value]="option.value">{{ option.label }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+            } @else {
+              <mat-form-field appearance="outline" class="filter-bar__field">
+                <mat-label>{{ field.label }}</mat-label>
+                <input
+                  matInput
+                  type="text"
+                  [formControlName]="field.key"
+                  [placeholder]="field.placeholder ?? ''"
+                  autocomplete="off"
+                />
+              </mat-form-field>
+            }
+          }
+        </div>
+      }
+
+      <div class="filter-bar__footer">
+        <div class="filter-bar__datetime-row">
+          @for (field of datetimeFields(); track field.key) {
+            <div class="filter-bar__datetime" [class.filter-bar__datetime--compact]="layout() === 'compact'">
+              <mat-form-field appearance="outline" class="filter-bar__datetime-date" subscriptSizing="dynamic">
+                <mat-label>{{ field.label }}</mat-label>
+                <input
+                  matInput
+                  [matDatepicker]="datePicker"
+                  [formControlName]="dateControlKey(field.key)"
+                  placeholder="dd.MM.yyyy"
+                  autocomplete="off"
+                />
+                <mat-datepicker-toggle matIconSuffix [for]="datePicker" />
+                <mat-datepicker #datePicker />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="filter-bar__datetime-time" subscriptSizing="dynamic">
+                <input
+                  matInput
+                  [formControlName]="timeControlKey(field.key)"
+                  [attr.aria-label]="field.label + ' time'"
+                  placeholder="HH:mm"
+                  inputmode="numeric"
+                  autocomplete="off"
+                  maxlength="5"
+                />
+              </mat-form-field>
+            </div>
+          }
+        </div>
+
+        <div class="filter-bar__actions">
+          <button mat-stroked-button type="button" (click)="clear()">Clear</button>
+          <button mat-flat-button color="primary" type="submit">Apply filters</button>
+        </div>
+      </div>
+    }
   </form>
 }

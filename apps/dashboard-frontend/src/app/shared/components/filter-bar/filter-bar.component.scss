@@ -1,7 +1,6 @@
 .filter-bar {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
   padding: 1rem;
   border-radius: 0.5rem;
   background: rgba(255, 255, 255, 0.03);
@@ -14,8 +13,28 @@
   gap: 0.75rem 1rem;
 }
 
+.filter-bar__fields--primary {
+  width: 100%;
+}
+
 .filter-bar__field {
   width: 100%;
+}
+
+.filter-bar__footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+}
+
+.filter-bar__datetime-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 0.75rem 1rem;
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .filter-bar__datetime {
@@ -23,12 +42,12 @@
   gap: 0.5rem;
   align-items: flex-start;
   min-width: 0;
-  width: 100%;
 }
 
 .filter-bar__datetime-date {
   flex: 1 1 auto;
   min-width: 0;
+  width: 11.5rem;
 }
 
 .filter-bar__datetime-time {
@@ -36,8 +55,29 @@
   width: 5.5rem;
 }
 
+.filter-bar__datetime--compact {
+  .filter-bar__datetime-date {
+    width: 11.5rem;
+  }
+
+  .filter-bar__datetime-time {
+    flex: 0 0 5.5rem;
+    width: 5.5rem;
+  }
+}
+
+.filter-bar--compact {
+  gap: 0.75rem;
+
+  .filter-bar__footer {
+    align-items: center;
+  }
+}
+
 .filter-bar__actions {
   display: flex;
   justify-content: flex-end;
   gap: 0.75rem;
+  flex: 0 0 auto;
+  margin-top: 1rem;
 }

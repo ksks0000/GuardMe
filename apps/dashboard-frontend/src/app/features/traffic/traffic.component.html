@@ -1,20 +1,10 @@
 <section class="history-page">
   <header class="history-page__header">
     <h1>Traffic History</h1>
-    <p>Paginated traffic logs with decision, verdict, IPs, and time range filters</p>
+    <p>Paginated traffic logs with filters</p>
   </header>
 
-  <app-filter-bar [fields]="filterFields" (filtersApply)="onFiltersApply($event)" />
-
-  @if (activeFilterChips$ | async; as chips) {
-    @if (chips.length > 0) {
-      <mat-chip-set aria-label="Active traffic filters" class="history-page__active-filters">
-        @for (chip of chips; track chip.key) {
-          <mat-chip>{{ chip.label }}: {{ chip.value }}</mat-chip>
-        }
-      </mat-chip-set>
-    }
-  }
+  <app-filter-bar layout="split" [fields]="filterFields" (filtersApply)="onFiltersApply($event)" />
 
   @if (viewState$ | async; as state) {
     @if (state.status === 'loading') {
@@ -132,4 +122,4 @@
     }
   }
 </section>
-
+
