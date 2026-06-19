@@ -25,8 +25,15 @@ export class SiemController {
   }
 
   @Get('security-events')
-  getSecurityEvents(@Query() query: SecurityEventsQueryDto) {
-    return this.siemService.findSecurityEvents(query);
+  getSecurityEvents(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query() query: SecurityEventsQueryDto,
+  ) {
+    return this.siemService.findSecurityEventsForUser(
+      user.userId,
+      user.username,
+      query,
+    );
   }
 
   @Get('analytics/summary')

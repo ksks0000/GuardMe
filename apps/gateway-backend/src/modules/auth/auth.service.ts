@@ -15,6 +15,7 @@ import { SiemService } from '../siem/siem.service';
 import { SessionsService } from '../sessions/sessions.service';
 import { UsersService } from '../users/users.service';
 import { VaultKeyCacheService } from '../vault/vault-key-cache.service';
+import { ProxyRealmService } from '../proxy/proxy-realm.service';
 import { AuthProfileDto } from './dto/auth-profile.dto';
 import { LoginDto } from './dto/login.dto';
 import { LogoutResponseDto } from './dto/logout-response.dto';
@@ -34,6 +35,7 @@ export class AuthService {
     private readonly eventEmitter: EventEmitter2,
     private readonly siemService: SiemService,
     private readonly vaultKeyCache: VaultKeyCacheService,
+    private readonly proxyRealmService: ProxyRealmService,
   ) {}
 
   async register(dto: RegisterDto): Promise<PublicUserProfileDto> {
@@ -61,6 +63,7 @@ export class AuthService {
 
     await this.usersService.updateLastAuthAt(user.id);
     await this.issueSessionCookie(user.id, req, res);
+    this.proxyRealmService.rotate();
     this.emitSessionEvent('LOGIN', user.id, user.username);
 
     return this.usersService.toPublicProfile({
@@ -78,7 +81,9 @@ export class AuthService {
       const payload = await verifyJwtPayload(this.jwtService, token, {
         ignoreExpiration: true,
       });
-      if (payload?.jti) {
+      if (payload?.jti && payload?.sub) {
+        await this.sessionsService.revokeAllForUser(payload.sub);
+      } else if (payload?.jti) {
         await this.sessionsService.revokeByJwtId(payload.jti);
       }
       if (payload?.sub) {
@@ -91,6 +96,7 @@ export class AuthService {
     }
 
     this.clearSessionCookie(res);
+    this.proxyRealmService.rotate();
 
     if (logoutUserId) {
       this.vaultKeyCache.clearKey(logoutUserId);

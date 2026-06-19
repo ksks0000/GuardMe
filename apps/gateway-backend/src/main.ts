@@ -12,15 +12,14 @@ import { proxyConfig } from './config/proxy.config';
 import { ConnectTunnelService } from './modules/proxy/connect-tunnel.service';
 import { ProxyAuthService } from './modules/proxy/proxy-auth.service';
 import { ProxyPipelineService } from './modules/proxy/proxy-pipeline.service';
+import { ProxyRealmService } from './modules/proxy/proxy-realm.service';
 
 const logger = new Logger('Bootstrap');
 
-const PROXY_AUTH_REALM = 'GuardMe';
-
-function respondProxyAuthRequired(res: Response): void {
+function respondProxyAuthRequired(res: Response, realm: string): void {
   res
     .status(407)
-    .setHeader('Proxy-Authenticate', `Basic realm="${PROXY_AUTH_REALM}"`)
+    .setHeader('Proxy-Authenticate', `Basic realm="${realm}"`)
     .setHeader('Content-Type', 'text/html; charset=utf-8')
     .setHeader('X-Content-Type-Options', 'nosniff')
     .send(`<!DOCTYPE html>
@@ -29,8 +28,8 @@ function respondProxyAuthRequired(res: Response): void {
 <body style="font-family:system-ui;background:#0f1419;color:#e7ecf3;padding:2rem;">
   <h1>Proxy authentication required</h1>
   <p>Your browser should prompt for a username and password.</p>
-  <p>Use the <strong>same GuardMe credentials</strong> as the dashboard (e.g. after signing in at <code>localhost:4200</code>).</p>
-  <p>Firefox and Chrome remember proxy credentials for the rest of the session.</p>
+  <p>Sign in at the dashboard first, then enter the <strong>same GuardMe credentials</strong> when prompted.</p>
+  <p>After sign-out or switching users, your browser may prompt again for proxy credentials.</p>
 </body>
 </html>`);
 }
@@ -39,6 +38,7 @@ function createProxyServer(app: INestApplication): Server {
   const proxyAuth = app.get(ProxyAuthService);
   const proxyPipeline = app.get(ProxyPipelineService);
   const connectTunnel = app.get(ConnectTunnelService);
+  const proxyRealm = app.get(ProxyRealmService);
 
   const proxyApp = express();
   proxyApp.disable('x-powered-by');
@@ -49,7 +49,7 @@ function createProxyServer(app: INestApplication): Server {
       try {
         user = await proxyAuth.authenticate(req);
       } catch {
-        respondProxyAuthRequired(res);
+        respondProxyAuthRequired(res, proxyRealm.getRealm());
         return;
       }
 
@@ -65,9 +65,10 @@ function createProxyServer(app: INestApplication): Server {
         const user = await proxyAuth.authenticate(req);
         await connectTunnel.handle(req, clientSocket, user);
       } catch {
+        const realm = proxyRealm.getRealm();
         clientSocket.write(
           'HTTP/1.1 407 Proxy Authentication Required\r\n' +
-            `Proxy-Authenticate: Basic realm="${PROXY_AUTH_REALM}"\r\n\r\n`,
+            `Proxy-Authenticate: Basic realm="${realm}"\r\n\r\n`,
         );
         clientSocket.destroy();
       }

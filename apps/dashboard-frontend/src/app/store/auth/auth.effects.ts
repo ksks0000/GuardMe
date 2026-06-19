@@ -3,12 +3,13 @@ import { MatDialog } from '@angular/material/dialog';
 import { Router } from '@angular/router';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { Store } from '@ngrx/store';
-import { catchError, exhaustMap, filter, map, of, switchMap, tap } from 'rxjs';
+import { catchError, exhaustMap, filter, interval, map, of, startWith, switchMap, takeUntil, tap, withLatestFrom } from 'rxjs';
 import { AuthApi } from '../../core/api/auth.api';
 import { mapAuthError } from '../../core/utils/auth-error.util';
 import { sanitizeReturnUrl } from '../../core/utils/return-url.util';
 import { ReauthDialogComponent } from '../../shared/components/reauth-dialog/reauth-dialog.component';
 import { AuthActions } from './auth.actions';
+import { selectIsAuthenticated, selectIsReAuthStale } from './auth.selectors';
 
 @Injectable()
 export class AuthEffects {
@@ -107,6 +108,32 @@ export class AuthEffects {
         }),
       ),
     { dispatch: false },
+  );
+
+  readonly promptReAuthWhenStale$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(
+        AuthActions.loginSuccess,
+        AuthActions.loadProfileSuccess,
+        AuthActions.verifyPasswordSuccess,
+      ),
+      switchMap(() =>
+        interval(30_000).pipe(
+          startWith(0),
+          withLatestFrom(
+            this.store.select(selectIsAuthenticated),
+            this.store.select(selectIsReAuthStale),
+          ),
+          filter(([, isAuthenticated, isStale]) => isAuthenticated && isStale),
+          map(() => AuthActions.reauthRequired()),
+          takeUntil(
+            this.actions$.pipe(
+              ofType(AuthActions.logoutSuccess, AuthActions.sessionExpired),
+            ),
+          ),
+        ),
+      ),
+    ),
   );
 
   readonly openReAuthDialog$ = createEffect(

@@ -16,6 +16,7 @@ import { TrafficLogInput } from './dto/traffic-log.input';
 import { TrafficLogsQueryDto } from './dto/traffic-logs-query.dto';
 import { toSecurityEventDetailPayload } from './utils/history-payload.mapper';
 import { sanitizeSearchTerm } from './utils/search-term.util';
+import { buildSecurityEventUserScope } from './utils/security-event-user-scope.util';
 
 @Injectable()
 export class SiemService {
@@ -105,13 +106,15 @@ export class SiemService {
     };
   }
 
-  async findSecurityEvents(
+  async findSecurityEventsForUser(
+    userId: string,
+    username: string,
     query: SecurityEventsQueryDto,
   ): Promise<PaginatedResultDto<SecurityEventDetailPayload>> {
     const page = query.page ?? 1;
     const pageSize = query.pageSize ?? 15;
     const skip = (page - 1) * pageSize;
-    const where = this.buildSecurityEventWhere(query);
+    const where = this.buildSecurityEventWhere(userId, username, query);
 
     const [total, rows] = await Promise.all([
       this.prisma.securityEvent.count({ where }),
@@ -172,29 +175,34 @@ export class SiemService {
   }
 
   private buildSecurityEventWhere(
+    userId: string,
+    username: string,
     query: SecurityEventsQueryDto,
   ): Prisma.SecurityEventWhereInput {
-    const where: Prisma.SecurityEventWhereInput = {};
+    const clauses: Prisma.SecurityEventWhereInput[] = [
+      buildSecurityEventUserScope(userId, username),
+    ];
 
     if (query.type) {
-      where.type = query.type;
+      clauses.push({ type: query.type });
     }
 
     if (query.severity) {
-      where.severity = query.severity;
+      clauses.push({ severity: query.severity });
     }
 
     if (query.from || query.to) {
-      where.createdAt = {};
+      const createdAt: Prisma.DateTimeFilter = {};
       if (query.from) {
-        where.createdAt.gte = new Date(query.from);
+        createdAt.gte = new Date(query.from);
       }
       if (query.to) {
-        where.createdAt.lte = new Date(query.to);
+        createdAt.lte = new Date(query.to);
       }
+      clauses.push({ createdAt });
     }
 
-    return where;
+    return { AND: clauses };
   }
 
   private logPersistenceFallback(

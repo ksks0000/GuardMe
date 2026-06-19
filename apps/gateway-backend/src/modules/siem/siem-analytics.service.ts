@@ -14,6 +14,7 @@ import {
   toCountRecord,
 } from './utils/analytics-aggregation.util';
 import { resolveAnalyticsRange } from './utils/analytics-range.util';
+import { buildSecurityEventUserScope } from './utils/security-event-user-scope.util';
 
 const POLICY_DECISIONS = Object.values(PolicyDecision);
 const THREAT_VERDICTS = Object.values(ThreatVerdict);
@@ -179,21 +180,12 @@ export class SiemAnalyticsService {
     to: Date,
   ): Prisma.SecurityEventWhereInput {
     return {
-      createdAt: {
-        gte: from,
-        lte: to,
-      },
-      OR: [
+      AND: [
+        buildSecurityEventUserScope(userId, username),
         {
-          metadata: {
-            path: ['userId'],
-            equals: userId,
-          },
-        },
-        {
-          metadata: {
-            path: ['attemptedUsername'],
-            equals: username,
+          createdAt: {
+            gte: from,
+            lte: to,
           },
         },
       ],

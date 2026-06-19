@@ -107,6 +107,13 @@ export class SessionsService {
     });
   }
 
+  async revokeAllForUser(userId: string): Promise<void> {
+    await this.prisma.session.updateMany({
+      where: { userId, revokedAt: null },
+      data: { revokedAt: new Date() },
+    });
+  }
+
   async updateLastVerifiedAt(sessionId: string): Promise<void> {
     await this.prisma.session.update({
       where: { id: sessionId },
