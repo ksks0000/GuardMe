@@ -1,6 +1,5 @@
 import { Request } from 'express';
 
-/** Collapses IPv4-mapped IPv6 and loopback addresses to plain IPv4 form. */
 function normalizeIp(value: string): string {
   const trimmed = value.trim();
   if (trimmed === '::1') {

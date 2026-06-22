@@ -19,26 +19,9 @@ model User {
   trafficLogs      TrafficLog[]
   firewallRules    FirewallRule[]
   vaultCredentials VaultCredential[]
+  securityEvents   SecurityEvent[]
 
   @@map("users")
-}
-
-model FirewallRule {
-  id        String   @id @default(uuid()) @db.Uuid
-  userId    String   @map("user_id") @db.Uuid
-  name      String?  @db.VarChar(100)
-  ruleType  String   @map("rule_type") @db.VarChar(16)
-  pattern   String   @db.VarChar(253)
-  action    String   @db.VarChar(16)
-  enabled   Boolean  @default(true)
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-  @@index([userId, enabled])
-  @@map("firewall_rules")
 }
 
 model Session {
@@ -57,6 +40,24 @@ model Session {
   @@index([userId])
   @@index([jwtId])
   @@map("sessions")
+}
+
+model FirewallRule {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  name      String?  @db.VarChar(100)
+  ruleType  String   @map("rule_type") @db.VarChar(16)
+  pattern   String   @db.VarChar(253)
+  action    String   @db.VarChar(16)
+  enabled   Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([userId, enabled])
+  @@map("firewall_rules")
 }
 
 model TrafficLog {
@@ -88,15 +89,19 @@ model TrafficLog {
 
 model SecurityEvent {
   id        String   @id @default(uuid()) @db.Uuid
+  userId    String?  @map("user_id") @db.Uuid
   type      String
   severity  String
   message   String
   metadata  Json?
   createdAt DateTime @default(now()) @map("created_at")
 
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
   @@index([createdAt])
   @@index([type])
   @@index([severity])
+  @@index([userId, createdAt])
   @@map("security_events")
 }
 
