@@ -6,13 +6,12 @@ import { PrismaService } from '../../database/prisma.service';
 import { HealthState, SystemStatusPayload } from './dto/system-status.payload';
 
 // Short cache so the public /health endpoint and the periodic WebSocket
-// broadcast do not burn VirusTotal quota (free tier: 4 requests/minute).
-const STATUS_CACHE_TTL_MS = 30_000;
+// broadcast do not burn VirusTotal quota (4 requests/minute)
+const STATUS_CACHE_TTL_MS = 30000;
 
 @Injectable()
 export class SystemStatusService {
-  private cached: { payload: SystemStatusPayload; expiresAt: number } | null =
-    null;
+  private cached: { payload: SystemStatusPayload; expiresAt: number } | null = null;
 
   constructor(
     private readonly prisma: PrismaService,
@@ -64,7 +63,7 @@ export class SystemStatusService {
           `${threatConfig.virusTotalApiBaseUrl()}/domains/google.com`,
           {
             headers: { 'x-apikey': apiKey },
-            timeout: 5_000,
+            timeout: 5000,
             validateStatus: () => true,
           },
         ),

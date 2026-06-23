@@ -8,7 +8,9 @@ import {
   extractUserAgent,
 } from '../../common/utils/request-context.util';
 import { PrismaService } from '../../database/prisma.service';
+import { buildSecurityEventActorMetadata } from '../siem/utils/security-event-user-scope.util';
 import { SiemService } from '../siem/siem.service';
+import { UsersService } from '../users/users.service';
 import { CreateSessionInput } from './dto/create-session.input';
 import { SessionVerificationResult } from './dto/session-verification.result';
 
@@ -17,6 +19,7 @@ export class SessionsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly siemService: SiemService,
+    private readonly usersService: UsersService,
   ) {}
 
   create(input: CreateSessionInput): Promise<Session> {
@@ -55,7 +58,7 @@ export class SessionsService {
 
   async verifySessionForRequest(
     session: Session,
-    req: Request,
+    req: Request
   ): Promise<SessionVerificationResult> {
     const currentIp = extractClientIp(req);
     const currentUserAgent = extractUserAgent(req);
@@ -67,11 +70,13 @@ export class SessionsService {
       return { fingerprintMatched: true };
     }
 
+    const actor = await this.actorMetadata(session.userId);
+
     void this.siemService.logSecurityEvent({
       type: SIEM_EVENT_TYPES.FINGERPRINT_MISMATCH,
       message: 'Session device fingerprint mismatch',
       metadata: {
-        userId: session.userId,
+        ...actor,
         sessionId: session.id,
         jwtId: session.jwtId,
         expectedIp: session.ipAddress,
@@ -87,7 +92,7 @@ export class SessionsService {
         type: SIEM_EVENT_TYPES.SESSION_REVOKED,
         message: 'Session revoked due to fingerprint mismatch',
         metadata: {
-          userId: session.userId,
+          ...actor,
           sessionId: session.id,
           jwtId: session.jwtId,
         },
@@ -119,5 +124,12 @@ export class SessionsService {
       where: { id: sessionId },
       data: { lastVerifiedAt: new Date() },
     });
+  }
+
+  private async actorMetadata(
+    userId: string,
+  ): Promise<ReturnType<typeof buildSecurityEventActorMetadata>> {
+    const user = await this.usersService.findById(userId);
+    return buildSecurityEventActorMetadata(userId, user?.username);
   }
 }

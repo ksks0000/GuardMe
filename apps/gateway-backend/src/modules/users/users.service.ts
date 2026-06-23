@@ -1,5 +1,5 @@
 import { ConflictException, Injectable } from '@nestjs/common';
-import { User } from '@prisma/client';
+import { Prisma,User } from '@prisma/client';
 import { randomBytes } from 'crypto';
 import { PrismaService } from '../../database/prisma.service';
 import { hashPassword } from '../../common/utils/password.util';
@@ -10,14 +10,6 @@ import { PublicUserProfileDto } from './dto/public-user-profile.dto';
 export class UsersService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async usernameExists(username: string): Promise<boolean> {
-    const user = await this.prisma.user.findUnique({
-      where: { username },
-      select: { id: true },
-    });
-    return Boolean(user);
-  }
-
   findByUsername(username: string): Promise<User | null> {
     return this.prisma.user.findUnique({ where: { username } });
   }
@@ -27,20 +19,26 @@ export class UsersService {
   }
 
   async create(input: CreateUserInput): Promise<User> {
-    if (await this.usernameExists(input.username)) {
-      throw new ConflictException('Username is already taken');
-    }
-
     const passwordHash = await hashPassword(input.password);
     const kdfSalt = randomBytes(32).toString('base64');
-
-    return this.prisma.user.create({
-      data: {
-        username: input.username,
-        passwordHash,
-        kdfSalt,
-      },
-    });
+  
+    try {
+      return await this.prisma.user.create({
+        data: {
+          username: input.username,
+          passwordHash,
+          kdfSalt,
+        },
+      });
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        throw new ConflictException('Username is already taken');
+      }
+      throw error;
+    }
   }
 
   async updateLastAuthAt(userId: string): Promise<void> {
