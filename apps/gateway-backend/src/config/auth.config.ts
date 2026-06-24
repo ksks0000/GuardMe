@@ -14,7 +14,7 @@ function parseBoolean(value: string | undefined, defaultValue: boolean): boolean
 
 export const authConfig = {
   jwtSecret: () => requireEnv('JWT_SECRET'),
-  jwtExpiresIn: () => process.env.JWT_EXPIRES_IN ?? '15m',
+  jwtExpiresIn: () => process.env.JWT_EXPIRES_IN ?? '30m',
   cookieName: () => process.env.COOKIE_NAME ?? 'gateway_access_token',
   cookieSecure: () => 
     parseBoolean(process.env.COOKIE_SECURE, process.env.NODE_ENV === 'production'),

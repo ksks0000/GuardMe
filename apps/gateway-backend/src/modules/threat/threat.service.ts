@@ -3,7 +3,9 @@ import { AxiosError } from 'axios';
 import { threatConfig } from '../../config/threat.config';
 import { SIEM_EVENT_TYPES } from '../../config/siem.config';
 import { SiemService } from '../siem/siem.service';
+import { buildSecurityEventActorMetadata } from '../siem/utils/security-event-user-scope.util';
 import { ThreatScanResult } from './dto/threat-scan.result';
+import { ThreatScanActor } from './dto/threat-scan-actor';
 import { ThreatVerdict } from './dto/threat-verdict.enum';
 import {
   THREAT_RISK_SCORES,
@@ -17,10 +19,10 @@ export class ThreatService {
     private readonly siemService: SiemService,
   ) {}
 
-  async scanUrl(url: string): Promise<ThreatScanResult> {
+  async scanUrl(url: string, actor?: ThreatScanActor): Promise<ThreatScanResult> {
     const apiKey = threatConfig.virusTotalApiKey();
     if (!apiKey) {
-      return this.failSafeResult(url, {
+      return this.failSafeResult(url, actor, {
         eventType: SIEM_EVENT_TYPES.THREAT_SCAN_FAILURE,
         message: 'VirusTotal API key is missing; allowing as UNVERIFIED',
         metadata: { url, reason: 'missing_api_key' },
@@ -32,7 +34,7 @@ export class ThreatService {
     } catch (error) {
       const isTimeout = this.isTimeoutError(error);
 
-      return this.failSafeResult(url, {
+      return this.failSafeResult(url, actor, {
         eventType: isTimeout
           ? SIEM_EVENT_TYPES.THREAT_SCAN_TIMEOUT
           : SIEM_EVENT_TYPES.THREAT_SCAN_FAILURE,
@@ -50,6 +52,7 @@ export class ThreatService {
 
   private failSafeResult(
     url: string,
+    actor: ThreatScanActor | undefined,
     event: {
       eventType:
         | typeof SIEM_EVENT_TYPES.THREAT_SCAN_FAILURE
@@ -61,7 +64,14 @@ export class ThreatService {
     void this.siemService.logSecurityEvent({
       type: event.eventType,
       message: event.message,
-      metadata: event.metadata,
+      userId: actor?.userId ?? null,
+      metadata: {
+        ...event.metadata,
+        failStrategy: threatConfig.failStrategy(),
+        ...(actor
+          ? buildSecurityEventActorMetadata(actor.userId, actor.username)
+          : {}),
+      },
     });
 
     return {

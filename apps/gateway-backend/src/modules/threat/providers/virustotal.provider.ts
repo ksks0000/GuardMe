@@ -144,10 +144,15 @@ export class VirusTotalProvider {
         throw new Error('VirusTotal analysis failed');
       }
 
+      const remaining = this.remainingTimeout(deadline);
+      if (remaining <= threatConfig.minPollSleepMs()) {
+        break;
+      }
+
       await this.sleep(
         Math.min(
           threatConfig.scanPollIntervalMs(),
-          this.remainingTimeout(deadline),
+          Math.max(threatConfig.minPollSleepMs(), remaining),
         ),
       );
     }

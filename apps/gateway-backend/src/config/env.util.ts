@@ -1,6 +1,6 @@
 export function parsePositiveNumber(
   value: string | undefined,
-  defaultValue: number,
+  defaultValue: number
 ): number {
   const parsed = Number(value);
   const safeDefault =
