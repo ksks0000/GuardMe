@@ -55,6 +55,7 @@ export class VaultController {
   }
 
   @Get('credentials')
+  @UseGuards(VaultUnlockGuard)
   list(@CurrentUser() user: AuthenticatedUser) {
     return this.vaultService.listCredentials(user.userId);
   }

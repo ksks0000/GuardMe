@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   UnauthorizedException,
+  UnprocessableEntityException,
 } from '@nestjs/common';
 import { VaultCredential } from '@prisma/client';
 import { Request } from 'express';
@@ -71,6 +72,8 @@ export class VaultService {
     );
     this.vaultKeyCache.setKey(user.userId, vaultKey);
 
+    await this.usersService.updateLastAuthAt(user.userId);
+
     void this.siemService.logSecurityEvent({
       type: SIEM_EVENT_TYPES.VAULT_UNLOCKED,
       message: 'Vault unlocked',
@@ -111,14 +114,27 @@ export class VaultService {
     const row = await this.findOwnedCredential(userId, credentialId);
     const vaultKey = this.requireVaultKey(userId);
 
-    const password = this.cryptoService.decrypt(
-      {
-        ciphertext: row.encryptedPassword,
-        iv: row.iv,
-        authTag: row.authTag,
-      },
-      vaultKey,
-    );
+    let password: string;
+    try {
+      password = this.cryptoService.decrypt(
+        {
+          ciphertext: row.encryptedPassword,
+          iv: row.iv,
+          authTag: row.authTag,
+        },
+        vaultKey,
+      );
+    } catch {
+      void this.siemService.logSecurityEvent({
+        type: SIEM_EVENT_TYPES.VAULT_DECRYPT_FAILURE,
+        message: 'Vault credential failed to decrypt',
+        userId,
+        metadata: { userId, credentialId },
+      });
+      throw new UnprocessableEntityException(
+        'Stored credential could not be decrypted',
+      );
+    }
 
     return {
       ...toSummaryPayload(row),

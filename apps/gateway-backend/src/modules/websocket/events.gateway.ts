@@ -22,8 +22,6 @@ import {
 } from '../../config/websocket.config';
 import { AuthenticatedUser } from '../../common/types/auth.types';
 import { SystemStatusService } from '../health/system-status.service';
-import { UsersService } from '../users/users.service';
-import { readSecurityEventMetadata } from '../siem/utils/security-event-user-scope.util';
 import { SessionEventPayload } from './dto/session-event.payload';
 import { WsAuthService } from './ws-auth.service';
 import {
@@ -62,7 +60,6 @@ export class EventsGateway
   constructor(
     private readonly wsAuthService: WsAuthService,
     private readonly systemStatusService: SystemStatusService,
-    private readonly usersService: UsersService,
   ) {}
 
   onModuleInit(): void {
@@ -117,24 +114,14 @@ export class EventsGateway
   }
 
   @OnEvent(SIEM_EMIT_EVENTS.SECURITY_EVENT)
-  async handleSecurityEvent(row: SecurityEvent): Promise<void> {
-    if (!this.server) {
+  handleSecurityEvent(row: SecurityEvent): void {
+    if (!this.server || !row.userId) {
       return;
     }
 
-    const recipientUserIds = await this.resolveSecurityEventRecipients(
-      row.metadata,
-    );
-    if (recipientUserIds.length === 0) {
-      return;
-    }
-
-    const payload = toSecurityEventPayload(row);
-    for (const userId of recipientUserIds) {
-      this.server
-        .to(this.userRoom(userId))
-        .emit(WEBSOCKET_CLIENT_EVENTS.SECURITY_EVENT, payload);
-    }
+    this.server
+      .to(this.userRoom(row.userId))
+      .emit(WEBSOCKET_CLIENT_EVENTS.SECURITY_EVENT, toSecurityEventPayload(row));
   }
 
   @OnEvent(WEBSOCKET_INTERNAL_EVENTS.SESSION_EVENT)
@@ -146,22 +133,6 @@ export class EventsGateway
     this.server
       .to(this.userRoom(payload.userId))
       .emit(WEBSOCKET_CLIENT_EVENTS.SESSION_EVENT, payload);
-  }
-
-  private async resolveSecurityEventRecipients(
-    metadata: SecurityEvent['metadata'],
-  ): Promise<string[]> {
-    const { userId, username } = readSecurityEventMetadata(metadata ?? null);
-    if (userId) {
-      return [userId];
-    }
-
-    if (!username) {
-      return [];
-    }
-
-    const user = await this.usersService.findByUsername(username);
-    return user ? [user.id] : [];
   }
 
   private async broadcastSystemStatus(): Promise<void> {

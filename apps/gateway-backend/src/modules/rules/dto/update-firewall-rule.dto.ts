@@ -1,10 +1,13 @@
 import {
   IsBoolean,
+  IsFQDN,
   IsIn,
+  IsIP,
   IsOptional,
   IsString,
   MaxLength,
   MinLength,
+  ValidateIf,
 } from 'class-validator';
 import {
   FIREWALL_RULE_ACTIONS,
@@ -28,6 +31,10 @@ export class UpdateFirewallRuleDto {
   @IsString()
   @MinLength(1)
   @MaxLength(253)
+  @ValidateIf((dto) => dto.ruleType === FIREWALL_RULE_TYPES.IP)
+  @IsIP(4)
+  @ValidateIf((dto) => dto.ruleType === FIREWALL_RULE_TYPES.DOMAIN)
+  @IsFQDN({ require_tld: false })
   pattern?: string;
 
   @IsOptional()

@@ -16,7 +16,7 @@ import {
   RuleMatchContext,
   RuleMatchResult,
   ruleMatchesContext,
-  toRuleMatchResult,
+  toRuleMatchResult
 } from './utils/rule-matcher.util';
 
 @Injectable()
@@ -26,18 +26,18 @@ export class RulesService {
   async listForUser(userId: string): Promise<RulesListPayload> {
     const rows = await this.prisma.firewallRule.findMany({
       where: { userId },
-      orderBy: [{ enabled: 'desc' }, { createdAt: 'desc' }],
+      orderBy: [{ enabled: 'desc' }, { createdAt: 'desc' }]
     });
 
     return {
       systemRules: policyConfig.systemRules(),
-      userRules: rows.map(toFirewallRulePayload),
+      userRules: rows.map(toFirewallRulePayload)
     };
   }
 
   async createForUser(
     userId: string,
-    dto: CreateFirewallRuleDto,
+    dto: CreateFirewallRuleDto
   ): Promise<FirewallRulePayload> {
     const pattern = this.resolvePattern(dto.ruleType, dto.pattern);
 
@@ -48,8 +48,8 @@ export class RulesService {
         ruleType: dto.ruleType,
         pattern,
         action: dto.action,
-        enabled: dto.enabled ?? true,
-      },
+        enabled: dto.enabled ?? true
+      }
     });
 
     return toFirewallRulePayload(row);
@@ -58,7 +58,7 @@ export class RulesService {
   async updateForUser(
     userId: string,
     ruleId: string,
-    dto: UpdateFirewallRuleDto,
+    dto: UpdateFirewallRuleDto
   ): Promise<FirewallRulePayload> {
     await this.assertRuleOwnedByUser(userId, ruleId);
 
@@ -75,8 +75,8 @@ export class RulesService {
         ruleType: dto.ruleType,
         pattern,
         action: dto.action,
-        enabled: dto.enabled,
-      },
+        enabled: dto.enabled
+      }
     });
 
     return toFirewallRulePayload(row);
@@ -91,21 +91,32 @@ export class RulesService {
   async evaluateRules(
     userId: string,
     context: RuleMatchContext,
+    resolveDestinationIp?: () => Promise<string | null>
   ): Promise<RuleMatchResult | null> {
     const rules = await this.prisma.firewallRule.findMany({
       where: { userId, enabled: true },
-      orderBy: { createdAt: 'asc' },
+      orderBy: { createdAt: 'asc' }
     });
 
+    if (rules.length === 0) {
+      return null;
+    }
+
+    const matchContext = await this.withResolvedIp(
+      rules,
+      context,
+      resolveDestinationIp
+    );
+
     const blockMatch = rules.find(
-      (rule) => isBlockRule(rule) && ruleMatchesContext(rule, context),
+      (rule) => isBlockRule(rule) && ruleMatchesContext(rule, matchContext)
     );
     if (blockMatch) {
       return toRuleMatchResult(blockMatch);
     }
 
     const allowMatch = rules.find(
-      (rule) => isAllowRule(rule) && ruleMatchesContext(rule, context),
+      (rule) => isAllowRule(rule) && ruleMatchesContext(rule, matchContext)
     );
     if (allowMatch) {
       return toRuleMatchResult(allowMatch);
@@ -114,13 +125,29 @@ export class RulesService {
     return null;
   }
 
+  private async withResolvedIp(
+    rules: FirewallRule[],
+    context: RuleMatchContext,
+    resolveDestinationIp?: () => Promise<string | null>
+  ): Promise<RuleMatchContext> {
+    if (
+      !resolveDestinationIp ||
+      context.destinationIp != null ||
+      !rules.some((rule) => rule.ruleType === 'IP')
+    ) {
+      return context;
+    }
+
+    return { ...context, destinationIp: await resolveDestinationIp() };
+  }
+
   private async assertRuleOwnedByUser(
     userId: string,
-    ruleId: string,
+    ruleId: string
   ): Promise<void> {
     const rule = await this.prisma.firewallRule.findFirst({
       where: { id: ruleId, userId },
-      select: { id: true },
+      select: { id: true }
     });
 
     if (!rule) {
@@ -131,7 +158,7 @@ export class RulesService {
   private async getRuleType(userId: string, ruleId: string): Promise<string> {
     const rule = await this.prisma.firewallRule.findFirst({
       where: { id: ruleId, userId },
-      select: { ruleType: true },
+      select: { ruleType: true }
     });
 
     if (!rule) {
@@ -160,6 +187,6 @@ function toFirewallRulePayload(row: FirewallRule): FirewallRulePayload {
     action: row.action,
     enabled: row.enabled,
     createdAt: row.createdAt.toISOString(),
-    updatedAt: row.updatedAt.toISOString(),
+    updatedAt: row.updatedAt.toISOString()
   };
 }

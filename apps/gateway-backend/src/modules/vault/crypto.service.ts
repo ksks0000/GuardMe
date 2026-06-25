@@ -11,10 +11,6 @@ export interface EncryptedPayload {
 
 @Injectable()
 export class CryptoService {
-  generateKdfSalt(): string {
-    return randomBytes(32).toString('base64');
-  }
-
   async deriveVaultKey(password: string, kdfSaltBase64: string): Promise<Buffer> {
     const salt = Buffer.from(kdfSaltBase64, 'base64');
     const key = await argon2.hash(password, {
