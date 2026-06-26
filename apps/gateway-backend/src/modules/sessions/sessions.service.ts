@@ -8,7 +8,7 @@ import {
   extractUserAgent,
 } from '../../common/utils/request-context.util';
 import { PrismaService } from '../../database/prisma.service';
-import { buildSecurityEventActorMetadata } from '../siem/utils/security-event-user-scope.util';
+import { buildSecurityEventActorMetadata } from '../siem/dto/security-event.input';
 import { SiemService } from '../siem/siem.service';
 import { UsersService } from '../users/users.service';
 import { CreateSessionInput } from './dto/create-session.input';

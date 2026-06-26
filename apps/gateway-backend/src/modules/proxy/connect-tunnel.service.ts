@@ -3,6 +3,7 @@ import { IncomingMessage } from 'node:http';
 import { Socket } from 'node:net';
 import { AuthenticatedUser } from '../../common/types/auth.types';
 import { PolicyDecision } from './dto/policy-decision.enum';
+import { parseConnectTarget } from './utils/connect-target.util';
 import { ProxyPipelineService } from './proxy-pipeline.service';
 
 @Injectable()
@@ -16,7 +17,7 @@ export class ConnectTunnelService {
     clientSocket: Socket,
     user: AuthenticatedUser,
   ): Promise<void> {
-    const target = this.parseConnectTarget(req.url ?? '');
+    const target = parseConnectTarget(req.url ?? '');
     if (!target) {
       this.reject(clientSocket, 400, 'Bad Request');
       return;
@@ -60,22 +61,6 @@ export class ConnectTunnelService {
 
     serverSocket.on('error', closeBoth);
     clientSocket.on('error', closeBoth);
-  }
-
-  private parseConnectTarget(
-    target: string,
-  ): { host: string; port: number } | null {
-    const [host, portValue] = target.split(':');
-    if (!host) {
-      return null;
-    }
-
-    const port = portValue ? Number(portValue) : 443;
-    if (!Number.isFinite(port) || port <= 0 || port > 65535) {
-      return null;
-    }
-
-    return { host, port };
   }
 
   private reject(clientSocket: Socket, status: number, message: string): void {

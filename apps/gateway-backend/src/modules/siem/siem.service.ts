@@ -8,15 +8,11 @@ import { toTrafficLogPayload } from '../websocket/utils/payload-mapper.util';
 import { PaginatedResultDto } from './dto/paginated-result.dto';
 import { SecurityEventDetailPayload } from './dto/security-event-detail.payload';
 import { SecurityEventsQueryDto } from './dto/security-events-query.dto';
-import {
-  resolveEventSeverity,
-  SecurityEventInput,
-} from './dto/security-event.input';
+import { resolveEventSeverity, SecurityEventInput } from './dto/security-event.input';
 import { TrafficLogInput } from './dto/traffic-log.input';
 import { TrafficLogsQueryDto } from './dto/traffic-logs-query.dto';
 import { toSecurityEventDetailPayload } from './utils/history-payload.mapper';
 import { sanitizeSearchTerm } from './utils/search-term.util';
-import { buildSecurityEventUserScope } from './utils/security-event-user-scope.util';
 
 @Injectable()
 export class SiemService {
@@ -24,7 +20,7 @@ export class SiemService {
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly eventEmitter: EventEmitter2,
+    private readonly eventEmitter: EventEmitter2
   ) {}
 
   async logTraffic(input: TrafficLogInput): Promise<void> {
@@ -42,8 +38,8 @@ export class SiemService {
           threatVerdict: input.threatVerdict,
           matchedRuleId: input.matchedRuleId ?? null,
           riskScore: input.riskScore,
-          timestamp: input.timestamp ?? new Date(),
-        },
+          timestamp: input.timestamp ?? new Date()
+        }
       });
 
       this.emitEvent(SIEM_EMIT_EVENTS.TRAFFIC_LOG, row);
@@ -54,15 +50,17 @@ export class SiemService {
 
   async logSecurityEvent(input: SecurityEventInput): Promise<void> {
     const severity = resolveEventSeverity(input.type, input.severity);
+    const userId = input.userId ?? this.readMetadataUserId(input.metadata);
 
     try {
       const row = await this.prisma.securityEvent.create({
         data: {
+          userId,
           type: input.type,
           severity,
           message: input.message,
-          metadata: input.metadata as Prisma.InputJsonValue | undefined,
-        },
+          metadata: input.metadata as Prisma.InputJsonValue | undefined
+        }
       });
 
       this.emitEvent(SIEM_EMIT_EVENTS.SECURITY_EVENT, row);
@@ -70,7 +68,7 @@ export class SiemService {
       this.logPersistenceFallback(
         'security event',
         { ...input, severity },
-        error,
+        error
       );
     }
   }
@@ -81,7 +79,7 @@ export class SiemService {
 
   async findTrafficLogsForUser(
     userId: string,
-    query: TrafficLogsQueryDto,
+    query: TrafficLogsQueryDto
   ): Promise<PaginatedResultDto<TrafficLogPayload>> {
     const page = query.page ?? 1;
     const pageSize = query.pageSize ?? 15;
@@ -94,27 +92,26 @@ export class SiemService {
         where,
         orderBy: { timestamp: 'desc' },
         skip,
-        take: pageSize,
-      }),
+        take: pageSize
+      })
     ]);
 
     return {
       items: rows.map(toTrafficLogPayload),
       total,
       page,
-      pageSize,
+      pageSize
     };
   }
 
   async findSecurityEventsForUser(
     userId: string,
-    username: string,
-    query: SecurityEventsQueryDto,
+    query: SecurityEventsQueryDto
   ): Promise<PaginatedResultDto<SecurityEventDetailPayload>> {
     const page = query.page ?? 1;
     const pageSize = query.pageSize ?? 15;
     const skip = (page - 1) * pageSize;
-    const where = this.buildSecurityEventWhere(userId, username, query);
+    const where = this.buildSecurityEventWhere(userId, query);
 
     const [total, rows] = await Promise.all([
       this.prisma.securityEvent.count({ where }),
@@ -122,21 +119,21 @@ export class SiemService {
         where,
         orderBy: { createdAt: 'desc' },
         skip,
-        take: pageSize,
-      }),
+        take: pageSize
+      })
     ]);
 
     return {
       items: rows.map(toSecurityEventDetailPayload),
       total,
       page,
-      pageSize,
+      pageSize
     };
   }
 
   private buildTrafficLogWhere(
     userId: string,
-    query: TrafficLogsQueryDto,
+    query: TrafficLogsQueryDto
   ): Prisma.TrafficLogWhereInput {
     const where: Prisma.TrafficLogWhereInput = { userId };
 
@@ -176,46 +173,42 @@ export class SiemService {
 
   private buildSecurityEventWhere(
     userId: string,
-    username: string,
-    query: SecurityEventsQueryDto,
+    query: SecurityEventsQueryDto
   ): Prisma.SecurityEventWhereInput {
-    const clauses: Prisma.SecurityEventWhereInput[] = [
-      buildSecurityEventUserScope(userId, username),
-    ];
+    const where: Prisma.SecurityEventWhereInput = { userId };
 
     if (query.type) {
-      clauses.push({ type: query.type });
+      where.type = query.type;
     }
 
     if (query.severity) {
-      clauses.push({ severity: query.severity });
+      where.severity = query.severity;
     }
 
     if (query.from || query.to) {
-      const createdAt: Prisma.DateTimeFilter = {};
+      where.createdAt = {};
       if (query.from) {
-        createdAt.gte = new Date(query.from);
+        where.createdAt.gte = new Date(query.from);
       }
       if (query.to) {
-        createdAt.lte = new Date(query.to);
+        where.createdAt.lte = new Date(query.to);
       }
-      clauses.push({ createdAt });
     }
 
-    return { AND: clauses };
+    return where;
   }
 
-  private logPersistenceFallback(
-    label: string,
-    payload: unknown,
-    error: unknown,
-  ): void {
-    const message =
-      error instanceof Error ? error.message : 'Unknown database error';
+  private readMetadataUserId(
+    metadata: Record<string, unknown> | undefined
+  ): string | null {
+    const value = metadata?.userId;
+    return typeof value === 'string' ? value : null;
+  }
 
-    this.logger.warn(
-      `Failed to persist ${label}: ${message}`,
-      JSON.stringify(payload),
-    );
+  private logPersistenceFallback(label: string, payload: unknown, error: unknown): void {
+
+    const message = error instanceof Error ? error.message : 'Unknown database error';
+
+    this.logger.warn(`Failed to persist ${label}: ${message}`, JSON.stringify(payload));
   }
 }

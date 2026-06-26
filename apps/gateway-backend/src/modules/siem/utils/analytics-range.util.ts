@@ -40,7 +40,7 @@ export function resolveAnalyticsRange(input: {
 }
 
 function resolveDefaultBucketHours(from: Date, to: Date): AnalyticsBucketHours {
-  const rangeHours = (to.getTime() - from.getTime()) / 3_600_000;
+  const rangeHours = (to.getTime() - from.getTime()) / 3600000;
 
   if (rangeHours <= 48) {
     return 1;

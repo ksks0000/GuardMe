@@ -62,7 +62,7 @@ export class BypassTokenService {
 
       this.consumedTokenIds.set(
         payload.jti,
-        Date.now() + proxyConfig.bypassTokenExpiresMinutes() * 60_000,
+        Date.now() + proxyConfig.bypassTokenExpiresMinutes() * 60000,
       );
       return true;
     } catch {

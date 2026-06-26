@@ -7,7 +7,7 @@ import {
 import { VaultCredential } from '@prisma/client';
 import { Request } from 'express';
 import { AuthenticatedUser } from '../../common/types/auth.types';
-import { verifyPassword } from '../../common/utils/password.util';
+import { verifyPasswordHash } from '../../common/utils/password.util';
 import { extractClientIp, extractUserAgent } from '../../common/utils/request-context.util';
 import { SIEM_EVENT_TYPES } from '../../config/siem.config';
 import { PrismaService } from '../../database/prisma.service';
@@ -51,7 +51,7 @@ export class VaultService {
       throw new UnauthorizedException(GENERIC_UNLOCK_FAILURE);
     }
 
-    const passwordValid = await verifyPassword(password, dbUser.passwordHash);
+    const passwordValid = await verifyPasswordHash(password, dbUser.passwordHash);
     if (!passwordValid) {
       void this.siemService.logSecurityEvent({
         type: SIEM_EVENT_TYPES.VAULT_UNLOCK_FAILURE,

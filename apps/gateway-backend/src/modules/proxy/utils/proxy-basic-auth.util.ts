@@ -3,7 +3,6 @@ export interface ProxyBasicCredentials {
   password: string;
 }
 
-/** Parses `Proxy-Authorization: Basic …` (RFC 7617). */
 export function parseProxyAuthorizationBasic(
   header: string | string[] | undefined,
 ): ProxyBasicCredentials | null {

@@ -14,7 +14,6 @@ import {
   toCountRecord,
 } from './utils/analytics-aggregation.util';
 import { resolveAnalyticsRange } from './utils/analytics-range.util';
-import { buildSecurityEventUserScope } from './utils/security-event-user-scope.util';
 
 const POLICY_DECISIONS = Object.values(PolicyDecision);
 const THREAT_VERDICTS = Object.values(ThreatVerdict);
@@ -35,14 +34,12 @@ export class SiemAnalyticsService {
 
   async getSummaryForUser(
     userId: string,
-    username: string,
     query: AnalyticsSummaryQueryDto,
   ): Promise<AnalyticsSummaryPayload> {
     const range = resolveAnalyticsRange(query);
     const trafficWhere = this.buildTrafficWhere(userId, range.from, range.to);
     const securityWhere = this.buildSecurityEventWhere(
       userId,
-      username,
       range.from,
       range.to,
     );
@@ -175,20 +172,15 @@ export class SiemAnalyticsService {
 
   private buildSecurityEventWhere(
     userId: string,
-    username: string,
     from: Date,
     to: Date,
   ): Prisma.SecurityEventWhereInput {
     return {
-      AND: [
-        buildSecurityEventUserScope(userId, username),
-        {
-          createdAt: {
-            gte: from,
-            lte: to,
-          },
-        },
-      ],
+      userId,
+      createdAt: {
+        gte: from,
+        lte: to,
+      },
     };
   }
 

@@ -29,11 +29,7 @@ export class SiemController {
     @CurrentUser() user: AuthenticatedUser,
     @Query() query: SecurityEventsQueryDto,
   ) {
-    return this.siemService.findSecurityEventsForUser(
-      user.userId,
-      user.username,
-      query,
-    );
+    return this.siemService.findSecurityEventsForUser(user.userId, query);
   }
 
   @Get('analytics/summary')
@@ -41,10 +37,6 @@ export class SiemController {
     @CurrentUser() user: AuthenticatedUser,
     @Query() query: AnalyticsSummaryQueryDto,
   ) {
-    return this.siemAnalyticsService.getSummaryForUser(
-      user.userId,
-      user.username,
-      query,
-    );
+    return this.siemAnalyticsService.getSummaryForUser(user.userId, query);
   }
 }

@@ -8,6 +8,7 @@ import { SIEM_EVENT_TYPES } from '../../config/siem.config';
 import { RulesService } from '../rules/rules.service';
 import { RuleMatchResult } from '../rules/utils/rule-matcher.util';
 import { SiemService } from '../siem/siem.service';
+import { buildSecurityEventActorMetadata } from '../siem/dto/security-event.input';
 import { ThreatScanResult } from '../threat/dto/threat-scan.result';
 import { ThreatVerdict } from '../threat/dto/threat-verdict.enum';
 import { ThreatService } from '../threat/threat.service';
@@ -64,7 +65,7 @@ export class ProxyPipelineService {
           message: 'User proceeded past security warning',
           metadata: {
             url: inspection.normalizedUrl,
-            userId: user.userId,
+            ...buildSecurityEventActorMetadata(user.userId, user.username),
             sessionId: user.sessionId,
           },
         });
@@ -81,43 +82,34 @@ export class ProxyPipelineService {
       }
 
       const userRulePolicy = await this.evaluateUserRules(
-        user.userId,
+        user,
         inspection.destinationHost,
         inspection.normalizedUrl,
-        user.sessionId,
       );
       if (userRulePolicy) {
         await this.logTraffic(user.userId, clientIp, inspection, userRulePolicy);
-        await this.respondForPolicy(
-          res,
-          inspection.normalizedUrl,
-          userRulePolicy,
-          null,
-        );
         if (userRulePolicy.decision === PolicyDecision.ALLOW) {
           await this.proxyForwardService.forward(req, res, inspection);
+        } else {
+          this.respondBlock(res, inspection.normalizedUrl, userRulePolicy);
         }
         return;
       }
 
-      const threatScan = await this.scanWithCache(inspection.normalizedUrl);
+      const threatScan = await this.scanWithCache(inspection.normalizedUrl, user);
       const fileScan = this.inspectionService.simulateFileScan(inspection);
       const policy = this.policyService.decide(threatScan, fileScan);
 
       await this.logTraffic(user.userId, clientIp, inspection, policy);
-      await this.logMaliciousBlocked(policy, inspection.normalizedUrl, user.userId);
+      await this.logMaliciousBlocked(
+        policy,
+        inspection.normalizedUrl,
+        user.userId,
+        user.username,
+      );
 
       if (policy.decision === PolicyDecision.BLOCK) {
-        this.respondHtml(
-          res,
-          403,
-          this.blockPageService.render({
-            url: inspection.normalizedUrl,
-            reason: policy.reason,
-            timestamp: new Date(),
-            riskScore: policy.riskScore,
-          }),
-        );
+        this.respondBlock(res, inspection.normalizedUrl, policy);
         return;
       }
 
@@ -160,6 +152,7 @@ export class ProxyPipelineService {
         metadata: {
           error: error instanceof Error ? error.message : 'Unknown error',
           path: req.url,
+          ...buildSecurityEventActorMetadata(user.userId, user.username),
         },
       });
 
@@ -186,10 +179,9 @@ export class ProxyPipelineService {
     const clientIp = this.extractClientIpFromMessage(req);
 
     const userRulePolicy = await this.evaluateUserRules(
-      user.userId,
+      user,
       inspection.destinationHost,
       inspection.normalizedUrl,
-      user.sessionId,
     );
     if (userRulePolicy) {
       await this.logTraffic(user.userId, clientIp, inspection, userRulePolicy);
@@ -199,11 +191,16 @@ export class ProxyPipelineService {
       return PolicyDecision.BLOCK;
     }
 
-    const threatScan = await this.scanWithCache(inspection.normalizedUrl);
+    const threatScan = await this.scanWithCache(inspection.normalizedUrl, user);
     const policy = this.policyService.decide(threatScan);
 
     await this.logTraffic(user.userId, clientIp, inspection, policy);
-    await this.logMaliciousBlocked(policy, inspection.normalizedUrl, user.userId);
+    await this.logMaliciousBlocked(
+      policy,
+      inspection.normalizedUrl,
+      user.userId,
+      user.username,
+    );
 
     if (policy.decision === PolicyDecision.WARN) {
       return PolicyDecision.BLOCK;
@@ -213,20 +210,21 @@ export class ProxyPipelineService {
   }
 
   private async evaluateUserRules(
-    userId: string,
+    user: AuthenticatedUser,
     destinationHost: string,
     url: string,
-    sessionId: string,
   ): Promise<PolicyResult | null> {
-    const match = await this.rulesService.evaluateRules(userId, {
-      destinationHost,
-    });
+    const match = await this.rulesService.evaluateRules(
+      user.userId,
+      { destinationHost },
+      () => resolveDestinationIp(destinationHost),
+    );
 
     if (!match) {
       return null;
     }
 
-    this.logRuleMatch(match, url, userId, sessionId);
+    this.logRuleMatch(match, url, user);
     return this.policyFromUserRule(match);
   }
 
@@ -266,16 +264,15 @@ export class ProxyPipelineService {
   private logRuleMatch(
     match: RuleMatchResult,
     url: string,
-    userId: string,
-    sessionId: string,
+    user: AuthenticatedUser,
   ): void {
     void this.siemService.logSecurityEvent({
       type: SIEM_EVENT_TYPES.RULE_MATCH,
       message: `User firewall rule matched (${match.action})`,
       metadata: {
         url,
-        userId,
-        sessionId,
+        ...buildSecurityEventActorMetadata(user.userId, user.username),
+        sessionId: user.sessionId,
         ruleId: match.ruleId,
         ruleType: match.ruleType,
         pattern: match.pattern,
@@ -288,6 +285,7 @@ export class ProxyPipelineService {
     policy: PolicyResult,
     url: string,
     userId: string,
+    username: string,
   ): Promise<void> {
     if (
       policy.decision !== PolicyDecision.BLOCK ||
@@ -302,57 +300,43 @@ export class ProxyPipelineService {
       message: 'Malicious URL blocked by threat intelligence',
       metadata: {
         url,
-        userId,
+        ...buildSecurityEventActorMetadata(userId, username),
         riskScore: policy.riskScore,
         threatVerdict: policy.threatVerdict,
       },
     });
   }
 
-  private async respondForPolicy(
+  private respondBlock(
     res: Response,
     url: string,
-    policy: PolicyResult,
-    threatScan: ThreatScanResult | null,
-  ): Promise<void> {
-    if (policy.decision === PolicyDecision.BLOCK) {
-      this.respondHtml(
-        res,
-        403,
-        this.blockPageService.render({
-          url,
-          reason: policy.reason,
-          timestamp: new Date(),
-          riskScore: policy.riskScore,
-        }),
-      );
-      return;
-    }
-
-    if (policy.decision === PolicyDecision.WARN && threatScan) {
-      this.respondHtml(
-        res,
-        403,
-        this.warningPageService.render(
-          this.warningPageService.buildContext({
-            url,
-            reason: policy.reason,
-            threatSummary: buildThreatSummary(threatScan),
-            riskScore: policy.riskScore,
-            proceedUrl: url,
-          }),
-        ),
-      );
-    }
+    policy: Pick<PolicyResult, 'reason' | 'riskScore'>,
+  ): void {
+    this.respondHtml(
+      res,
+      403,
+      this.blockPageService.render({
+        url,
+        reason: policy.reason,
+        timestamp: new Date(),
+        riskScore: policy.riskScore,
+      }),
+    );
   }
 
-  private async scanWithCache(url: string): Promise<ThreatScanResult> {
+  private async scanWithCache(
+    url: string,
+    user: AuthenticatedUser,
+  ): Promise<ThreatScanResult> {
     const cached = this.threatScanCache.get(url);
     if (cached) {
       return cached;
     }
 
-    const result = await this.threatService.scanUrl(url);
+    const result = await this.threatService.scanUrl(url, {
+      userId: user.userId,
+      username: user.username,
+    });
     if (!result.metadata.failSafe) {
       this.threatScanCache.set(url, result);
     }

@@ -14,6 +14,7 @@ import { PolicyService } from './policy.service';
 import { ProxyAuthService } from './proxy-auth.service';
 import { ProxyForwardService } from './proxy-forward.service';
 import { ProxyPipelineService } from './proxy-pipeline.service';
+import { ProxyRateLimitService } from './proxy-rate-limit.service';
 import { ThreatScanCacheService } from './threat-scan-cache.service';
 import { WarningPageService } from './warning-page.service';
 
@@ -37,6 +38,7 @@ import { WarningPageService } from './warning-page.service';
     ThreatScanCacheService,
     BypassTokenService,
     ProxyAuthService,
+    ProxyRateLimitService,
     ProxyForwardService,
     ProxyPipelineService,
     ConnectTunnelService,

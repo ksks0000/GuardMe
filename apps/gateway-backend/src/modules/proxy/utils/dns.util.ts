@@ -1,12 +1,8 @@
 import { lookup } from 'node:dns/promises';
 import { isIP } from 'node:net';
 
-const DNS_LOOKUP_TIMEOUT_MS = 2_000;
+const DNS_LOOKUP_TIMEOUT_MS = 2000;
 
-/**
- * Best-effort resolution of the destination host to an IP for traffic logs.
- * Returns null on failure or timeout — logging must never fail on DNS.
- */
 export async function resolveDestinationIp(
   host: string,
 ): Promise<string | null> {

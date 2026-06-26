@@ -4,10 +4,8 @@ import { Request, Response } from 'express';
 import { firstValueFrom } from 'rxjs';
 import { proxyConfig } from '../../config/proxy.config';
 import { InspectionResult } from './dto/inspection.result';
-import {
-  sanitizeForwardRequestHeaders,
-  sanitizeForwardResponseHeaders,
-} from './utils/hop-by-hop-headers.util';
+import { sanitizeForwardRequestHeaders,
+   sanitizeForwardResponseHeaders } from './utils/hop-by-hop-headers.util';
 
 @Injectable()
 export class ProxyForwardService {
@@ -32,8 +30,6 @@ export class ProxyForwardService {
         data: this.shouldForwardBody(inspection.method) ? req : undefined,
         responseType: 'stream',
         timeout: proxyConfig.forwardTimeoutMs(),
-        // Redirects are passed back to the browser instead of being followed
-        // here, so every redirect target goes through threat scanning again.
         maxRedirects: 0,
         validateStatus: () => true,
       }),

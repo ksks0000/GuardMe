@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { threatConfig } from '../../config/threat.config';
 import { ThreatScanResult } from '../threat/dto/threat-scan.result';
 import { ThreatVerdict } from '../threat/dto/threat-verdict.enum';
 import { FileScanResult } from './dto/file-scan.result';
@@ -83,19 +84,40 @@ export class PolicyService {
           },
         };
 
-      case ThreatVerdict.UNVERIFIED:
+      case ThreatVerdict.UNVERIFIED: {
+        const failSafe = threatScan.metadata?.failSafe === true;
+        if (failSafe && threatConfig.failClosed()) {
+          return {
+            decision: PolicyDecision.BLOCK,
+            reason:
+              'Threat scan unavailable; traffic blocked by fail-closed policy',
+            riskScore: threatScan.riskScore,
+            threatVerdict: threatScan.verdict,
+            metadata: {
+              source: 'url_scan',
+              failClosed: true,
+              provider: threatScan.provider,
+              scanMetadata: threatScan.metadata,
+            },
+          };
+        }
+
         return {
           decision: PolicyDecision.ALLOW,
-          reason: 'URL reputation could not be fully verified',
+          reason: failSafe
+            ? 'Threat scan unavailable; traffic allowed by fail-open policy'
+            : 'URL reputation could not be fully verified',
           riskScore: threatScan.riskScore,
           threatVerdict: threatScan.verdict,
           metadata: {
             source: 'url_scan',
             elevatedRisk: true,
+            failSafe,
             provider: threatScan.provider,
             scanMetadata: threatScan.metadata,
           },
         };
+      }
 
       case ThreatVerdict.SAFE:
       default:

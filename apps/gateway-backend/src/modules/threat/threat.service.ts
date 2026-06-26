@@ -3,7 +3,7 @@ import { AxiosError } from 'axios';
 import { threatConfig } from '../../config/threat.config';
 import { SIEM_EVENT_TYPES } from '../../config/siem.config';
 import { SiemService } from '../siem/siem.service';
-import { buildSecurityEventActorMetadata } from '../siem/utils/security-event-user-scope.util';
+import { buildSecurityEventActorMetadata } from '../siem/dto/security-event.input';
 import { ThreatScanResult } from './dto/threat-scan.result';
 import { ThreatScanActor } from './dto/threat-scan-actor';
 import { ThreatVerdict } from './dto/threat-verdict.enum';
