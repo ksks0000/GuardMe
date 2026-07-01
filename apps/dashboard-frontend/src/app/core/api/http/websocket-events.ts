@@ -1,4 +1,4 @@
-// Mirrors the backend WEBSOCKET_CLIENT_EVENTS the dashboard subscribes to.
+// Mirrors the backend WEBSOCKET_CLIENT_EVENTS
 export const WEBSOCKET_CLIENT_EVENTS = {
   TRAFFIC_LOG: 'TRAFFIC_LOG',
   SECURITY_EVENT: 'SECURITY_EVENT',

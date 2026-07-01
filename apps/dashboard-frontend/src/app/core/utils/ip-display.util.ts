@@ -1,10 +1,6 @@
 const PLACEHOLDER = '—';
 
-/**
- * Normalizes IP addresses for display.
- * Loopback and IPv4-mapped IPv6 addresses (e.g. `::1`, `::ffff:127.0.0.1`)
- * are shown as their plain IPv4 form (e.g. `127.0.0.1`).
- */
+// Normalizes IP addresses for display in plain IPv4 form
 export function formatIpAddress(value: string | null | undefined): string {
   const trimmed = value?.trim();
   if (!trimmed) {

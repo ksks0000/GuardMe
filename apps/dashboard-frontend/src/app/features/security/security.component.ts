@@ -28,7 +28,6 @@ import { FilterFieldConfig, FilterValues } from '../../shared/models/filter-bar.
 
 const PAGE_SIZE = 15;
 
-// Raw identifiers we never surface in the GUI (a readable name is shown instead when present).
 const HIDDEN_METADATA_KEYS = new Set(['userId', 'ruleId']);
 
 const EMPTY_FILTERS: FilterValues = {

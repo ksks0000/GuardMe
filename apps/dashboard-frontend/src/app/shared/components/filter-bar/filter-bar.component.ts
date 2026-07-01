@@ -24,6 +24,9 @@ import {
 import { FilterFieldConfig, FilterValues } from '../../models/filter-bar.model';
 import { FILTER_DATE_FORMATS_PROVIDER } from './filter-bar-date-formats';
 
+// grid = single row (default)
+// split = primary row + datetime/actions row
+// compact = narrow datetime + actions
 export type FilterBarLayout = 'grid' | 'split' | 'compact';
 
 @Component({
@@ -45,7 +48,6 @@ export type FilterBarLayout = 'grid' | 'split' | 'compact';
 export class FilterBarComponent implements OnInit {
   readonly fields = input.required<FilterFieldConfig[]>();
   readonly initialValues = input<FilterValues>({});
-  /** `grid` = single row (default); `split` = primary row + datetime/actions row; `compact` = narrow datetime + actions */
   readonly layout = input<FilterBarLayout>('grid');
 
   readonly primaryFields = computed(() =>

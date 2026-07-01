@@ -1,7 +1,6 @@
 import { AsyncPipe, DatePipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, DestroyRef, inject, OnInit } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { ChangeDetectionStrategy, Component, inject, OnInit } from '@angular/core';
+import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -10,9 +9,8 @@ import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { Actions, ofType } from '@ngrx/effects';
 import { Store } from '@ngrx/store';
-import { combineLatest, filter, map, take } from 'rxjs';
+import { combineLatest, map } from 'rxjs';
 import {
   CreateVaultCredentialInput,
   UpdateVaultCredentialInput,
@@ -40,10 +38,6 @@ import {
   CredentialFormDialogData,
   CredentialFormDialogResult,
 } from './credential-form-dialog/credential-form-dialog.component';
-import {
-  ViewPasswordDialogComponent,
-  ViewPasswordDialogData,
-} from './view-password-dialog/view-password-dialog.component';
 
 @Component({
   selector: 'app-vault',
@@ -66,10 +60,8 @@ import {
 })
 export class VaultComponent implements OnInit {
   private readonly store = inject(Store);
-  private readonly actions$ = inject(Actions);
   private readonly dialog = inject(MatDialog);
   private readonly fb = inject(FormBuilder);
-  private readonly destroyRef = inject(DestroyRef);
 
   readonly credentials$ = this.store.select(selectAllCredentials);
   readonly locked$ = this.store.select(selectVaultLocked);
@@ -122,27 +114,6 @@ export class VaultComponent implements OnInit {
 
   viewPassword(credential: VaultCredentialSummary): void {
     this.store.dispatch(VaultActions.revealCredential({ id: credential.id }));
-
-    this.actions$
-      .pipe(
-        ofType(VaultActions.revealCredentialSuccess),
-        filter((action) => action.id === credential.id),
-        take(1),
-        takeUntilDestroyed(this.destroyRef),
-      )
-      .subscribe((action) => {
-        this.dialog.open<ViewPasswordDialogComponent, ViewPasswordDialogData>(
-          ViewPasswordDialogComponent,
-          {
-            width: '26rem',
-            data: {
-              serviceName: credential.serviceName,
-              username: credential.username,
-              password: action.password,
-            },
-          },
-        );
-      });
   }
 
   deleteCredential(credential: VaultCredentialSummary): void {

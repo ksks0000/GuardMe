@@ -92,7 +92,8 @@ export class RegisterComponent implements OnInit {
       }),
     );
 
-    this.form.patchValue({ password: '', confirmPassword: '' });
+    this.form.controls.password.reset('');
+    this.form.controls.confirmPassword.reset('');
   }
 
   protected usernameError(): string | null {

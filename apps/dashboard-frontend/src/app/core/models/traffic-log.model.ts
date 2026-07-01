@@ -15,7 +15,7 @@ export const POLICY_DECISIONS = {
 
 export type PolicyDecision = (typeof POLICY_DECISIONS)[keyof typeof POLICY_DECISIONS];
 
-/* Mirrors backend TrafficLogPayload / WS TRAFFIC_LOG event */
+// Mirrors backend TrafficLogPayload / WS TRAFFIC_LOG event
 export interface TrafficLog {
   id: string;
   userId: string;

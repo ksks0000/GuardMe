@@ -10,7 +10,6 @@ export function mapPublicUserProfile(dto: PublicUserProfileResponse): UserProfil
   };
 }
 
-// /auth/me omits createdAt; lastAuthAt drives the re-auth stale indicator
 export function mapAuthMeProfile(dto: AuthMeResponse): UserProfile {
   return {
     id: dto.id,

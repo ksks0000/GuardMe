@@ -9,6 +9,7 @@ export interface AuthState {
   initialized: boolean;
   verifyPasswordLoading: boolean;
   verifyPasswordError: string | null;
+  reAuthStaleTick: number;
 }
 
 export const initialAuthState: AuthState = {
@@ -18,4 +19,5 @@ export const initialAuthState: AuthState = {
   initialized: false,
   verifyPasswordLoading: false,
   verifyPasswordError: null,
+  reAuthStaleTick: 0,
 };

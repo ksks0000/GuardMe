@@ -11,8 +11,15 @@ export const selectUsername = createSelector(selectAuthUser, (user) => user?.use
 
 export const selectLastAuthAt = createSelector(selectAuthUser, (user) => user?.lastAuthAt ?? null);
 
-export const selectIsReAuthStale = createSelector(selectLastAuthAt, (lastAuthAt) =>
-  isReAuthStale(lastAuthAt),
+export const selectReAuthStaleTick = createSelector(
+  selectAuthState,
+  (state) => state.reAuthStaleTick,
+);
+
+export const selectIsReAuthStale = createSelector(
+  selectLastAuthAt,
+  selectReAuthStaleTick,
+  (lastAuthAt) => isReAuthStale(lastAuthAt),
 );
 
 export const selectIsAuthenticated = createSelector(

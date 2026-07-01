@@ -79,7 +79,6 @@ export class LoginComponent implements OnInit {
       }),
     );
 
-    // Clear the password without re-triggering "required" validation feedback.
     this.form.controls.password.reset('');
   }
 

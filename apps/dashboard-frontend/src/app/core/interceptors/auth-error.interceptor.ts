@@ -4,7 +4,7 @@ import { Store } from '@ngrx/store';
 import { throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
-import { isReAuthRequiredError } from '../utils/auth-error.util';
+import { isInvalidPasswordError, isReAuthRequiredError } from '../utils/auth-error.util';
 import { AuthActions } from '../../store/auth/auth.actions';
 
 export const authErrorInterceptor: HttpInterceptorFn = (req, next) => {
@@ -26,7 +26,7 @@ export const authErrorInterceptor: HttpInterceptorFn = (req, next) => {
       ) {
         if (isReAuthRequiredError(error)) {
           store.dispatch(AuthActions.reauthRequired());
-        } else {
+        } else if (!isInvalidPasswordError(error)) {
           store.dispatch(AuthActions.sessionExpired());
         }
       }

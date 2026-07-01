@@ -1,14 +1,23 @@
 import { inject, Injectable } from '@angular/core';
+import { MatDialog } from '@angular/material/dialog';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
-import { catchError, map, of, switchMap } from 'rxjs';
+import { Store } from '@ngrx/store';
+import { catchError, filter, map, of, switchMap, tap, withLatestFrom } from 'rxjs';
 import { VaultApi } from '../../core/api/vault.api';
 import { mapVaultError } from '../../core/utils/vault-error.util';
+import {
+  ViewPasswordDialogComponent,
+  ViewPasswordDialogData,
+} from '../../features/vault/view-password-dialog/view-password-dialog.component';
 import { VaultActions } from './vault.actions';
+import { selectAllCredentials } from './vault.selectors';
 
 @Injectable()
 export class VaultEffects {
   private readonly actions$ = inject(Actions);
   private readonly vaultApi = inject(VaultApi);
+  private readonly store = inject(Store);
+  private readonly dialog = inject(MatDialog);
 
   readonly loadStatus$ = createEffect(() =>
     this.actions$.pipe(
@@ -27,6 +36,9 @@ export class VaultEffects {
   readonly loadCredentialsOnReady$ = createEffect(() =>
     this.actions$.pipe(
       ofType(VaultActions.loadStatusSuccess, VaultActions.unlockVaultSuccess),
+      filter((action) =>
+        action.type === VaultActions.unlockVaultSuccess.type ? true : !action.locked,
+      ),
       map(() => VaultActions.loadCredentials()),
     ),
   );
@@ -129,5 +141,32 @@ export class VaultEffects {
         ),
       ),
     ),
+  );
+
+  readonly showRevealedPasswordDialog$ = createEffect(
+    () =>
+      this.actions$.pipe(
+        ofType(VaultActions.revealCredentialSuccess),
+        withLatestFrom(this.store.select(selectAllCredentials)),
+        tap(([{ id, password }, credentials]) => {
+          const credential = credentials.find((entry) => entry.id === id);
+          if (!credential) {
+            return;
+          }
+
+          this.dialog.open<ViewPasswordDialogComponent, ViewPasswordDialogData>(
+            ViewPasswordDialogComponent,
+            {
+              width: '26rem',
+              data: {
+                serviceName: credential.serviceName,
+                username: credential.username,
+                password,
+              },
+            },
+          );
+        }),
+      ),
+    { dispatch: false },
   );
 }

@@ -47,6 +47,7 @@ export const vaultReducer = createReducer(
     loading: false,
     statusLoaded: true,
     locked,
+    credentials: locked ? credentialsAdapter.getInitialState() : state.credentials,
   })),
 
   on(VaultActions.loadStatusFailure, (state, { error }) => ({
@@ -85,6 +86,7 @@ export const vaultReducer = createReducer(
     ...state,
     saving: false,
     locked,
+    credentials: credentialsAdapter.getInitialState(),
   })),
 
   on(VaultActions.lockVaultFailure, (state, { error }) => ({
@@ -141,8 +143,8 @@ export const vaultReducer = createReducer(
     credentials: credentialsAdapter.removeOne(id, state.credentials),
   })),
 
-  // The revealed password is consumed directly from the action payload by the
-  // view dialog; it is intentionally NOT persisted in the store.
+  // The revealed password goes directly from the action payload to the view dialog
+  // not saved in the store
   on(VaultActions.revealCredentialSuccess, (state) => ({
     ...state,
     saving: false,

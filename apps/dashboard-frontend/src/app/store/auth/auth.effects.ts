@@ -2,14 +2,15 @@ import { inject, Injectable } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { Router } from '@angular/router';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
-import { Store } from '@ngrx/store';
-import { catchError, exhaustMap, filter, interval, map, of, startWith, switchMap, takeUntil, tap, withLatestFrom } from 'rxjs';
+import { Action, Store } from '@ngrx/store';
+import { catchError, exhaustMap, filter, interval, map, mergeMap, of, startWith, switchMap, takeUntil, tap, withLatestFrom } from 'rxjs';
 import { AuthApi } from '../../core/api/auth.api';
 import { mapAuthError } from '../../core/utils/auth-error.util';
+import { isReAuthStale } from '../../core/utils/re-auth.util';
 import { sanitizeReturnUrl } from '../../core/utils/return-url.util';
 import { ReauthDialogComponent } from '../../shared/components/reauth-dialog/reauth-dialog.component';
 import { AuthActions } from './auth.actions';
-import { selectIsAuthenticated, selectIsReAuthStale } from './auth.selectors';
+import { selectAuthUser, selectIsAuthenticated } from './auth.selectors';
 
 @Injectable()
 export class AuthEffects {
@@ -118,14 +119,19 @@ export class AuthEffects {
         AuthActions.verifyPasswordSuccess,
       ),
       switchMap(() =>
-        interval(30_000).pipe(
+        interval(30000).pipe(
           startWith(0),
           withLatestFrom(
             this.store.select(selectIsAuthenticated),
-            this.store.select(selectIsReAuthStale),
+            this.store.select(selectAuthUser),
           ),
-          filter(([, isAuthenticated, isStale]) => isAuthenticated && isStale),
-          map(() => AuthActions.reauthRequired()),
+          mergeMap(([, isAuthenticated, user]) => {
+            const actions: Action[] = [AuthActions.reauthStaleTick()];
+            if (isAuthenticated && isReAuthStale(user?.lastAuthAt ?? null)) {
+              actions.push(AuthActions.reauthRequired());
+            }
+            return actions;
+          }),
           takeUntil(
             this.actions$.pipe(
               ofType(AuthActions.logoutSuccess, AuthActions.sessionExpired),
@@ -159,7 +165,7 @@ export class AuthEffects {
         }),
         filter((verified): verified is boolean => verified === true),
         tap(() => {
-          // Dialog closed after successful verify-password; user can retry their action.
+          // Dialog closed after successful verify password
         }),
       ),
     { dispatch: false },

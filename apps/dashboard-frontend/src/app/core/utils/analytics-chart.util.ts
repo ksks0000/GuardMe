@@ -138,13 +138,12 @@ function niceAxisStep(maxValue: number, targetTicks: number): number {
   return nice * magnitude;
 }
 
-/** Top of the Y-axis scale (rounded ceiling), shared by ticks, grid lines, and bar heights. */
+// Top of the Y-axis scale
 export function timeChartYAxisCeiling(maxRequestCount: number): number {
   const ticks = buildTimeChartYAxisTicks(maxRequestCount);
   return ticks.at(-1) ?? 0;
 }
 
-/** Y-axis tick values from 0 through a rounded ceiling of `maxRequestCount`. */
 export function buildTimeChartYAxisTicks(maxRequestCount: number): number[] {
   if (maxRequestCount <= 0) {
     return [0];

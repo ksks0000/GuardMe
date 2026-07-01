@@ -37,8 +37,6 @@ export class SocketRealtimeApi extends RealtimeApi implements OnDestroy {
 
     this.disconnect();
 
-    // Socket.IO retries with exponential backoff (delay → delayMax) and
-    // re-sends the session cookie via withCredentials on each reconnect.
     const socket = io(environment.wsUrl, {
       withCredentials: true,
       autoConnect: true,

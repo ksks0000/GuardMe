@@ -1,4 +1,3 @@
-/** Splits an ISO timestamp into local date + 24h time parts for filter controls. */
 export function splitIsoToDateTimeParts(iso: string): {
   date: Date | null;
   time: string;
@@ -21,7 +20,7 @@ export function splitIsoToDateTimeParts(iso: string): {
   };
 }
 
-/** Parses HH:mm or H:mm in 24-hour format. */
+// Parses HH:mm or H:mm in 24-hour format
 export function parseTime24h(value: string | undefined): { hours: number; minutes: number } | null {
   if (!value?.trim()) {
     return null;
@@ -42,7 +41,6 @@ export function parseTime24h(value: string | undefined): { hours: number; minute
   return { hours, minutes };
 }
 
-/** Combines a picked date and optional 24h time into an ISO string for API queries. */
 export function combineDateAndTime(
   date: Date | null | undefined,
   time: string | undefined,

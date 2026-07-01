@@ -26,7 +26,7 @@ export const SIEM_EVENT_SEVERITIES = {
 export type SiemEventSeverity =
   (typeof SIEM_EVENT_SEVERITIES)[keyof typeof SIEM_EVENT_SEVERITIES];
 
-/* Mirrors backend SecurityEventPayload */
+// Mirrors backend SecurityEventPayload 
 export interface SecurityEvent {
   id: string;
   type: string;

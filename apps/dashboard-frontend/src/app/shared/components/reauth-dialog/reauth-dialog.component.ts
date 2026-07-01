@@ -2,7 +2,7 @@ import { AsyncPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
-import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import { MatDialogModule } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
@@ -38,7 +38,6 @@ import {
 export class ReauthDialogComponent {
   private readonly fb = inject(FormBuilder);
   private readonly store = inject(Store);
-  private readonly dialogRef = inject(MatDialogRef<ReauthDialogComponent, boolean>);
 
   readonly loading$ = this.store.select(selectVerifyPasswordLoading);
   readonly error$ = this.store.select(selectVerifyPasswordError);
@@ -59,10 +58,6 @@ export class ReauthDialogComponent {
     const { password } = this.form.getRawValue();
     this.store.dispatch(AuthActions.verifyPassword({ password }));
     this.form.patchValue({ password: '' });
-  }
-
-  cancel(): void {
-    this.dialogRef.close(false);
   }
 
   protected passwordError(): string | null {

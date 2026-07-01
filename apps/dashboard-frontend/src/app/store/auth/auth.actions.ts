@@ -17,6 +17,7 @@ export const AuthActions = createActionGroup({
     'Load Profile Failure': emptyProps(),
     'Session Expired': emptyProps(),
     'Reauth Required': emptyProps(),
+    'Reauth Stale Tick': emptyProps(),
     'Verify Password': props<{ password: string }>(),
     'Verify Password Success': props<{ lastAuthAt: string }>(),
     'Verify Password Failure': props<{ error: string }>(),

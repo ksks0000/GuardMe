@@ -89,9 +89,14 @@
       }
     </div>
 
-    @if ((credentials$ | async)?.length === 0) {
+    @if ((locked$ | async) === true) {
       <app-empty-state
-        [message]="(locked$ | async) ? 'No saved credentials yet. Unlock the vault to add entries.' : 'No saved credentials yet. Add your first entry.'"
+        message="Unlock the vault to see your credentials list."
+        icon="lock"
+      />
+    } @else if ((credentials$ | async)?.length === 0) {
+      <app-empty-state
+        message="No saved credentials yet. Add your first entry."
         icon="key"
       />
     } @else {

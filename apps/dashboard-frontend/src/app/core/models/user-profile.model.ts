@@ -1,4 +1,4 @@
-/* Mirrors backend PublicUserProfileDto  */
+// Mirrors backend PublicUserProfileDto 
 export interface UserProfile {
   id: string;
   username: string;
