@@ -44,9 +44,9 @@ export function parseTime24h(value: string | undefined): { hours: number; minute
 export function combineDateAndTime(
   date: Date | null | undefined,
   time: string | undefined,
-): string | undefined {
+): string {
   if (!date) {
-    return undefined;
+    return '';
   }
 
   const parsedTime = parseTime24h(time);
