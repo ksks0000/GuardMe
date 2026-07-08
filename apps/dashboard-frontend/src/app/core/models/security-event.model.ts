@@ -29,8 +29,8 @@ export type SiemEventSeverity =
 // Mirrors backend SecurityEventPayload 
 export interface SecurityEvent {
   id: string;
-  type: string;
-  severity: string;
+  type: SiemEventType;
+  severity: SiemEventSeverity;
   message: string;
   createdAt: string;
   metadata?: Record<string, unknown>;

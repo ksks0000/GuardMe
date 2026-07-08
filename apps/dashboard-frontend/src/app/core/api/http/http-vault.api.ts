@@ -50,6 +50,6 @@ export class HttpVaultApi extends VaultApi {
   }
 
   deleteCredential(id: string): Observable<void> {
-    return this.http.delete<void>(`${this.baseUrl}/credentials/${id}`).pipe(map(() => undefined));
+    return this.http.delete<void>(`${this.baseUrl}/credentials/${id}`);
   }
 }

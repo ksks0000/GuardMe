@@ -1,3 +1,4 @@
+import { SiemEventSeverity } from './security-event.model';
 import { PolicyDecision, ThreatVerdict } from './traffic-log.model';
 
 export type AnalyticsBucketHours = 1 | 6 | 24;
@@ -43,7 +44,7 @@ export interface AnalyticsTrafficSummary {
 export interface AnalyticsSecurityEventsSummary {
   total: number;
   byType: Record<string, number>;
-  bySeverity: Record<string, number>;
+  bySeverity: Record<SiemEventSeverity, number>;
 }
 
 // Mirrors backend AnalyticsSummaryPayload 

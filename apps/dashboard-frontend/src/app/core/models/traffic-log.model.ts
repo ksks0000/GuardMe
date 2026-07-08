@@ -25,8 +25,8 @@ export interface TrafficLog {
   destinationPort: number | null;
   destinationIp: string | null;
   method: string;
-  policyDecision: string;
-  threatVerdict: string;
+  policyDecision: PolicyDecision;
+  threatVerdict: ThreatVerdict;
   matchedRuleId: string | null;
   riskScore: number;
   timestamp: string;

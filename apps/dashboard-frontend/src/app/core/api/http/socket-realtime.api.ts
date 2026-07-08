@@ -18,17 +18,11 @@ export class SocketRealtimeApi extends RealtimeApi implements OnDestroy {
   private readonly securitySubject = new Subject<SecurityEvent>();
   private readonly statusSubject = new Subject<SystemStatus>();
 
-  readonly trafficLogs$: Observable<TrafficLog> = this.trafficSubject
-    .asObservable()
-    .pipe(share());
+  readonly trafficLogs$: Observable<TrafficLog> = this.trafficSubject.asObservable();
 
-  readonly securityEvents$: Observable<SecurityEvent> = this.securitySubject
-    .asObservable()
-    .pipe(share());
+  readonly securityEvents$: Observable<SecurityEvent> = this.securitySubject.asObservable();
 
-  readonly systemStatus$: Observable<SystemStatus> = this.statusSubject
-    .asObservable()
-    .pipe(share());
+  readonly systemStatus$: Observable<SystemStatus> = this.statusSubject.asObservable();
 
   connect(): void {
     if (this.socket?.connected) {

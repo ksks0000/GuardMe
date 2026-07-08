@@ -11,7 +11,6 @@ import {
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { provideRouter } from '@angular/router';
 import { Store } from '@ngrx/store';
-
 import { routes } from './app.routes';
 import { provideGuardMeApi } from './core/api';
 import { httpInterceptors } from './core/interceptors';

@@ -18,7 +18,7 @@ export interface SystemPolicyRule {
   id: string;
   name: string;
   condition: string;
-  action: string;
+  action: FirewallRuleAction;
   source: 'system';
 }
 

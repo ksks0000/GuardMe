@@ -25,7 +25,7 @@ export class HttpAuthApi extends AuthApi {
   }
 
   logout(): Observable<void> {
-    return this.http.post<void>(`${this.baseUrl}/logout`, null).pipe(map(() => undefined));
+    return this.http.post<void>(`${this.baseUrl}/logout`, null);
   }
 
   getProfile(): Observable<UserProfile> {

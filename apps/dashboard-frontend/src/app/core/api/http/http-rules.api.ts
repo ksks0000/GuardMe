@@ -28,6 +28,6 @@ export class HttpRulesApi extends RulesApi {
   }
 
   delete(id: string): Observable<void> {
-    return this.http.delete<void>(`${this.baseUrl}/${id}`).pipe(map(() => undefined));
+    return this.http.delete<void>(`${this.baseUrl}/${id}`);
   }
 }
