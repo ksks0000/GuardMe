@@ -77,8 +77,8 @@ export const authReducer = createReducer(
     verifyPasswordError: null,
   })),
 
-  on(AuthActions.reauthStaleTick, (state) => ({
+  on(AuthActions.reauthStaleCheck, (state) => ({
     ...state,
-    reAuthStaleTick: Date.now(),
+    reAuthCheckedAt: Date.now(),
   })),
 );

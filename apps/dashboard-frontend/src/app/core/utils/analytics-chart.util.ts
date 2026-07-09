@@ -4,6 +4,7 @@ import {
   SIEM_EVENT_SEVERITIES,
   SIEM_EVENT_TYPES,
   SiemEventSeverity,
+  SiemEventType,
   THREAT_VERDICTS,
   ThreatVerdict,
 } from '../models';
@@ -94,13 +95,13 @@ export function buildThreatVerdictSeries(
 }
 
 export function buildSecuritySeveritySeries(
-  counts: Record<string, number>,
+  counts: Record<SiemEventSeverity, number>,
 ): AnalyticsChartSegment[] {
   return buildChartSeries(counts, SECURITY_SEVERITY_CHART_CONFIG);
 }
 
 export function buildSecurityEventTypeSeries(
-  counts: Record<string, number>,
+  counts: Record<SiemEventType, number>,
 ): AnalyticsChartSegment[] {
   const config = Object.values(SIEM_EVENT_TYPES).map((type) => ({
     key: type,
@@ -188,4 +189,33 @@ export function blockedSharePercent(requestCount: number, blockedCount: number):
   }
 
   return Math.min((blockedCount / requestCount) * 100, 100);
+}
+
+export function seriesTotal(values: Array<{ value: number }>): number {
+  return values.reduce((sum, item) => sum + item.value, 0);
+}
+
+export function formatBucketLabel(iso: string, bucketHours: number): string {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) {
+    return iso;
+  }
+
+  if (bucketHours >= 24) {
+    return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  }
+
+  return date.toLocaleString(undefined, {
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+  });
+}
+
+export function bucketTooltip(requestCount: number, blockedCount: number): string {
+  if (blockedCount > 0) {
+    return `${requestCount} requests (${blockedCount} blocked)`;
+  }
+
+  return `${requestCount} requests`;
 }

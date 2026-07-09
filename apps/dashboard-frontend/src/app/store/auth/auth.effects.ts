@@ -126,7 +126,7 @@ export class AuthEffects {
             this.store.select(selectAuthUser),
           ),
           mergeMap(([, isAuthenticated, user]) => {
-            const actions: Action[] = [AuthActions.reauthStaleTick()];
+            const actions: Action[] = [AuthActions.reauthStaleCheck()];
             if (isAuthenticated && isReAuthStale(user?.lastAuthAt ?? null)) {
               actions.push(AuthActions.reauthRequired());
             }

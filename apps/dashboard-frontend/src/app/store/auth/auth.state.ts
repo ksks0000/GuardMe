@@ -9,7 +9,8 @@ export interface AuthState {
   initialized: boolean;
   verifyPasswordLoading: boolean;
   verifyPasswordError: string | null;
-  reAuthStaleTick: number;
+  /** Updated every 30s so re-auth staleness selectors re-evaluate against Date.now(). */
+  reAuthCheckedAt: number;
 }
 
 export const initialAuthState: AuthState = {
@@ -19,5 +20,5 @@ export const initialAuthState: AuthState = {
   initialized: false,
   verifyPasswordLoading: false,
   verifyPasswordError: null,
-  reAuthStaleTick: 0,
+  reAuthCheckedAt: 0,
 };

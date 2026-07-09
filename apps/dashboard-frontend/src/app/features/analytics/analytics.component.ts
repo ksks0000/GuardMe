@@ -12,8 +12,11 @@ import { MatTableModule } from '@angular/material/table';
 import { Store } from '@ngrx/store';
 import {
   blockedSharePercent,
+  bucketTooltip,
   buildTimeChartYAxisTicks,
   chartSegmentWidthPercent,
+  formatBucketLabel,
+  seriesTotal,
   timeBucketHeightPercent,
 } from '../../core/utils/analytics-chart.util';
 import { buildAnalyticsSummaryQuery } from '../../core/utils/analytics-query.util';
@@ -92,6 +95,9 @@ export class AnalyticsComponent implements OnInit {
   protected blockedShare = blockedSharePercent;
   protected segmentWidth = chartSegmentWidthPercent;
   protected yAxisTicks = buildTimeChartYAxisTicks;
+  protected seriesTotal = seriesTotal;
+  protected formatBucketLabel = formatBucketLabel;
+  protected bucketTooltip = bucketTooltip;
 
   ngOnInit(): void {
     this.store.dispatch(AnalyticsActions.loadSummary({ query: {} }));
@@ -101,34 +107,5 @@ export class AnalyticsComponent implements OnInit {
     this.store.dispatch(
       AnalyticsActions.loadSummary({ query: buildAnalyticsSummaryQuery(filters) }),
     );
-  }
-
-  seriesTotal(values: Array<{ value: number }>): number {
-    return values.reduce((sum, item) => sum + item.value, 0);
-  }
-
-  formatBucketLabel(iso: string, bucketHours: number): string {
-    const date = new Date(iso);
-    if (Number.isNaN(date.getTime())) {
-      return iso;
-    }
-
-    if (bucketHours >= 24) {
-      return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-    }
-
-    return date.toLocaleString(undefined, {
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-    });
-  }
-
-  bucketTooltip(requestCount: number, blockedCount: number): string {
-    if (blockedCount > 0) {
-      return `${requestCount} requests (${blockedCount} blocked)`;
-    }
-
-    return `${requestCount} requests`;
   }
 }
