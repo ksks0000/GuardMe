@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Prisma } from '@prisma/client';
 import { SIEM_EMIT_EVENTS } from '../../config/siem.config';
+import { DOMAIN_EVENTS } from '../../config/events.config';
 import { PrismaService } from '../../database/prisma.service';
 import { TrafficLogPayload } from '../websocket/dto/traffic-log.payload';
 import { toTrafficLogPayload } from '../websocket/utils/payload-mapper.util';
@@ -43,6 +44,7 @@ export class SiemService {
       });
 
       this.emitEvent(SIEM_EMIT_EVENTS.TRAFFIC_LOG, row);
+      this.emitEvent(DOMAIN_EVENTS.TRAFFIC_LOG_CREATED, row);
     } catch (error) {
       this.logPersistenceFallback('traffic log', input, error);
     }
@@ -64,6 +66,7 @@ export class SiemService {
       });
 
       this.emitEvent(SIEM_EMIT_EVENTS.SECURITY_EVENT, row);
+      this.emitEvent(DOMAIN_EVENTS.SECURITY_EVENT_CREATED, row);
     } catch (error) {
       this.logPersistenceFallback(
         'security event',

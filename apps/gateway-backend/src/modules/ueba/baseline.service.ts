@@ -48,6 +48,20 @@ export class BaselineService {
     );
   }
 
+  async findSnapshotForUser(
+    userId: string,
+  ): Promise<BehaviorBaselineSnapshot | null> {
+    const row = await this.prisma.behaviorBaseline.findUnique({
+      where: { userId },
+    });
+
+    if (!row) {
+      return null;
+    }
+
+    return row.snapshot as unknown as BehaviorBaselineSnapshot;
+  }
+
   async refreshForUser(userId: string): Promise<BaselinePayload> {
     const windowDays = uebaConfig.baselineWindowDays();
     const minSampleSize = uebaConfig.baselineMinSampleSize();
