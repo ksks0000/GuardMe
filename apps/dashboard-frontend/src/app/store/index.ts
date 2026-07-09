@@ -11,14 +11,10 @@ import { rulesFeatureKey, rulesReducer } from './rules/rules.reducer';
 import { VaultEffects } from './vault/vault.effects';
 import { vaultFeatureKey, vaultReducer } from './vault/vault.reducer';
 import { RealtimeEffects } from './realtime/realtime.effects';
-import {
-  securityEventsFeatureKey,
-  securityEventsReducer,
-} from './security-events/security-events.reducer';
-import {
-  systemStatusFeatureKey,
-  systemStatusReducer,
-} from './system-status/system-status.reducer';
+import { securityEventsFeatureKey, securityEventsReducer } from './security-events/security-events.reducer';
+import { systemStatusFeatureKey, systemStatusReducer } from './system-status/system-status.reducer';
+import { notificationsFeatureKey, notificationsReducer } from './notifications/notifications.reducer';
+import { NotificationsEffects } from './notifications/notifications.effects';
 import { trafficFeatureKey, trafficReducer } from './traffic/traffic.reducer';
 
 export function provideAppStore(): EnvironmentProviders[] {
@@ -31,12 +27,14 @@ export function provideAppStore(): EnvironmentProviders[] {
     provideState(vaultFeatureKey, vaultReducer),
     provideState(analyticsFeatureKey, analyticsReducer),
     provideState(systemStatusFeatureKey, systemStatusReducer),
+    provideState(notificationsFeatureKey, notificationsReducer),
     provideEffects(
       AuthEffects,
       RealtimeEffects,
       RulesEffects,
       VaultEffects,
       AnalyticsEffects,
+      NotificationsEffects,
     ),
     ...(isDevMode()
       ? [

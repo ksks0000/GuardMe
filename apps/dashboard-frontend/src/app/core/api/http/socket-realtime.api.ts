@@ -2,7 +2,7 @@ import { Injectable, OnDestroy } from '@angular/core';
 import { Observable, share, Subject } from 'rxjs';
 import { io, Socket } from 'socket.io-client';
 import { environment } from '../../../../environments/environment';
-import { SecurityEvent, SystemStatus, TrafficLog } from '../../models';
+import { SecurityEvent, SystemStatus, ThreatNotificationPayload, TrafficLog } from '../../models';
 import { RealtimeApi } from '../realtime.api';
 import { WEBSOCKET_CLIENT_EVENTS } from './websocket-events';
 
@@ -16,11 +16,15 @@ export class SocketRealtimeApi extends RealtimeApi implements OnDestroy {
 
   private readonly trafficSubject = new Subject<TrafficLog>();
   private readonly securitySubject = new Subject<SecurityEvent>();
+  private readonly threatNotificationSubject = new Subject<ThreatNotificationPayload>();
   private readonly statusSubject = new Subject<SystemStatus>();
 
   readonly trafficLogs$: Observable<TrafficLog> = this.trafficSubject.asObservable();
 
   readonly securityEvents$: Observable<SecurityEvent> = this.securitySubject.asObservable();
+
+  readonly threatNotifications$: Observable<ThreatNotificationPayload> =
+    this.threatNotificationSubject.asObservable();
 
   readonly systemStatus$: Observable<SystemStatus> = this.statusSubject.asObservable();
 
@@ -49,6 +53,13 @@ export class SocketRealtimeApi extends RealtimeApi implements OnDestroy {
       this.securitySubject.next(payload);
     });
 
+    socket.on(
+      WEBSOCKET_CLIENT_EVENTS.THREAT_NOTIFICATION,
+      (payload: ThreatNotificationPayload) => {
+        this.threatNotificationSubject.next(payload);
+      },
+    );
+
     socket.on(WEBSOCKET_CLIENT_EVENTS.SYSTEM_STATUS, (payload: SystemStatus) => {
       this.statusSubject.next(payload);
     });
@@ -70,6 +81,7 @@ export class SocketRealtimeApi extends RealtimeApi implements OnDestroy {
     this.disconnect();
     this.trafficSubject.complete();
     this.securitySubject.complete();
+    this.threatNotificationSubject.complete();
     this.statusSubject.complete();
   }
 }

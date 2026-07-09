@@ -9,6 +9,7 @@ import { AuthActions } from '../auth/auth.actions';
 import { SecurityEventsActions } from '../security-events/security-events.actions';
 import { selectSecurityEventEntities } from '../security-events/security-events.selectors';
 import { SystemStatusActions } from '../system-status/system-status.actions';
+import { NotificationsActions } from '../notifications/notifications.actions';
 import { TrafficActions } from '../traffic/traffic.actions';
 import { selectTrafficEntities } from '../traffic/traffic.selectors';
 
@@ -81,6 +82,7 @@ export class RealtimeEffects {
         TrafficActions.clearLogs(),
         SecurityEventsActions.clearEvents(),
         SystemStatusActions.clearStatus(),
+        NotificationsActions.clearNotifications(),
       ]),
     ),
   );

@@ -14,3 +14,15 @@ body {
   margin: 0;
   height: 100%;
 }
+
+.threat-snackbar {
+  --mat-snack-bar-button-color: var(--gm-primary);
+}
+
+.threat-snackbar--high {
+  --mat-snack-bar-container-color: var(--gm-severity-high-bg, #5c3d00);
+}
+
+.threat-snackbar--critical {
+  --mat-snack-bar-container-color: var(--gm-danger-bg, #5c1010);
+}

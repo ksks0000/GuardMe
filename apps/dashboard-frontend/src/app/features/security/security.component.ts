@@ -1,9 +1,6 @@
 import { AsyncPipe, DatePipe, LowerCasePipe } from '@angular/common';
-import {
-  ChangeDetectionStrategy,
-  Component,
-  inject,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { PageEvent } from '@angular/material/paginator';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatExpansionModule } from '@angular/material/expansion';
@@ -66,8 +63,14 @@ type SecurityViewState =
 })
 export class SecurityComponent {
   private readonly siemApi = inject(SiemApi);
+  private readonly route = inject(ActivatedRoute);
 
   readonly pageSize = PAGE_SIZE;
+
+  readonly initialFilters: FilterValues = {
+    ...EMPTY_FILTERS,
+    type: this.route.snapshot.queryParamMap.get('type') ?? '',
+  };
 
   readonly filterFields: FilterFieldConfig[] = [
     {
@@ -103,7 +106,9 @@ export class SecurityComponent {
     },
   ];
 
-  private readonly filters$ = new BehaviorSubject<FilterValues>({ ...EMPTY_FILTERS });
+  private readonly filters$ = new BehaviorSubject<FilterValues>({
+    ...this.initialFilters,
+  });
   private readonly page$ = new BehaviorSubject(1);
 
   readonly viewState$ = combineLatest([this.filters$, this.page$]).pipe(

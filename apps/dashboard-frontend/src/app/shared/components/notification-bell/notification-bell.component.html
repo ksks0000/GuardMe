@@ -1,0 +1,72 @@
+<button
+  mat-icon-button
+  type="button"
+  class="notification-bell__trigger"
+  [matMenuTriggerFor]="notificationMenu"
+  [matBadge]="unreadCount() || null"
+  matBadgeColor="warn"
+  matBadgeSize="small"
+  [matBadgeHidden]="unreadCount() === 0"
+  (menuOpened)="onOpen()"
+  aria-label="Threat notifications"
+>
+  <mat-icon>notifications</mat-icon>
+</button>
+
+<mat-menu #notificationMenu="matMenu" class="notification-bell__menu" xPosition="before">
+  <div class="notification-bell__header" role="presentation">
+    <span>Threat alerts</span>
+    <span class="notification-bell__hint">Recent session alerts</span>
+  </div>
+
+  @if (notifications().length === 0) {
+    <p class="notification-bell__empty">No recent alerts.</p>
+  } @else {
+    @for (notification of notifications(); track notification.id) {
+      <button
+        mat-menu-item
+        type="button"
+        class="notification-bell__item"
+        [class.notification-bell__item--unread]="!notification.read"
+        (click)="openNotification(notification)"
+      >
+        <div class="notification-bell__item-main">
+          <div class="notification-bell__item-top">
+            <mat-chip
+              class="notification-bell__severity"
+              [class]="'severity--' + (notification.severity | lowercase)"
+            >
+              {{ notification.severity }}
+            </mat-chip>
+            <time class="notification-bell__time" [attr.datetime]="notification.timestamp">
+              {{ notification.timestamp | date: 'short' }}
+            </time>
+          </div>
+          <span class="notification-bell__title">{{ notification.title }}</span>
+          <span class="notification-bell__message">{{ notification.message }}</span>
+        </div>
+        <mat-icon
+          class="notification-bell__dismiss"
+          role="button"
+          tabindex="0"
+          aria-label="Dismiss notification"
+          (click)="dismiss($event, notification.id)"
+          (keydown.enter)="dismiss($event, notification.id)"
+          (keydown.space)="dismiss($event, notification.id)"
+        >
+          close
+        </mat-icon>
+      </button>
+    }
+  }
+
+  <button
+    mat-menu-item
+    type="button"
+    class="notification-bell__footer"
+    routerLink="/security"
+  >
+    <mat-icon>security</mat-icon>
+    <span>View full event history</span>
+  </button>
+</mat-menu>

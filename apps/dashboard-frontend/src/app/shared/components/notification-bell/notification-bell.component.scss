@@ -1,0 +1,120 @@
+.notification-bell__trigger {
+  margin-right: 0.5rem;
+}
+
+.notification-bell__menu {
+  max-width: min(24rem, 92vw);
+}
+
+.notification-bell__header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.75rem 1rem 0.5rem;
+  font-weight: 500;
+  pointer-events: none;
+}
+
+.notification-bell__hint {
+  font-size: 0.75rem;
+  font-weight: 400;
+  opacity: 0.7;
+}
+
+.notification-bell__empty {
+  margin: 0;
+  padding: 0.75rem 1rem 1rem;
+  font-size: 0.875rem;
+  opacity: 0.75;
+}
+
+.notification-bell__item {
+  display: flex !important;
+  align-items: flex-start !important;
+  gap: 0.25rem;
+  height: auto !important;
+  min-height: 3.5rem;
+  line-height: 1.35 !important;
+  white-space: normal !important;
+  padding-top: 0.65rem !important;
+  padding-bottom: 0.65rem !important;
+}
+
+.notification-bell__item--unread {
+  background: var(--gm-primary-subtle);
+}
+
+.notification-bell__item-main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.notification-bell__item-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.notification-bell__severity {
+  --mdc-chip-label-text-size: 0.65rem;
+  height: 1.35rem;
+
+  &.severity--low {
+    color: var(--gm-muted);
+  }
+
+  &.severity--medium {
+    color: var(--gm-warn);
+  }
+
+  &.severity--high {
+    color: var(--gm-severity-high);
+  }
+
+  &.severity--critical {
+    color: var(--gm-danger);
+  }
+}
+
+.notification-bell__time {
+  font-size: 0.7rem;
+  opacity: 0.7;
+  white-space: nowrap;
+}
+
+.notification-bell__title {
+  font-weight: 500;
+  font-size: 0.875rem;
+}
+
+.notification-bell__message {
+  font-size: 0.8rem;
+  opacity: 0.85;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.notification-bell__dismiss {
+  flex-shrink: 0;
+  font-size: 1rem;
+  width: 1rem;
+  height: 1rem;
+  margin-top: 0.1rem;
+  cursor: pointer;
+  opacity: 0.7;
+
+  &:hover {
+    opacity: 1;
+  }
+}
+
+.notification-bell__footer {
+  border-top: 1px solid var(--gm-border);
+  margin-top: 0.25rem;
+}

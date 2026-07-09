@@ -51,6 +51,8 @@ const SECURITY_EVENT_TYPE_LABELS: Record<string, string> = {
   [SIEM_EVENT_TYPES.PROXY_ERROR]: 'Proxy error',
   [SIEM_EVENT_TYPES.VAULT_UNLOCKED]: 'Vault unlocked',
   [SIEM_EVENT_TYPES.VAULT_UNLOCK_FAILURE]: 'Vault unlock failure',
+  [SIEM_EVENT_TYPES.VAULT_DECRYPT_FAILURE]: 'Vault decrypt failure',
+  [SIEM_EVENT_TYPES.ANOMALY_DETECTED]: 'Anomaly detected',
 };
 
 const SECURITY_SEVERITY_CHART_CONFIG: Array<{
