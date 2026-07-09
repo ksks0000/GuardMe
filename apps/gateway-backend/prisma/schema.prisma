@@ -20,6 +20,7 @@ model User {
   firewallRules    FirewallRule[]
   vaultCredentials VaultCredential[]
   securityEvents   SecurityEvent[]
+  behaviorBaseline BehaviorBaseline?
 
   @@map("users")
 }
@@ -103,6 +104,20 @@ model SecurityEvent {
   @@index([severity])
   @@index([userId, createdAt])
   @@map("security_events")
+}
+
+model BehaviorBaseline {
+  id         String   @id @default(uuid()) @db.Uuid
+  userId     String   @unique @map("user_id") @db.Uuid
+  snapshot   Json
+  sampleSize Int      @map("sample_size")
+  windowDays Int      @default(7) @map("window_days")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("behavior_baselines")
 }
 
 model VaultCredential {

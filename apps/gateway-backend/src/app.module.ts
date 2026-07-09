@@ -12,6 +12,7 @@ import { ProxyRealmModule } from './modules/proxy/proxy-realm.module';
 import { RulesModule } from './modules/rules/rules.module';
 import { SiemModule } from './modules/siem/siem.module';
 import { ThreatModule } from './modules/threat/threat.module';
+import { UebaModule } from './modules/ueba/ueba.module';
 import { VaultModule } from './modules/vault/vault.module';
 import { WebsocketModule } from './modules/websocket/websocket.module';
 
@@ -31,6 +32,7 @@ import { WebsocketModule } from './modules/websocket/websocket.module';
     AuthModule,
     HealthModule,
     RulesModule,
+    UebaModule,
     VaultModule,
     ProxyRealmModule,
     ProxyModule,
