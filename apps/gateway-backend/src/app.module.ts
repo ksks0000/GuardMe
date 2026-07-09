@@ -10,6 +10,7 @@ import { HealthModule } from './modules/health/health.module';
 import { ProxyModule } from './modules/proxy/proxy.module';
 import { ProxyRealmModule } from './modules/proxy/proxy-realm.module';
 import { RulesModule } from './modules/rules/rules.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
 import { SiemModule } from './modules/siem/siem.module';
 import { ThreatModule } from './modules/threat/threat.module';
 import { UebaModule } from './modules/ueba/ueba.module';
@@ -32,6 +33,7 @@ import { WebsocketModule } from './modules/websocket/websocket.module';
     AuthModule,
     HealthModule,
     RulesModule,
+    NotificationsModule,
     UebaModule,
     VaultModule,
     ProxyRealmModule,

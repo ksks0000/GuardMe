@@ -5,29 +5,19 @@ import {
   WebSocketGateway,
   WebSocketServer,
 } from '@nestjs/websockets';
-import {
-  Injectable,
-  Logger,
-  OnModuleDestroy,
-  OnModuleInit,
-} from '@nestjs/common';
+import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
 import { SecurityEvent, TrafficLog } from '@prisma/client';
 import { Server, Socket } from 'socket.io';
 import { SIEM_EMIT_EVENTS } from '../../config/siem.config';
-import {
-  WEBSOCKET_CLIENT_EVENTS,
-  WEBSOCKET_INTERNAL_EVENTS,
-  websocketConfig,
-} from '../../config/websocket.config';
+import { WEBSOCKET_CLIENT_EVENTS, websocketConfig, WEBSOCKET_INTERNAL_EVENTS } from '../../config/websocket.config';
+import { NOTIFICATION_EMIT_EVENTS } from '../../config/notification.config';
+import { ThreatNotificationEmitPayload } from '../notifications/dto/threat-notification-emit.payload';
 import { AuthenticatedUser } from '../../common/types/auth.types';
 import { SystemStatusService } from '../health/system-status.service';
 import { SessionEventPayload } from './dto/session-event.payload';
 import { WsAuthService } from './ws-auth.service';
-import {
-  toSecurityEventPayload,
-  toTrafficLogPayload,
-} from './utils/payload-mapper.util';
+import { toSecurityEventPayload, toTrafficLogPayload } from './utils/payload-mapper.util';
 
 interface AuthenticatedSocket extends Socket {
   data: {
@@ -133,6 +123,20 @@ export class EventsGateway
     this.server
       .to(this.userRoom(payload.userId))
       .emit(WEBSOCKET_CLIENT_EVENTS.SESSION_EVENT, payload);
+  }
+
+  @OnEvent(NOTIFICATION_EMIT_EVENTS.THREAT_NOTIFICATION)
+  handleThreatNotification(payload: ThreatNotificationEmitPayload): void {
+    if (!this.server) {
+      return;
+    }
+
+    this.server
+      .to(this.userRoom(payload.userId))
+      .emit(
+        WEBSOCKET_CLIENT_EVENTS.THREAT_NOTIFICATION,
+        payload.notification,
+      );
   }
 
   private async broadcastSystemStatus(): Promise<void> {
