@@ -1,6 +1,7 @@
 import { AsyncPipe, DatePipe, LowerCasePipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, ParamMap } from '@angular/router';
 import { PageEvent } from '@angular/material/paginator';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatExpansionModule } from '@angular/material/expansion';
@@ -13,6 +14,7 @@ import {
   map,
   of,
   shareReplay,
+  skip,
   startWith,
   switchMap,
 } from 'rxjs';
@@ -27,12 +29,14 @@ const PAGE_SIZE = 15;
 
 const HIDDEN_METADATA_KEYS = new Set(['userId', 'ruleId']);
 
-const EMPTY_FILTERS: FilterValues = {
-  type: '',
-  severity: '',
-  from: '',
-  to: '',
-};
+function filtersFromRoute(params: ParamMap): FilterValues {
+  return {
+    type: params.get('type') ?? '',
+    severity: params.get('severity') ?? '',
+    from: params.get('from') ?? '',
+    to: params.get('to') ?? '',
+  };
+}
 
 type SecurityViewState =
   | { status: 'loading' }
@@ -67,10 +71,8 @@ export class SecurityComponent {
 
   readonly pageSize = PAGE_SIZE;
 
-  readonly initialFilters: FilterValues = {
-    ...EMPTY_FILTERS,
-    type: this.route.snapshot.queryParamMap.get('type') ?? '',
-  };
+  readonly routeFilters = signal<FilterValues>(filtersFromRoute(this.route.snapshot.queryParamMap));
+  readonly filterBarRevision = signal(0);
 
   readonly filterFields: FilterFieldConfig[] = [
     {
@@ -106,10 +108,16 @@ export class SecurityComponent {
     },
   ];
 
-  private readonly filters$ = new BehaviorSubject<FilterValues>({
-    ...this.initialFilters,
-  });
+  private readonly filters$ = new BehaviorSubject<FilterValues>(
+    filtersFromRoute(this.route.snapshot.queryParamMap),
+  );
   private readonly page$ = new BehaviorSubject(1);
+
+  constructor() {
+    this.route.queryParamMap
+      .pipe(skip(1), takeUntilDestroyed())
+      .subscribe((params) => this.applyRouteFilters(params));
+  }
 
   readonly viewState$ = combineLatest([this.filters$, this.page$]).pipe(
     switchMap(([filters, page]) =>
@@ -141,6 +149,14 @@ export class SecurityComponent {
 
   onPageChange(event: PageEvent): void {
     this.page$.next(event.pageIndex + 1);
+  }
+
+  private applyRouteFilters(params: ParamMap): void {
+    const filters = filtersFromRoute(params);
+    this.routeFilters.set(filters);
+    this.page$.next(1);
+    this.filters$.next(filters);
+    this.filterBarRevision.update((revision) => revision + 1);
   }
 
   metadataEntries(event: SecurityEvent): Array<{ key: string; value: string }> {

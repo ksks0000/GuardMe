@@ -17,6 +17,13 @@ interface NavItem {
   icon: string;
 }
 
+const NAV_LINK_ACTIVE_OPTIONS = {
+  paths: 'exact',
+  queryParams: 'ignored',
+  fragment: 'ignored',
+  matrixParams: 'ignored',
+} as const;
+
 @Component({
   selector: 'app-shell',
   imports: [
@@ -39,6 +46,8 @@ export class ShellComponent {
   readonly username = toSignal(this.store.select(selectUsername), { initialValue: null });
 
   readonly reAuthStale = toSignal(this.store.select(selectIsReAuthStale), { initialValue: false });
+
+  readonly navLinkActiveOptions = NAV_LINK_ACTIVE_OPTIONS;
 
   readonly navItems: NavItem[] = [
     { label: 'Dashboard', route: '/dashboard', icon: 'dashboard' },

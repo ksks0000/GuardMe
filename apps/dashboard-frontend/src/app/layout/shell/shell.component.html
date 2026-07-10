@@ -6,7 +6,7 @@
           mat-list-item
           [routerLink]="item.route"
           routerLinkActive="active-nav-item"
-          [routerLinkActiveOptions]="{ exact: true }"
+          [routerLinkActiveOptions]="navLinkActiveOptions"
         >
           <mat-icon matListItemIcon>{{ item.icon }}</mat-icon>
           <span matListItemTitle>{{ item.label }}</span>
@@ -35,8 +35,8 @@
             Re-auth needed
           </button>
         }
-        <app-notification-bell />
         <span class="user-label">{{ name }}</span>
+        <app-notification-bell />
         <button mat-button type="button" (click)="logout()">Sign out</button>
       }
     </mat-toolbar>

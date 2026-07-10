@@ -4,11 +4,13 @@
     <p>Event history with severity and type filters; expand rows for metadata</p>
   </header>
 
-  <app-filter-bar
-    [fields]="filterFields"
-    [initialValues]="initialFilters"
-    (filtersApply)="onFiltersApply($event)"
-  />
+  @for (_ of [filterBarRevision()]; track _) {
+    <app-filter-bar
+      [fields]="filterFields"
+      [initialValues]="routeFilters()"
+      (filtersApply)="onFiltersApply($event)"
+    />
+  }
 
   @if (viewState$ | async; as state) {
     @if (state.status === 'loading') {

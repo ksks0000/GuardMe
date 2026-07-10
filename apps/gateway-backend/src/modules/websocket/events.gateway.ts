@@ -12,7 +12,7 @@ import { Server, Socket } from 'socket.io';
 import { SIEM_EMIT_EVENTS } from '../../config/siem.config';
 import { WEBSOCKET_CLIENT_EVENTS, websocketConfig, WEBSOCKET_INTERNAL_EVENTS } from '../../config/websocket.config';
 import { NOTIFICATION_EMIT_EVENTS } from '../../config/notification.config';
-import { ThreatNotificationEmitPayload } from '../notifications/dto/threat-notification-emit.payload';
+import { ThreatNotificationEmitPayload } from '../notifications/dto/threat-notification.payload';
 import { AuthenticatedUser } from '../../common/types/auth.types';
 import { SystemStatusService } from '../health/system-status.service';
 import { SessionEventPayload } from './dto/session-event.payload';

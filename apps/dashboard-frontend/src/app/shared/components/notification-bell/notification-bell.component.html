@@ -1,7 +1,6 @@
 <button
   mat-icon-button
   type="button"
-  class="notification-bell__trigger"
   [matMenuTriggerFor]="notificationMenu"
   [matBadge]="unreadCount() || null"
   matBadgeColor="warn"
@@ -13,7 +12,12 @@
   <mat-icon>notifications</mat-icon>
 </button>
 
-<mat-menu #notificationMenu="matMenu" class="notification-bell__menu" xPosition="before">
+<mat-menu
+  #notificationMenu="matMenu"
+  class="notification-bell__menu"
+  panelClass="notification-bell__menu"
+  xPosition="before"
+>
   <div class="notification-bell__header" role="presentation">
     <span>Threat alerts</span>
     <span class="notification-bell__hint">Recent session alerts</span>

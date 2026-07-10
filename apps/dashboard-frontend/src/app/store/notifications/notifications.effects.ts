@@ -73,7 +73,12 @@ export class NotificationsEffects {
 
           ref.onAction().subscribe(() => {
             void this.router.navigate(['/security'], {
-              queryParams: { type: notification.type },
+              queryParams: {
+                type: notification.type,
+                severity: null,
+                from: null,
+                to: null,
+              },
             });
           });
         }),

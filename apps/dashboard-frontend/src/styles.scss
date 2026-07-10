@@ -26,3 +26,8 @@ body {
 .threat-snackbar--critical {
   --mat-snack-bar-container-color: var(--gm-danger-bg, #5c1010);
 }
+
+.mat-mdc-menu-panel.notification-bell__menu {
+  width: 280px;
+  max-width: min(280px, 92vw);
+}

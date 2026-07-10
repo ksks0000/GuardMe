@@ -52,7 +52,12 @@ export class NotificationBellComponent {
   openNotification(notification: ThreatNotification): void {
     this.store.dispatch(NotificationsActions.markRead({ id: notification.id }));
     void this.router.navigate(['/security'], {
-      queryParams: { type: notification.type },
+      queryParams: {
+        type: notification.type,
+        severity: null,
+        from: null,
+        to: null,
+      },
     });
   }
 
