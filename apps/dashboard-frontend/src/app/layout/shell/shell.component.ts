@@ -55,6 +55,7 @@ export class ShellComponent {
     { label: 'Rules', route: '/rules', icon: 'rule' },
     { label: 'Security', route: '/security', icon: 'security' },
     { label: 'Analytics', route: '/analytics', icon: 'insights' },
+    { label: 'Behavior', route: '/behavior', icon: 'psychology' },
     { label: 'Vault', route: '/vault', icon: 'key' },
   ];
 

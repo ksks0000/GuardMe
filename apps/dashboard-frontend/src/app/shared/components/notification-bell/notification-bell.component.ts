@@ -9,6 +9,7 @@ import { MatMenuModule } from '@angular/material/menu';
 import { Router, RouterLink } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { ThreatNotification } from '../../../core/models';
+import { buildNotificationNavigationTarget } from '../../../core/utils/notification-navigation.util';
 import { NotificationsActions } from '../../../store/notifications/notifications.actions';
 import {
   selectAllNotifications,
@@ -51,14 +52,8 @@ export class NotificationBellComponent {
 
   openNotification(notification: ThreatNotification): void {
     this.store.dispatch(NotificationsActions.markRead({ id: notification.id }));
-    void this.router.navigate(['/security'], {
-      queryParams: {
-        type: notification.type,
-        severity: null,
-        from: null,
-        to: null,
-      },
-    });
+    const target = buildNotificationNavigationTarget(notification);
+    void this.router.navigate(target.path, { queryParams: target.queryParams });
   }
 
   dismiss(event: Event, id: string): void {

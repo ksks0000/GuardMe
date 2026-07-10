@@ -1,0 +1,319 @@
+<section class="behavior-page">
+  <header class="behavior-page__header">
+    <h1>Behavior Analytics</h1>
+    <p>Anomaly detection for your account. Behavior baseline and detected anomalies.</p>
+  </header>
+
+  <app-filter-bar layout="compact" [fields]="filterFields" (filtersApply)="onFiltersApply($event)" />
+
+  @if (period$ | async; as period) {
+    <p class="behavior-page__period-label">
+      Showing: {{ period.from | date: 'medium' }} — {{ period.to | date: 'medium' }}
+    </p>
+  }
+
+  @if (periodLoading$ | async) {
+    <div class="behavior-page__loading">
+      <mat-spinner diameter="40" />
+      <span>Loading period insights…</span>
+    </div>
+  } @else if (error$ | async; as error) {
+    <p class="behavior-page__error" role="alert">{{ error }}</p>
+  } @else {
+    <div class="behavior-page__stats">
+      <app-stat-card
+        label="Anomalies in period"
+        [value]="(anomalyTotal$ | async) ?? 0"
+        icon="warning"
+        accent="warn"
+      />
+      <app-stat-card
+        label="Requests in period"
+        [value]="periodRequestCount()"
+        icon="language"
+      />
+      <app-stat-card
+        label="Avg risk in period"
+        [value]="periodAverageRisk()"
+        icon="speed"
+      />
+    </div>
+
+    <div class="behavior-page__charts">
+      <mat-card class="behavior-card">
+        <mat-card-header>
+          <mat-card-title>Anomaly timeline</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          @if (anomalyTimeline$ | async; as timeline) {
+            @if (timeline.length === 0) {
+              <p class="behavior-card__empty">No anomalies in this period.</p>
+            } @else {
+              @if (maxTimelineCount$ | async; as maxCount) {
+                @if (yAxisTicks(maxCount); as ticks) {
+                  <div class="time-chart-wrap">
+                    <div class="time-chart__y-axis" aria-hidden="true">
+                      @for (tick of ticks.slice().reverse(); track tick) {
+                        <span class="time-chart__y-tick">{{ tick }}</span>
+                      }
+                    </div>
+                    <div class="time-chart__body">
+                      <div class="time-chart__grid-lines" aria-hidden="true">
+                        @for (tick of ticks.slice().reverse(); track tick) {
+                          <span class="time-chart__grid-line"></span>
+                        }
+                      </div>
+                      <div class="time-chart" role="img" aria-label="Anomaly count over time">
+                        @for (bucket of timeline; track bucket.date) {
+                          <div class="time-chart__column" [title]="anomalyTooltip(bucket)">
+                            <div class="time-chart__plot-area">
+                              <div
+                                class="time-chart__bar time-chart__bar--anomaly"
+                                [style.height.%]="timelineHeight(bucket.count, ticks[ticks.length - 1])"
+                              ></div>
+                            </div>
+                            <span class="time-chart__label">{{ formatInsightDate(bucket.date) }}</span>
+                          </div>
+                        }
+                      </div>
+                    </div>
+                  </div>
+                }
+              }
+            }
+          }
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="behavior-card">
+        <mat-card-header>
+          <mat-card-title>Risk trend</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          @if (riskTrend$ | async; as trend) {
+            @if (trend.length === 0) {
+              <p class="behavior-card__empty">No traffic risk data in this period.</p>
+            } @else {
+              @if (maxRiskTrendAverage$ | async; as maxRisk) {
+                @if (riskTrendYAxisTicks(maxRisk); as ticks) {
+                  <div class="time-chart-wrap">
+                    <div class="time-chart__y-axis" aria-hidden="true">
+                      @for (tick of ticks.slice().reverse(); track tick) {
+                        <span class="time-chart__y-tick">{{ tick }}</span>
+                      }
+                    </div>
+                    <div class="time-chart__body">
+                      <div class="time-chart__grid-lines" aria-hidden="true">
+                        @for (tick of ticks.slice().reverse(); track tick) {
+                          <span class="time-chart__grid-line"></span>
+                        }
+                      </div>
+                      <div class="time-chart" role="img" aria-label="Average risk score over time">
+                        @for (point of trend; track point.date) {
+                          <div class="time-chart__column" [title]="riskTooltip(point)">
+                            <div class="time-chart__plot-area">
+                              <div
+                                class="time-chart__bar time-chart__bar--risk"
+                                [style.height.%]="riskHeight(point.averageRisk, ticks[ticks.length - 1])"
+                              ></div>
+                            </div>
+                            <span class="time-chart__label">{{ formatInsightDate(point.date) }}</span>
+                          </div>
+                        }
+                      </div>
+                    </div>
+                  </div>
+                }
+              }
+            }
+          }
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <section class="behavior-page__baseline" aria-labelledby="baseline-title">
+      <mat-card class="behavior-card behavior-card--baseline">
+        <mat-card-header>
+          <mat-card-title>Current behavior baseline</mat-card-title>
+          <button
+            mat-stroked-button
+            type="button"
+            class="behavior-card__refresh"
+            [disabled]="(baselineRefreshing$ | async) ?? false"
+            (click)="refreshBaseline()"
+          >
+            @if (baselineRefreshing$ | async) {
+              <mat-spinner diameter="16" />
+            } @else {
+              <mat-icon>refresh</mat-icon>
+            }
+            Recompute
+          </button>
+        </mat-card-header>
+  
+        <mat-card-content>
+          @if (baselineLoading$ | async) {
+            <div class="behavior-card__loading">
+              <mat-spinner diameter="32" />
+              <span>Loading baseline…</span>
+            </div>
+          } @else {
+            @if (baselineError$ | async; as baselineError) {
+              <p class="behavior-page__error" role="alert">{{ baselineError }}</p>
+            }
+  
+            @if (baseline$ | async; as baseline) {
+              @if (baseline.status === 'insufficient_data') {
+                <app-empty-state
+                  message="Not enough traffic yet to build a behavior baseline."
+                  icon="insights"
+                />
+                <p class="behavior-card__meta">
+                  Need at least {{ baseline.minSampleSize }} requests in the last {{ baseline.windowDays }} days
+                  ({{ baseline.sampleSize }} recorded so far).
+                </p>
+              } @else if (baseline.snapshot; as snapshot) {
+                <div class="baseline-meta">
+                  <span>{{ baseline.sampleSize }} requests · {{ baseline.windowDays }}-day window</span>
+                  @if (baseline.updatedAt) {
+                    <span>Updated {{ baseline.updatedAt | date: 'medium' }}</span>
+                  }
+                  <span>Avg risk {{ snapshot.riskScore.average }}</span>
+                  <span>Peak risk {{ snapshot.riskScore.max }}</span>
+                </div>
+  
+                <div class="baseline-body">
+                  <div class="baseline-heatmap-col">
+                    <p class="baseline-heatmap__title">Requests per hour (24 h profile)</p>
+                    <div class="hour-grid" role="img" aria-label="Requests per hour across a 24-hour day">
+                      @for (count of snapshot.activeHours; track $index) {
+                        <div
+                          class="hour-cell"
+                          [style.opacity]="hourIntensity(count, maxOf(snapshot.activeHours))"
+                          [title]="$index + 'h — ' + count + ' requests'"
+                          aria-hidden="true"
+                        >
+                          <span class="hour-cell__label">{{ $index }}h</span>
+                          <span class="hour-cell__count">{{ count }}</span>
+                        </div>
+                      }
+                    </div>
+                    <p class="baseline-heatmap__legend">Darker = less activity</p>
+                  </div>
+  
+                  <div class="baseline-hosts-wrapper">
+                    <div class="baseline-hosts-col">
+                      @if (snapshot.topHosts?.length) {
+                        <table
+                          mat-table
+                          [dataSource]="snapshot.topHosts"
+                          class="behavior-table"
+                          aria-label="Top destination hosts in baseline"
+                        >
+                          <ng-container matColumnDef="host">
+                            <th mat-header-cell *matHeaderCellDef>Top hosts in baseline</th>
+                            <td mat-cell *matCellDef="let row">{{ row.host }}</td>
+                          </ng-container>
+  
+                          <ng-container matColumnDef="count">
+                            <th mat-header-cell *matHeaderCellDef>Requests</th>
+                            <td mat-cell *matCellDef="let row">{{ row.count }}</td>
+                          </ng-container>
+  
+                          <tr mat-header-row *matHeaderRowDef="baselineHostColumns"></tr>
+                          <tr mat-row *matRowDef="let row; columns: baselineHostColumns"></tr>
+                        </table>
+                      } @else {
+                        <p class="behavior-card__empty">No host data recorded yet.</p>
+                      }
+                    </div>
+                  </div>
+                </div>
+              }
+            } @else {
+              <p class="behavior-card__empty">Baseline unavailable.</p>
+            }
+          }
+        </mat-card-content>
+      </mat-card>
+    </section>
+
+    <section class="behavior-page__anomalies" aria-labelledby="detected-anomalies-title">
+      <header class="behavior-page__anomalies-header">
+        <h2 id="detected-anomalies-title">Detected anomalies</h2>
+        <p>History of behavioral anomaly events for the selected period. Expand a row to see which signals triggered it.</p>
+      </header>
+
+      <div class="behavior-page__toolbar">
+        @if (((anomalyTotal$ | async) ?? 0) > 0) {
+          <mat-paginator
+            class="behavior-page__paginator"
+            [length]="(anomalyTotal$ | async) ?? 0"
+            [pageSize]="(anomalyPageSize$ | async) ?? 15"
+            [pageIndex]="((anomalyPage$ | async) ?? 1) - 1"
+            [hidePageSize]="true"
+            (page)="onPageChange($event)"
+            aria-label="Anomaly pages"
+          />
+        }
+      </div>
+
+      @if (anomalyItems$ | async; as anomalies) {
+        @if (anomalies.length === 0) {
+          <app-empty-state message="No anomaly events in this period." icon="shield" />
+        } @else {
+          <mat-accordion multi class="behavior-page__accordion">
+            @for (anomaly of anomalies; track anomaly.id) {
+              <mat-expansion-panel>
+                <mat-expansion-panel-header>
+                  <mat-panel-title>
+                    <span class="severity--{{ anomaly.severity | lowercase }}">
+                      {{ formatAnomalySignals(anomaly.signals) }}
+                    </span>
+                  </mat-panel-title>
+                  <mat-panel-description>
+                    {{ anomaly.createdAt | date: 'medium' }} · score {{ anomaly.anomalyScore }}
+                  </mat-panel-description>
+                </mat-expansion-panel-header>
+
+                <p class="anomaly-detail__message">{{ anomaly.message }}</p>
+
+                @if (anomaly.signals.length > 0) {
+                  <div class="anomaly-detail__chips">
+                    @for (signal of anomaly.signals; track signal) {
+                      <mat-chip disableRipple>{{ anomalySignalLabel(signal) }}</mat-chip>
+                    }
+                  </div>
+                }
+
+                <dl class="metadata-list">
+                  <dt>Destination host</dt>
+                  <dd>{{ anomaly.destinationHost ?? '—' }}</dd>
+
+                  <dt>Anomaly score</dt>
+                  <dd>{{ anomaly.anomalyScore }}</dd>
+
+                  <dt>Severity</dt>
+                  <dd>
+                    <span class="severity--{{ anomaly.severity | lowercase }}">{{ anomaly.severity }}</span>
+                  </dd>
+
+                  <dt>Policy decision</dt>
+                  <dd>{{ anomaly.policyDecision ?? '—' }}</dd>
+
+                  <dt>Threat verdict</dt>
+                  <dd>{{ anomaly.threatVerdict ?? '—' }}</dd>
+
+                  <dt>Request risk score</dt>
+                  <dd>{{ anomaly.riskScore ?? '—' }}</dd>
+                </dl>
+              </mat-expansion-panel>
+            }
+          </mat-accordion>
+        }
+      }
+    </section>
+  }
+
+ 
+</section>

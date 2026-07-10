@@ -51,6 +51,11 @@ export const routes: Routes = [
         loadChildren: () =>
           import('./features/analytics/analytics.routes').then((m) => m.ANALYTICS_ROUTES),
       },
+      {
+        path: 'behavior',
+        loadChildren: () =>
+          import('./features/behavior/behavior.routes').then((m) => m.BEHAVIOR_ROUTES),
+      },
     ],
   },
   { path: '**', redirectTo: 'dashboard' },

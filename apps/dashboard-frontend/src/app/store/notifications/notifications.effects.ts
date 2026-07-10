@@ -6,6 +6,7 @@ import { Store } from '@ngrx/store';
 import { filter, map, switchMap, takeUntil, tap, withLatestFrom } from 'rxjs';
 import { RealtimeApi } from '../../core/api/realtime.api';
 import { SIEM_EVENT_SEVERITIES } from '../../core/models';
+import { buildNotificationNavigationTarget } from '../../core/utils/notification-navigation.util';
 import { AuthActions } from '../auth/auth.actions';
 import { NotificationsActions } from './notifications.actions';
 import { selectNotificationEntities } from './notifications.selectors';
@@ -72,14 +73,8 @@ export class NotificationsEffects {
           );
 
           ref.onAction().subscribe(() => {
-            void this.router.navigate(['/security'], {
-              queryParams: {
-                type: notification.type,
-                severity: null,
-                from: null,
-                to: null,
-              },
-            });
+            const target = buildNotificationNavigationTarget(notification);
+            void this.router.navigate(target.path, { queryParams: target.queryParams });
           });
         }),
       ),

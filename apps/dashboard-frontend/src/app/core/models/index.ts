@@ -7,5 +7,6 @@ export * from './security-event.model';
 export * from './system-status.model';
 export * from './threat-notification.model';
 export * from './traffic-log.model';
+export * from './ueba.model';
 export * from './user-profile.model';
 export * from './vault.model';
