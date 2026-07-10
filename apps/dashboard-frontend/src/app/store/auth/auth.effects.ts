@@ -83,7 +83,7 @@ export class AuthEffects {
   readonly verifyPassword$ = createEffect(() =>
     this.actions$.pipe(
       ofType(AuthActions.verifyPassword),
-      exhaustMap(({ password }) =>
+      switchMap(({ password }) =>
         this.authApi.verifyPassword(password).pipe(
           map(({ lastAuthAt }) => AuthActions.verifyPasswordSuccess({ lastAuthAt })),
           catchError((error) =>
@@ -146,7 +146,6 @@ export class AuthEffects {
     () =>
       this.actions$.pipe(
         ofType(AuthActions.reauthRequired),
-        tap(() => this.store.dispatch(AuthActions.clearError())),
         exhaustMap(() => {
           const alreadyOpen = this.dialog.openDialogs.some(
             (ref) => ref.componentInstance instanceof ReauthDialogComponent,
@@ -154,6 +153,8 @@ export class AuthEffects {
           if (alreadyOpen) {
             return of(false);
           }
+
+          this.store.dispatch(AuthActions.clearError());
 
           const dialogRef = this.dialog.open(ReauthDialogComponent, {
             disableClose: true,

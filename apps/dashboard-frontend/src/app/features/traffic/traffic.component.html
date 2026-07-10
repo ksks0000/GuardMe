@@ -13,6 +13,9 @@
         <span>Loading traffic logs…</span>
       </div>
     } @else if (state.status === 'error') {
+      <div class="history-page__toolbar">
+        <app-history-refresh-button (refresh)="onRefresh()" />
+      </div>
       <p class="history-page__error" role="alert">{{ state.message }}</p>
     } @else {
       <div class="history-page__toolbar">
@@ -26,17 +29,20 @@
           </mat-chip-set>
         </div>
 
-        @if (state.items.length > 0) {
-          <mat-paginator
-            class="history-page__paginator"
-            [length]="state.total"
-            [pageSize]="pageSize"
-            [pageIndex]="state.page - 1"
-            [hidePageSize]="true"
-            (page)="onPageChange($event)"
-            aria-label="Traffic log pages (top)"
-          />
-        }
+        <div class="history-page__toolbar-actions">
+          <app-history-refresh-button (refresh)="onRefresh()" />
+          @if (state.items.length > 0) {
+            <mat-paginator
+              class="history-page__paginator"
+              [length]="state.total"
+              [pageSize]="pageSize"
+              [pageIndex]="state.page - 1"
+              [hidePageSize]="true"
+              (page)="onPageChange($event)"
+              aria-label="Traffic log pages (top)"
+            />
+          }
+        </div>
       </div>
 
       @if (state.items.length === 0) {
@@ -122,4 +128,3 @@
     }
   }
 </section>
-

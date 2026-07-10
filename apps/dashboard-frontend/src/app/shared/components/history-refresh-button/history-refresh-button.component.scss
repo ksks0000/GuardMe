@@ -1,0 +1,33 @@
+:host {
+  display: inline-flex;
+}
+
+.history-refresh-button {
+  padding: 4px 12px;
+  background-color: transparent;
+  cursor: pointer;
+  border: 1px solid #7f867f;
+  border-radius: 8px; 
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+
+  span {
+    font-family: Roboto, sans-serif;
+    font-size: 0.875rem;
+    font-weight: 500;
+    letter-spacing: 0.00625rem;
+    line-height: 1.25rem;
+    color: #c9d0c8;
+  }
+
+  mat-icon {
+    color: #c9d0c8;
+  }
+
+  &:hover {
+    background-color: var(--gm-surface);
+  }
+}
+

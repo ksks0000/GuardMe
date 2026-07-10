@@ -21,8 +21,10 @@ import {
 import { SiemApi } from '../../core/api/siem.api';
 import { SecurityEvent, SIEM_EVENT_SEVERITIES, SIEM_EVENT_TYPES } from '../../core/models';
 import { buildSecurityEventQuery } from '../../core/utils/history-query.util';
+import { HistoryRefreshTrigger } from '../../core/utils/history-refresh.util';
 import { EmptyStateComponent } from '../../shared/components/empty-state/empty-state.component';
 import { FilterBarComponent } from '../../shared/components/filter-bar/filter-bar.component';
+import { HistoryRefreshButtonComponent } from '../../shared/components/history-refresh-button/history-refresh-button.component';
 import { FilterFieldConfig, FilterValues } from '../../shared/models/filter-bar.model';
 
 const PAGE_SIZE = 15;
@@ -60,6 +62,7 @@ type SecurityViewState =
     MatChipsModule,
     FilterBarComponent,
     EmptyStateComponent,
+    HistoryRefreshButtonComponent,
   ],
   templateUrl: './security.component.html',
   styleUrl: './security.component.scss',
@@ -112,6 +115,7 @@ export class SecurityComponent {
     filtersFromRoute(this.route.snapshot.queryParamMap),
   );
   private readonly page$ = new BehaviorSubject(1);
+  private readonly historyRefresh = new HistoryRefreshTrigger();
 
   constructor() {
     this.route.queryParamMap
@@ -119,7 +123,11 @@ export class SecurityComponent {
       .subscribe((params) => this.applyRouteFilters(params));
   }
 
-  readonly viewState$ = combineLatest([this.filters$, this.page$]).pipe(
+  readonly viewState$ = combineLatest([
+    this.filters$,
+    this.page$,
+    this.historyRefresh.changes$,
+  ]).pipe(
     switchMap(([filters, page]) =>
       this.siemApi.getSecurityEvents(buildSecurityEventQuery(filters, page, PAGE_SIZE)).pipe(
         map(
@@ -149,6 +157,10 @@ export class SecurityComponent {
 
   onPageChange(event: PageEvent): void {
     this.page$.next(event.pageIndex + 1);
+  }
+
+  onRefresh(): void {
+    this.historyRefresh.refresh();
   }
 
   private applyRouteFilters(params: ParamMap): void {

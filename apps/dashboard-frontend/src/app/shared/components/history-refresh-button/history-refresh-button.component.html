@@ -1,0 +1,10 @@
+<button
+  type="button"
+  class="history-refresh-button"
+  [disabled]="disabled()"
+  (click)="refresh.emit()"
+  aria-label="Refresh history from database"
+>
+  <mat-icon aria-hidden="true">refresh</mat-icon>
+  <span>Refresh</span>
+</button>

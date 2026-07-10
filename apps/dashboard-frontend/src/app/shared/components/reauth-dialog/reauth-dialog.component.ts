@@ -1,5 +1,6 @@
 import { AsyncPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialogModule } from '@angular/material/dialog';
@@ -41,6 +42,7 @@ export class ReauthDialogComponent {
 
   readonly loading$ = this.store.select(selectVerifyPasswordLoading);
   readonly error$ = this.store.select(selectVerifyPasswordError);
+  protected readonly loading = toSignal(this.loading$, { initialValue: false });
 
   readonly passwordMin = PASSWORD_MIN_LENGTH;
   readonly passwordMax = PASSWORD_MAX_LENGTH;
@@ -50,6 +52,10 @@ export class ReauthDialogComponent {
   });
 
   submit(): void {
+    if (this.loading()) {
+      return;
+    }
+
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
@@ -57,7 +63,6 @@ export class ReauthDialogComponent {
 
     const { password } = this.form.getRawValue();
     this.store.dispatch(AuthActions.verifyPassword({ password }));
-    this.form.patchValue({ password: '' });
   }
 
   protected passwordError(): string | null {

@@ -55,6 +55,14 @@
   min-width: 0;
 }
 
+
+.history-page__toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
 .history-page__paginator {
   flex: 0 0 auto;
   background: transparent;

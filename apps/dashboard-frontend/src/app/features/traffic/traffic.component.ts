@@ -1,9 +1,5 @@
 import { AsyncPipe, DatePipe } from '@angular/common';
-import {
-  ChangeDetectionStrategy,
-  Component,
-  inject,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { PageEvent } from '@angular/material/paginator';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatPaginatorModule } from '@angular/material/paginator';
@@ -22,6 +18,7 @@ import {
 import { SiemApi } from '../../core/api/siem.api';
 import { POLICY_DECISIONS, THREAT_VERDICTS, TrafficLog } from '../../core/models';
 import { buildTrafficLogQuery } from '../../core/utils/history-query.util';
+import { HistoryRefreshTrigger } from '../../core/utils/history-refresh.util';
 import { formatIpAddress } from '../../core/utils/ip-display.util';
 import { computeTrafficPageStats, TrafficPageStats } from '../../core/utils/traffic-stats.util';
 import { truncateUrl } from '../../core/utils/url-display.util';
@@ -33,6 +30,7 @@ import {
 } from '../../core/utils/traffic-verdict.util';
 import { EmptyStateComponent } from '../../shared/components/empty-state/empty-state.component';
 import { FilterBarComponent } from '../../shared/components/filter-bar/filter-bar.component';
+import { HistoryRefreshButtonComponent } from '../../shared/components/history-refresh-button/history-refresh-button.component';
 import { FilterFieldConfig, FilterValues } from '../../shared/models/filter-bar.model';
 
 const PAGE_SIZE = 15;
@@ -68,6 +66,7 @@ type TrafficViewState =
     MatChipsModule,
     FilterBarComponent,
     EmptyStateComponent,
+    HistoryRefreshButtonComponent,
   ],
   templateUrl: './traffic.component.html',
   styleUrl: './traffic.component.scss',
@@ -139,8 +138,13 @@ export class TrafficComponent {
 
   private readonly filters$ = new BehaviorSubject<FilterValues>({ ...EMPTY_FILTERS });
   private readonly page$ = new BehaviorSubject(1);
+  private readonly historyRefresh = new HistoryRefreshTrigger();
 
-  readonly viewState$ = combineLatest([this.filters$, this.page$]).pipe(
+  readonly viewState$ = combineLatest([
+    this.filters$,
+    this.page$,
+    this.historyRefresh.changes$,
+  ]).pipe(
     switchMap(([filters, page]) =>
       this.siemApi.getTrafficLogs(buildTrafficLogQuery(filters, page, PAGE_SIZE)).pipe(
         map(
@@ -178,6 +182,10 @@ export class TrafficComponent {
 
   onPageChange(event: PageEvent): void {
     this.page$.next(event.pageIndex + 1);
+  }
+
+  onRefresh(): void {
+    this.historyRefresh.refresh();
   }
 }
 
