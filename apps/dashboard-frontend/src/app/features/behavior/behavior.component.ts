@@ -4,7 +4,6 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { PageEvent } from '@angular/material/paginator';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
-import { MatChipsModule } from '@angular/material/chips';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatIconModule } from '@angular/material/icon';
 import { MatPaginatorModule } from '@angular/material/paginator';
@@ -35,7 +34,6 @@ import {
   selectBehaviorBaseline,
   selectBehaviorBaselineError,
   selectBehaviorBaselineLoading,
-  selectBehaviorBaselineRefreshing,
   selectBehaviorError,
   selectBehaviorPeriod,
   selectBehaviorPeriodLoading,
@@ -56,7 +54,6 @@ import { buildBehaviorQuery } from './utils/behavior-query.util';
     LowerCasePipe,
     MatButtonModule,
     MatCardModule,
-    MatChipsModule,
     MatExpansionModule,
     MatIconModule,
     MatPaginatorModule,
@@ -85,7 +82,6 @@ export class BehaviorComponent implements OnInit {
   readonly error$ = this.store.select(selectBehaviorError);
   readonly period$ = this.store.select(selectBehaviorPeriod);
   readonly baseline$ = this.store.select(selectBehaviorBaseline);
-  readonly baselineRefreshing$ = this.store.select(selectBehaviorBaselineRefreshing);
   readonly baselineError$ = this.store.select(selectBehaviorBaselineError);
   readonly anomalyTimeline$ = this.store.select(selectAnomalyTimeline);
   readonly riskTrend$ = this.store.select(selectRiskTrend);
@@ -118,6 +114,29 @@ export class BehaviorComponent implements OnInit {
     return arr.length > 0 ? Math.max(...arr) : 0;
   }
 
+  protected shouldShowLabel(index: number, total: number): boolean {
+    if (total <= 14) return true;
+    if (total <= 28) return index % 2 === 0;
+    return index % 5 === 0 || index === total - 1;
+  }
+
+  protected anomalyScoreClass(score: number): string {
+    if (score >= 80) return 'critical';
+    if (score >= 60) return 'high';
+    if (score >= 30) return 'medium';
+    return 'low';
+  }
+
+  protected severityIcon(severity: string): string {
+    const map: Record<string, string> = {
+      low: 'info_outline',
+      medium: 'warning_amber',
+      high: 'warning',
+      critical: 'report',
+    };
+    return map[severity.toLowerCase()] ?? 'warning';
+  }
+
   ngOnInit(): void {
     this.store.dispatch(BehaviorActions.loadBaseline());
     this.loadPeriod(1);
@@ -130,10 +149,6 @@ export class BehaviorComponent implements OnInit {
 
   onPageChange(event: PageEvent): void {
     this.loadPeriod(event.pageIndex + 1);
-  }
-
-  refreshBaseline(): void {
-    this.store.dispatch(BehaviorActions.refreshBaseline());
   }
 
   private loadPeriod(page: number): void {

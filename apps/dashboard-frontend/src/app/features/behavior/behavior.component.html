@@ -64,7 +64,7 @@
                         }
                       </div>
                       <div class="time-chart" role="img" aria-label="Anomaly count over time">
-                        @for (bucket of timeline; track bucket.date) {
+                        @for (bucket of timeline; track bucket.date; let i = $index) {
                           <div class="time-chart__column" [title]="anomalyTooltip(bucket)">
                             <div class="time-chart__plot-area">
                               <div
@@ -72,7 +72,10 @@
                                 [style.height.%]="timelineHeight(bucket.count, ticks[ticks.length - 1])"
                               ></div>
                             </div>
-                            <span class="time-chart__label">{{ formatInsightDate(bucket.date) }}</span>
+                            <span
+                              class="time-chart__label"
+                              [class.time-chart__label--faded]="!shouldShowLabel(i, timeline.length)"
+                            >{{ formatInsightDate(bucket.date) }}</span>
                           </div>
                         }
                       </div>
@@ -109,7 +112,7 @@
                         }
                       </div>
                       <div class="time-chart" role="img" aria-label="Average risk score over time">
-                        @for (point of trend; track point.date) {
+                        @for (point of trend; track point.date; let i = $index) {
                           <div class="time-chart__column" [title]="riskTooltip(point)">
                             <div class="time-chart__plot-area">
                               <div
@@ -117,7 +120,10 @@
                                 [style.height.%]="riskHeight(point.averageRisk, ticks[ticks.length - 1])"
                               ></div>
                             </div>
-                            <span class="time-chart__label">{{ formatInsightDate(point.date) }}</span>
+                            <span
+                              class="time-chart__label"
+                              [class.time-chart__label--faded]="!shouldShowLabel(i, trend.length)"
+                            >{{ formatInsightDate(point.date) }}</span>
                           </div>
                         }
                       </div>
@@ -135,20 +141,6 @@
       <mat-card class="behavior-card behavior-card--baseline">
         <mat-card-header>
           <mat-card-title>Current behavior baseline</mat-card-title>
-          <button
-            mat-stroked-button
-            type="button"
-            class="behavior-card__refresh"
-            [disabled]="(baselineRefreshing$ | async) ?? false"
-            (click)="refreshBaseline()"
-          >
-            @if (baselineRefreshing$ | async) {
-              <mat-spinner diameter="16" />
-            } @else {
-              <mat-icon>refresh</mat-icon>
-            }
-            Recompute
-          </button>
         </mat-card-header>
   
         <mat-card-content>
@@ -264,49 +256,108 @@
         } @else {
           <mat-accordion multi class="behavior-page__accordion">
             @for (anomaly of anomalies; track anomaly.id) {
-              <mat-expansion-panel>
-                <mat-expansion-panel-header>
+              <mat-expansion-panel class="anomaly-panel">
+                <mat-expansion-panel-header
+                  collapsedHeight="auto"
+                  expandedHeight="auto"
+                  class="anomaly-panel__header"
+                >
                   <mat-panel-title>
-                    <span class="severity--{{ anomaly.severity | lowercase }}">
-                      {{ formatAnomalySignals(anomaly.signals) }}
-                    </span>
+                    <div class="anomaly-row">
+                      <span class="anomaly-severity severity--bg-{{ anomaly.severity | lowercase }}">
+                        <mat-icon class="anomaly-severity__icon">{{ severityIcon(anomaly.severity) }}</mat-icon>
+                        {{ anomaly.severity }}
+                      </span>
+
+                      <div class="anomaly-row__signals">
+                        @for (signal of anomaly.signals.slice(0, 2); track signal) {
+                          <span class="anomaly-chip">{{ anomalySignalLabel(signal) }}</span>
+                        }
+                        @if (anomaly.signals.length === 0) {
+                          <span class="anomaly-chip">Behavioral anomaly</span>
+                        }
+                        @if (anomaly.signals.length > 2) {
+                          <span class="anomaly-chip anomaly-chip--more">+{{ anomaly.signals.length - 2 }}</span>
+                        }
+                      </div>
+
+                      <span class="anomaly-row__spacer"></span>
+
+                      <span class="anomaly-score anomaly-score--{{ anomalyScoreClass(anomaly.anomalyScore) }}">
+                        score&nbsp;{{ anomaly.anomalyScore }}
+                      </span>
+
+                      <time class="anomaly-row__time" [attr.datetime]="anomaly.createdAt">
+                        {{ anomaly.createdAt | date: 'MMM d · HH:mm' }}
+                      </time>
+                    </div>
                   </mat-panel-title>
-                  <mat-panel-description>
-                    {{ anomaly.createdAt | date: 'medium' }} · score {{ anomaly.anomalyScore }}
-                  </mat-panel-description>
                 </mat-expansion-panel-header>
 
-                <p class="anomaly-detail__message">{{ anomaly.message }}</p>
+                <div class="anomaly-detail">
+                  <p class="anomaly-detail__message">{{ anomaly.message }}</p>
 
-                @if (anomaly.signals.length > 0) {
-                  <div class="anomaly-detail__chips">
-                    @for (signal of anomaly.signals; track signal) {
-                      <mat-chip disableRipple>{{ anomalySignalLabel(signal) }}</mat-chip>
-                    }
+                  @if (anomaly.signals.length > 0) {
+                    <div class="anomaly-detail__section">
+                      <span class="anomaly-detail__section-title">Triggered by</span>
+                      <div class="anomaly-detail__chips">
+                        @for (signal of anomaly.signals; track signal) {
+                          <span class="anomaly-chip anomaly-chip--signal">{{ anomalySignalLabel(signal) }}</span>
+                        }
+                      </div>
+                    </div>
+                  }
+
+                  <div class="anomaly-detail__grid">
+                    <div class="anomaly-detail__field">
+                      <span class="anomaly-detail__field-label">Destination host</span>
+                      <span class="anomaly-detail__field-value anomaly-detail__field-value--mono">
+                        {{ anomaly.destinationHost ?? '—' }}
+                      </span>
+                    </div>
+
+                    <div class="anomaly-detail__field">
+                      <span class="anomaly-detail__field-label">Anomaly score</span>
+                      <div class="anomaly-detail__score-row">
+                        <span class="anomaly-detail__field-value">
+                          {{ anomaly.anomalyScore }}<span class="anomaly-detail__field-sub"> / 100</span>
+                        </span>
+                        <div class="anomaly-detail__score-track">
+                          <div
+                            class="anomaly-detail__score-fill anomaly-score--{{ anomalyScoreClass(anomaly.anomalyScore) }}"
+                            [style.width.%]="anomaly.anomalyScore"
+                          ></div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="anomaly-detail__field">
+                      <span class="anomaly-detail__field-label">Policy decision</span>
+                      <span class="anomaly-detail__field-value anomaly-detail__field-value--{{ (anomaly.policyDecision ?? '') | lowercase }}">
+                        {{ anomaly.policyDecision ?? '—' }}
+                      </span>
+                    </div>
+
+                    <div class="anomaly-detail__field">
+                      <span class="anomaly-detail__field-label">Threat verdict</span>
+                      <span class="anomaly-detail__field-value anomaly-detail__field-value--{{ (anomaly.threatVerdict ?? '') | lowercase }}">
+                        {{ anomaly.threatVerdict ?? '—' }}
+                      </span>
+                    </div>
+
+                    <div class="anomaly-detail__field">
+                      <span class="anomaly-detail__field-label">Request risk score</span>
+                      <span class="anomaly-detail__field-value">{{ anomaly.riskScore ?? '—' }}</span>
+                    </div>
+
+                    <div class="anomaly-detail__field">
+                      <span class="anomaly-detail__field-label">Detected at</span>
+                      <span class="anomaly-detail__field-value">
+                        {{ anomaly.createdAt | date: 'MMM d, y · HH:mm:ss' }}
+                      </span>
+                    </div>
                   </div>
-                }
-
-                <dl class="metadata-list">
-                  <dt>Destination host</dt>
-                  <dd>{{ anomaly.destinationHost ?? '—' }}</dd>
-
-                  <dt>Anomaly score</dt>
-                  <dd>{{ anomaly.anomalyScore }}</dd>
-
-                  <dt>Severity</dt>
-                  <dd>
-                    <span class="severity--{{ anomaly.severity | lowercase }}">{{ anomaly.severity }}</span>
-                  </dd>
-
-                  <dt>Policy decision</dt>
-                  <dd>{{ anomaly.policyDecision ?? '—' }}</dd>
-
-                  <dt>Threat verdict</dt>
-                  <dd>{{ anomaly.threatVerdict ?? '—' }}</dd>
-
-                  <dt>Request risk score</dt>
-                  <dd>{{ anomaly.riskScore ?? '—' }}</dd>
-                </dl>
+                </div>
               </mat-expansion-panel>
             }
           </mat-accordion>
