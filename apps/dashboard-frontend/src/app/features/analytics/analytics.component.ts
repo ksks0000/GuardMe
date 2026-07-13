@@ -1,16 +1,12 @@
 import { AsyncPipe, DatePipe } from '@angular/common';
-import {
-  ChangeDetectionStrategy,
-  Component,
-  inject,
-  OnInit,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, OnInit } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatCardModule } from '@angular/material/card';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTableModule } from '@angular/material/table';
 import { Store } from '@ngrx/store';
 import {
+  AnalyticsChartSegment,
   blockedSharePercent,
   bucketTooltip,
   buildTimeChartYAxisTicks,
@@ -107,5 +103,22 @@ export class AnalyticsComponent implements OnInit {
     this.store.dispatch(
       AnalyticsActions.loadSummary({ query: buildAnalyticsSummaryQuery(filters) }),
     );
+  }
+
+  protected severityPieVars(series: AnalyticsChartSegment[]): Record<string, string> {
+    const total = seriesTotal(series);
+    if (total <= 0) return {};
+
+    let cumulative = 0;
+    const vars: Record<string, string> = {};
+
+    for (const seg of series) {
+      const pct = (seg.value / total) * 100;
+      vars[`--sev-${seg.cssClass}-start`] = `${cumulative}%`;
+      cumulative += pct;
+      vars[`--sev-${seg.cssClass}-end`] = `${cumulative}%`;
+    }
+
+    return vars;
   }
 }

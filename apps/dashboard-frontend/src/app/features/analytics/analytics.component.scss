@@ -63,7 +63,7 @@
 
 .analytics-page__grid {
   display: grid;
-  grid-template-columns: minmax(22rem, 1.5fr) minmax(14rem, 1fr);
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
   gap: 1rem;
   align-items: stretch;
 }
@@ -79,6 +79,8 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 1rem;
+
+  > * { min-width: 0; }
 }
 
 .analytics-card--status {
@@ -141,9 +143,26 @@
 
 .analytics-page__security-row {
   display: grid;
-  grid-template-columns: minmax(7rem, 0.55fr) minmax(12rem, 1.45fr);
+  grid-template-columns: minmax(0, 0.55fr) minmax(0, 1.45fr);
   gap: 1rem;
+
+  > * { min-width: 0; }
 }
+
+.analytics-card--severity,
+.analytics-card--event-types {
+  display: flex;
+  flex-direction: column;
+  max-height: 360px;
+
+  mat-card-content {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+  }
+}
+
+// ─── Hosts column ─────────────────────────────────────────────────────────────
 
 .analytics-page__hosts-col {
   min-width: 0;
@@ -151,10 +170,15 @@
 
 .analytics-card--hosts {
   height: 100%;
+  max-height: 650px;
+  display: flex;
+  flex-direction: column;
 
   mat-card-content {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
     padding-top: 0.5rem;
-    margin-top: 2rem;
   }
 }
 
@@ -341,6 +365,27 @@
   width: 100%;
 }
 
+// ─── Severity pie ─────────────────────────────────────────────────────────────
+
+.severity-pie {
+  display: block;
+  width: 100%;
+  max-width: 7rem;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  margin: 2rem auto 0;
+  padding: 0.5rem;
+  background:
+    radial-gradient(circle, #191c19 38%, transparent 38%),
+    conic-gradient(
+      from -90deg,
+      var(--gm-muted) var(--sev-low-start, 0%)           var(--sev-low-end, 0%),
+      var(--gm-warn) var(--sev-medium-start, 0%)         var(--sev-medium-end, 0%),
+      var(--gm-severity-high) var(--sev-high-start, 0%)  var(--sev-high-end, 0%),
+      var(--gm-danger) var(--sev-critical-start, 0%)     var(--sev-critical-end, 0%)
+    );
+}
+
 // ─── Responsive ───────────────────────────────────────────────────────────────
 
 @media (max-width: 960px) {
@@ -351,5 +396,9 @@
   .analytics-page__traffic-row,
   .analytics-page__security-row {
     grid-template-columns: 1fr;
+  }
+
+  .analytics-card--hosts {
+    height: auto;
   }
 }
