@@ -7,6 +7,14 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatPaginatorModule } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { SiemApi } from '../../core/api/siem.api';
+import { SecurityEvent, SIEM_EVENT_SEVERITIES, SIEM_EVENT_TYPES } from '../../core/models';
+import { buildSecurityEventQuery } from '../../core/utils/history-query.util';
+import { HistoryRefreshTrigger } from '../../core/utils/history-refresh.util';
+import { EmptyStateComponent } from '../../shared/components/empty-state/empty-state.component';
+import { FilterBarComponent } from '../../shared/components/filter-bar/filter-bar.component';
+import { HistoryRefreshButtonComponent } from '../../shared/components/history-refresh-button/history-refresh-button.component';
+import { FilterFieldConfig, FilterValues } from '../../shared/models/filter-bar.model';
 import {
   BehaviorSubject,
   catchError,
@@ -18,14 +26,6 @@ import {
   startWith,
   switchMap,
 } from 'rxjs';
-import { SiemApi } from '../../core/api/siem.api';
-import { SecurityEvent, SIEM_EVENT_SEVERITIES, SIEM_EVENT_TYPES } from '../../core/models';
-import { buildSecurityEventQuery } from '../../core/utils/history-query.util';
-import { HistoryRefreshTrigger } from '../../core/utils/history-refresh.util';
-import { EmptyStateComponent } from '../../shared/components/empty-state/empty-state.component';
-import { FilterBarComponent } from '../../shared/components/filter-bar/filter-bar.component';
-import { HistoryRefreshButtonComponent } from '../../shared/components/history-refresh-button/history-refresh-button.component';
-import { FilterFieldConfig, FilterValues } from '../../shared/models/filter-bar.model';
 
 const PAGE_SIZE = 15;
 
@@ -75,7 +75,6 @@ export class SecurityComponent {
   readonly pageSize = PAGE_SIZE;
 
   readonly routeFilters = signal<FilterValues>(filtersFromRoute(this.route.snapshot.queryParamMap));
-  readonly filterBarRevision = signal(0);
 
   readonly filterFields: FilterFieldConfig[] = [
     {
@@ -168,7 +167,6 @@ export class SecurityComponent {
     this.routeFilters.set(filters);
     this.page$.next(1);
     this.filters$.next(filters);
-    this.filterBarRevision.update((revision) => revision + 1);
   }
 
   metadataEntries(event: SecurityEvent): Array<{ key: string; value: string }> {

@@ -1,4 +1,5 @@
 import { SiemEventSeverity } from './security-event.model';
+import { PolicyDecision, ThreatVerdict } from './traffic-log.model';
 
 export type BaselineStatus = 'ready' | 'insufficient_data';
 
@@ -29,8 +30,8 @@ export interface UebaAnomalyItem {
   anomalyScore: number;
   signals: string[];
   destinationHost: string | null;
-  policyDecision: string | null;
-  threatVerdict: string | null;
+  policyDecision: PolicyDecision | string | null;
+  threatVerdict: ThreatVerdict | string | null;
   riskScore: number | null;
 }
 

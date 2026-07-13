@@ -10,9 +10,5 @@ export const BehaviorActions = createActionGroup({
     'Load Period': props<{ query: UebaAnomaliesQuery }>(),
     'Load Period Success': props<{ anomalies: UebaAnomaliesPayload }>(),
     'Load Period Failure': props<{ error: string }>(),
-    'Refresh Baseline': emptyProps(),
-    'Refresh Baseline Success': props<{ baseline: BehaviorBaselinePayload }>(),
-    'Refresh Baseline Failure': props<{ error: string }>(),
-    'Clear Error': emptyProps(),
   },
 });

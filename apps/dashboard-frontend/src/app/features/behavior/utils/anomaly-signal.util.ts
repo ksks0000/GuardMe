@@ -9,11 +9,3 @@ const ANOMALY_SIGNAL_LABELS: Record<string, string> = {
 export function anomalySignalLabel(signal: string): string {
   return ANOMALY_SIGNAL_LABELS[signal] ?? signal;
 }
-
-export function formatAnomalySignals(signals: string[]): string {
-  if (signals.length === 0) {
-    return 'Behavioral anomaly';
-  }
-
-  return signals.map(anomalySignalLabel).join(' · ');
-}

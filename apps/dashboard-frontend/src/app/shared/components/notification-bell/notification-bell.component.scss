@@ -1,3 +1,5 @@
+@use '../../styles/severity';
+
 .notification-bell__menu {
   width: 280px;
   max-width: min(280px, 92vw);
@@ -59,22 +61,6 @@
 .notification-bell__severity {
   --mdc-chip-label-text-size: 0.65rem;
   height: 1.35rem;
-
-  &.severity--low {
-    color: var(--gm-muted);
-  }
-
-  &.severity--medium {
-    color: var(--gm-warn);
-  }
-
-  &.severity--high {
-    color: var(--gm-severity-high);
-  }
-
-  &.severity--critical {
-    color: var(--gm-danger);
-  }
 }
 
 .notification-bell__time {

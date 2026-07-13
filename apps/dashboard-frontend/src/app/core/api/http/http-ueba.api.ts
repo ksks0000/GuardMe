@@ -15,10 +15,6 @@ export class HttpUebaApi extends UebaApi {
     return this.http.get<BehaviorBaselinePayload>(`${this.baseUrl}/baseline`);
   }
 
-  refreshBaseline(): Observable<BehaviorBaselinePayload> {
-    return this.http.post<BehaviorBaselinePayload>(`${this.baseUrl}/baseline/refresh`, {});
-  }
-
   getAnomalies(query: UebaAnomaliesQuery): Observable<UebaAnomaliesPayload> {
     return this.http.get<UebaAnomaliesPayload>(`${this.baseUrl}/anomalies`, {
       params: toHttpParams({

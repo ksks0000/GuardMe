@@ -2,10 +2,11 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  effect,
   inject,
   input,
-  OnInit,
   output,
+  untracked,
 } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { provideNativeDateAdapter } from '@angular/material/core';
@@ -45,7 +46,7 @@ export type FilterBarLayout = 'grid' | 'split' | 'compact';
   styleUrl: './filter-bar.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class FilterBarComponent implements OnInit {
+export class FilterBarComponent {
   readonly fields = input.required<FilterFieldConfig[]>();
   readonly initialValues = input<FilterValues>({});
   readonly layout = input<FilterBarLayout>('grid');
@@ -63,26 +64,29 @@ export class FilterBarComponent implements OnInit {
 
   private readonly fb = inject(FormBuilder);
 
-  form!: FormGroup;
+  form: FormGroup = this.fb.group({});
 
   protected readonly dateControlKey = dateControlKey;
   protected readonly timeControlKey = timeControlKey;
 
-  ngOnInit(): void {
-    const initial = this.initialValues();
-    const controls: Record<string, unknown> = {};
+  private fieldsSignature = '';
 
-    for (const field of this.fields()) {
-      if (field.type === 'datetime') {
-        const parts = splitIsoToDateTimeParts(initial[field.key] ?? '');
-        controls[dateControlKey(field.key)] = this.fb.control<Date | null>(parts.date);
-        controls[timeControlKey(field.key)] = this.fb.control(parts.time);
-      } else {
-        controls[field.key] = this.fb.control(initial[field.key] ?? '');
-      }
-    }
+  constructor() {
+    effect(() => {
+      const fields = this.fields();
+      const initial = this.initialValues();
+      const signature = fields.map((field) => `${field.key}:${field.type}`).join('|');
 
-    this.form = this.fb.group(controls);
+      untracked(() => {
+        if (!this.form || signature !== this.fieldsSignature) {
+          this.fieldsSignature = signature;
+          this.form = this.buildForm(fields, initial);
+          return;
+        }
+
+        this.patchForm(fields, initial);
+      });
+    });
   }
 
   apply(): void {
@@ -105,6 +109,34 @@ export class FilterBarComponent implements OnInit {
 
     this.filtersClear.emit();
     this.filtersApply.emit(cleared);
+  }
+
+  private buildForm(fields: FilterFieldConfig[], initial: FilterValues): FormGroup {
+    const controls: Record<string, unknown> = {};
+
+    for (const field of fields) {
+      if (field.type === 'datetime') {
+        const parts = splitIsoToDateTimeParts(initial[field.key] ?? '');
+        controls[dateControlKey(field.key)] = this.fb.control<Date | null>(parts.date);
+        controls[timeControlKey(field.key)] = this.fb.control(parts.time);
+      } else {
+        controls[field.key] = this.fb.control(initial[field.key] ?? '');
+      }
+    }
+
+    return this.fb.group(controls);
+  }
+
+  private patchForm(fields: FilterFieldConfig[], initial: FilterValues): void {
+    for (const field of fields) {
+      if (field.type === 'datetime') {
+        const parts = splitIsoToDateTimeParts(initial[field.key] ?? '');
+        this.form.get(dateControlKey(field.key))?.setValue(parts.date, { emitEvent: false });
+        this.form.get(timeControlKey(field.key))?.setValue(parts.time, { emitEvent: false });
+      } else {
+        this.form.get(field.key)?.setValue(initial[field.key] ?? '', { emitEvent: false });
+      }
+    }
   }
 
   private buildFilterValues(): FilterValues {

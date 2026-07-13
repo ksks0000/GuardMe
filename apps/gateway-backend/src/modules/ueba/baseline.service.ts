@@ -36,16 +36,16 @@ export class BaselineService {
       where: { userId },
     });
 
-    if (!row) {
-      return this.buildPayload('insufficient_data', 0, null, null);
+    if (row) {
+      return this.buildPayload(
+        'ready',
+        row.sampleSize,
+        row.updatedAt,
+        row.snapshot as unknown as BehaviorBaselineSnapshot,
+      );
     }
 
-    return this.buildPayload(
-      'ready',
-      row.sampleSize,
-      row.updatedAt,
-      row.snapshot as unknown as BehaviorBaselineSnapshot,
-    );
+    return this.ensureBaselineForUser(userId);
   }
 
   async findSnapshotForUser(
@@ -55,17 +55,18 @@ export class BaselineService {
       where: { userId },
     });
 
-    if (!row) {
-      return null;
+    if (row) {
+      return row.snapshot as unknown as BehaviorBaselineSnapshot;
     }
 
-    return row.snapshot as unknown as BehaviorBaselineSnapshot;
+    const payload = await this.ensureBaselineForUser(userId);
+    return payload.snapshot;
   }
 
   async refreshForUser(userId: string): Promise<BaselinePayload> {
     const windowDays = uebaConfig.baselineWindowDays();
     const minSampleSize = uebaConfig.baselineMinSampleSize();
-    const since = new Date(Date.now() - windowDays * HOURS_PER_DAY * 3600000);
+    const since = this.windowStart(windowDays);
 
     const logs: TrafficSample[] = await this.prisma.trafficLog.findMany({
       where: { userId, timestamp: { gte: since } },
@@ -258,6 +259,27 @@ export class BaselineService {
       },
       browsers,
     };
+  }
+
+  private async ensureBaselineForUser(userId: string): Promise<BaselinePayload> {
+    const windowDays = uebaConfig.baselineWindowDays();
+    const minSampleSize = uebaConfig.baselineMinSampleSize();
+    const sampleSize = await this.prisma.trafficLog.count({
+      where: {
+        userId,
+        timestamp: { gte: this.windowStart(windowDays) },
+      },
+    });
+
+    if (sampleSize < minSampleSize) {
+      return this.buildPayload('insufficient_data', sampleSize, null, null);
+    }
+
+    return this.refreshForUser(userId);
+  }
+
+  private windowStart(windowDays: number): Date {
+    return new Date(Date.now() - windowDays * HOURS_PER_DAY * 3600000);
   }
 
   private looksLikeFileDownload(url: string): boolean {

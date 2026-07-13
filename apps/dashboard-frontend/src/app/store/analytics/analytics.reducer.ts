@@ -40,10 +40,6 @@ export const analyticsFeature = createFeature({
       loading: false,
       error,
     })),
-    on(AnalyticsActions.clearError, (state) => ({
-      ...state,
-      error: null,
-    })),
   ),
 });
 

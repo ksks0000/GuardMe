@@ -1,4 +1,5 @@
 @use 'verdict';
+@use 'severity';
 
 .history-page {
   display: flex;
@@ -40,8 +41,8 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
   gap: 0.75rem 1rem;
+  justify-content: flex-end;
 }
 
 .history-page__stats {
@@ -54,7 +55,6 @@
   flex: 1 1 auto;
   min-width: 0;
 }
-
 
 .history-page__toolbar-actions {
   display: flex;
@@ -83,22 +83,6 @@
   font-family: monospace;
   font-size: 0.85rem;
   white-space: nowrap;
-}
-
-.severity--low {
-  color: var(--gm-muted);
-}
-
-.severity--medium {
-  color: var(--gm-warn);
-}
-
-.severity--high {
-  color: var(--gm-severity-high);
-}
-
-.severity--critical {
-  color: var(--gm-danger);
 }
 
 .metadata-list {

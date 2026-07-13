@@ -1,10 +1,5 @@
 import { AsyncPipe } from '@angular/common';
-import {
-  ChangeDetectionStrategy,
-  Component,
-  inject,
-  OnInit,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -25,6 +20,7 @@ import {
   USERNAME_MIN_LENGTH,
   usernameValidators,
 } from '../../../core/validators/auth.validators';
+import { confirmPasswordControlError, passwordControlError, usernameControlError } from '../../../core/utils/auth-form-errors.util';
 import { AuthActions } from '../../../store/auth/auth.actions';
 import { selectAuthError, selectAuthLoading } from '../../../store/auth/auth.selectors';
 
@@ -97,47 +93,14 @@ export class RegisterComponent implements OnInit {
   }
 
   protected usernameError(): string | null {
-    const control = this.form.controls.username;
-    if (!control.touched || !control.errors) {
-      return null;
-    }
-    if (control.errors['required']) {
-      return 'Username is required.';
-    }
-    if (control.errors['minlength'] || control.errors['maxlength']) {
-      return `Username must be ${USERNAME_MIN_LENGTH}–${USERNAME_MAX_LENGTH} characters.`;
-    }
-    if (control.errors['pattern']) {
-      return 'Username may only contain letters, numbers, dots, underscores, and hyphens.';
-    }
-    return null;
+    return usernameControlError(this.form.controls.username);
   }
 
   protected passwordError(): string | null {
-    const control = this.form.controls.password;
-    if (!control.touched || !control.errors) {
-      return null;
-    }
-    if (control.errors['required']) {
-      return 'Password is required.';
-    }
-    if (control.errors['minlength'] || control.errors['maxlength']) {
-      return `Password must be ${PASSWORD_MIN_LENGTH}–${PASSWORD_MAX_LENGTH} characters.`;
-    }
-    return null;
+    return passwordControlError(this.form.controls.password);
   }
 
   protected confirmPasswordError(): string | null {
-    const control = this.form.controls.confirmPassword;
-    if (!control.touched || !control.errors) {
-      return null;
-    }
-    if (control.errors['required']) {
-      return 'Please confirm your password.';
-    }
-    if (control.errors['passwordMismatch']) {
-      return 'Passwords do not match.';
-    }
-    return null;
+    return confirmPasswordControlError(this.form.controls.confirmPassword);
   }
 }

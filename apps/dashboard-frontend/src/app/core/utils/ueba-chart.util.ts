@@ -1,11 +1,4 @@
 import { UebaAnomalyTimelineBucket, UebaRiskTrendPoint } from '../models/ueba.model';
-import { buildTimeChartYAxisTicks, timeBucketHeightPercent } from './analytics-chart.util';
-
-export function formatHourLabel(hour: number): string {
-  const normalized = ((hour % 24) + 24) % 24;
-  const date = new Date(Date.UTC(2000, 0, 1, normalized));
-  return date.toLocaleTimeString(undefined, { hour: 'numeric' });
-}
 
 export function activeHourIntensity(count: number, maxCount: number): number {
   if (maxCount <= 0 || count <= 0) {
@@ -21,18 +14,6 @@ export function maxTimelineCount(buckets: UebaAnomalyTimelineBucket[]): number {
 
 export function maxRiskTrendAverage(points: UebaRiskTrendPoint[]): number {
   return points.reduce((max, point) => Math.max(max, point.averageRisk), 0);
-}
-
-export function timelineBucketHeight(count: number, axisCeiling: number): number {
-  return timeBucketHeightPercent(count, axisCeiling);
-}
-
-export function riskTrendHeight(averageRisk: number, axisCeiling: number): number {
-  return timeBucketHeightPercent(averageRisk, axisCeiling);
-}
-
-export function buildRiskTrendYAxisTicks(maxAverageRisk: number): number[] {
-  return buildTimeChartYAxisTicks(maxAverageRisk);
 }
 
 export function formatInsightDate(isoDate: string): string {
@@ -54,4 +35,27 @@ export function anomalyTimelineTooltip(bucket: UebaAnomalyTimelineBucket): strin
 
 export function riskTrendTooltip(point: UebaRiskTrendPoint): string {
   return `Avg risk ${point.averageRisk} · ${point.requestCount} requests`;
+}
+
+export function shouldShowChartLabel(index: number, total: number): boolean {
+  if (total <= 14) return true;
+  if (total <= 28) return index % 2 === 0;
+  return index % 5 === 0 || index === total - 1;
+}
+
+export function anomalyScoreTier(score: number): 'low' | 'medium' | 'high' | 'critical' {
+  if (score >= 80) return 'critical';
+  if (score >= 60) return 'high';
+  if (score >= 30) return 'medium';
+  return 'low';
+}
+
+export function severityIconName(severity: string): string {
+  const map: Record<string, string> = {
+    low: 'info_outline',
+    medium: 'warning_amber',
+    high: 'warning',
+    critical: 'report',
+  };
+  return map[severity.toLowerCase()] ?? 'warning';
 }

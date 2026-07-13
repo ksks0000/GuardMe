@@ -2,7 +2,6 @@ import { AsyncPipe, DatePipe, LowerCasePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject, OnInit } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { PageEvent } from '@angular/material/paginator';
-import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatIconModule } from '@angular/material/icon';
@@ -10,15 +9,15 @@ import { MatPaginatorModule } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTableModule } from '@angular/material/table';
 import { Store } from '@ngrx/store';
-import { buildTimeChartYAxisTicks } from '../../core/utils/analytics-chart.util';
+import { buildTimeChartYAxisTicks, timeBucketHeightPercent } from '../../core/utils/analytics-chart.util';
 import {
   activeHourIntensity,
+  anomalyScoreTier,
   anomalyTimelineTooltip,
-  buildRiskTrendYAxisTicks,
   formatInsightDate,
-  riskTrendHeight,
   riskTrendTooltip,
-  timelineBucketHeight,
+  severityIconName,
+  shouldShowChartLabel,
 } from '../../core/utils/ueba-chart.util';
 import { EmptyStateComponent } from '../../shared/components/empty-state/empty-state.component';
 import { FilterBarComponent } from '../../shared/components/filter-bar/filter-bar.component';
@@ -43,7 +42,7 @@ import {
   selectPeriodRequestCount,
   selectRiskTrend,
 } from '../../store/behavior/behavior.selectors';
-import { anomalySignalLabel, formatAnomalySignals } from './utils/anomaly-signal.util';
+import { anomalySignalLabel } from './utils/anomaly-signal.util';
 import { buildBehaviorQuery } from './utils/behavior-query.util';
 
 @Component({
@@ -52,7 +51,6 @@ import { buildBehaviorQuery } from './utils/behavior-query.util';
     AsyncPipe,
     DatePipe,
     LowerCasePipe,
-    MatButtonModule,
     MatCardModule,
     MatExpansionModule,
     MatIconModule,
@@ -100,41 +98,19 @@ export class BehaviorComponent implements OnInit {
   readonly baselineHostColumns = ['host', 'count'];
 
   protected yAxisTicks = buildTimeChartYAxisTicks;
-  protected riskTrendYAxisTicks = buildRiskTrendYAxisTicks;
-  protected timelineHeight = timelineBucketHeight;
-  protected riskHeight = riskTrendHeight;
+  protected timelineHeight = timeBucketHeightPercent;
+  protected riskHeight = timeBucketHeightPercent;
   protected formatInsightDate = formatInsightDate;
   protected anomalyTooltip = anomalyTimelineTooltip;
   protected riskTooltip = riskTrendTooltip;
   protected hourIntensity = activeHourIntensity;
-  protected formatAnomalySignals = formatAnomalySignals;
   protected anomalySignalLabel = anomalySignalLabel;
+  protected shouldShowLabel = shouldShowChartLabel;
+  protected anomalyScoreClass = anomalyScoreTier;
+  protected severityIcon = severityIconName;
 
-  maxOf(arr: number[]): number {
-    return arr.length > 0 ? Math.max(...arr) : 0;
-  }
-
-  protected shouldShowLabel(index: number, total: number): boolean {
-    if (total <= 14) return true;
-    if (total <= 28) return index % 2 === 0;
-    return index % 5 === 0 || index === total - 1;
-  }
-
-  protected anomalyScoreClass(score: number): string {
-    if (score >= 80) return 'critical';
-    if (score >= 60) return 'high';
-    if (score >= 30) return 'medium';
-    return 'low';
-  }
-
-  protected severityIcon(severity: string): string {
-    const map: Record<string, string> = {
-      low: 'info_outline',
-      medium: 'warning_amber',
-      high: 'warning',
-      critical: 'report',
-    };
-    return map[severity.toLowerCase()] ?? 'warning';
+  maxOf(values: number[]): number {
+    return values.length > 0 ? Math.max(...values) : 0;
   }
 
   ngOnInit(): void {

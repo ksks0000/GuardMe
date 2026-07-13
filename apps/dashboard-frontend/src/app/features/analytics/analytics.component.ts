@@ -15,7 +15,7 @@ import {
   seriesTotal,
   timeBucketHeightPercent,
 } from '../../core/utils/analytics-chart.util';
-import { buildAnalyticsSummaryQuery } from '../../core/utils/analytics-query.util';
+import { buildDateRangeFromFilters } from '../../core/utils/date-filter.util';
 import { EmptyStateComponent } from '../../shared/components/empty-state/empty-state.component';
 import { FilterBarComponent } from '../../shared/components/filter-bar/filter-bar.component';
 import { StatCardComponent } from '../../shared/components/stat-card/stat-card.component';
@@ -101,7 +101,7 @@ export class AnalyticsComponent implements OnInit {
 
   onFiltersApply(filters: FilterValues): void {
     this.store.dispatch(
-      AnalyticsActions.loadSummary({ query: buildAnalyticsSummaryQuery(filters) }),
+      AnalyticsActions.loadSummary({ query: buildDateRangeFromFilters(filters) }),
     );
   }
 

@@ -1,9 +1,5 @@
 import { createFeature, createReducer, on } from '@ngrx/store';
-import {
-  BehaviorBaselinePayload,
-  UebaAnomaliesPayload,
-  UebaAnomaliesQuery,
-} from '../../core/models';
+import { BehaviorBaselinePayload, UebaAnomaliesPayload, UebaAnomaliesQuery } from '../../core/models';
 import { BehaviorActions } from './behavior.actions';
 
 export interface BehaviorState {
@@ -12,7 +8,6 @@ export interface BehaviorState {
   lastQuery: UebaAnomaliesQuery | null;
   baselineLoading: boolean;
   periodLoading: boolean;
-  baselineRefreshing: boolean;
   error: string | null;
   baselineError: string | null;
 }
@@ -23,7 +18,6 @@ export const initialBehaviorState: BehaviorState = {
   lastQuery: null,
   baselineLoading: false,
   periodLoading: false,
-  baselineRefreshing: false,
   error: null,
   baselineError: null,
 };
@@ -65,27 +59,6 @@ export const behaviorFeature = createFeature({
       periodLoading: false,
       error,
     })),
-    on(BehaviorActions.refreshBaseline, (state) => ({
-      ...state,
-      baselineRefreshing: true,
-      baselineError: null,
-    })),
-    on(BehaviorActions.refreshBaselineSuccess, (state, { baseline }) => ({
-      ...state,
-      baselineRefreshing: false,
-      baseline,
-      baselineError: null,
-    })),
-    on(BehaviorActions.refreshBaselineFailure, (state, { error }) => ({
-      ...state,
-      baselineRefreshing: false,
-      baselineError: error,
-    })),
-    on(BehaviorActions.clearError, (state) => ({
-      ...state,
-      error: null,
-      baselineError: null,
-    })),
   ),
 });
 
@@ -98,7 +71,6 @@ export const {
   selectLastQuery,
   selectBaselineLoading,
   selectPeriodLoading,
-  selectBaselineRefreshing,
   selectError,
   selectBaselineError,
 } = behaviorFeature;

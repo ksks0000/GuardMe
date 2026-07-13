@@ -165,9 +165,6 @@ export class AuthEffects {
           return dialogRef.afterClosed();
         }),
         filter((verified): verified is boolean => verified === true),
-        tap(() => {
-          // Dialog closed after successful verify password
-        }),
       ),
     { dispatch: false },
   );

@@ -4,13 +4,11 @@
     <p>Event history with severity and type filters; expand rows for metadata</p>
   </header>
 
-  @for (_ of [filterBarRevision()]; track _) {
-    <app-filter-bar
-      [fields]="filterFields"
-      [initialValues]="routeFilters()"
-      (filtersApply)="onFiltersApply($event)"
-    />
-  }
+  <app-filter-bar
+    [fields]="filterFields"
+    [initialValues]="routeFilters()"
+    (filtersApply)="onFiltersApply($event)"
+  />
 
   @if (viewState$ | async; as state) {
     @if (state.status === 'loading') {
@@ -61,15 +59,17 @@
 
               <p class="security-event__message">{{ event.message }}</p>
 
-              @if (metadataEntries(event).length > 0) {
-                <dl class="metadata-list">
-                  @for (entry of metadataEntries(event); track entry.key) {
-                    <dt>{{ entry.key }}</dt>
-                    <dd>{{ entry.value }}</dd>
-                  }
-                </dl>
-              } @else {
-                <p class="security-event__no-meta">No additional metadata.</p>
+              @if (metadataEntries(event); as entries) {
+                @if (entries.length > 0) {
+                  <dl class="metadata-list">
+                    @for (entry of entries; track entry.key) {
+                      <dt>{{ entry.key }}</dt>
+                      <dd>{{ entry.value }}</dd>
+                    }
+                  </dl>
+                } @else {
+                  <p class="security-event__no-meta">No additional metadata.</p>
+                }
               }
             </mat-expansion-panel>
           }

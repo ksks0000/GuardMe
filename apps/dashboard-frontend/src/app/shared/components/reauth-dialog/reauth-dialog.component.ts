@@ -14,6 +14,7 @@ import {
   PASSWORD_MIN_LENGTH,
   passwordValidators,
 } from '../../../core/validators/auth.validators';
+import { passwordControlError } from '../../../core/utils/auth-form-errors.util';
 import { AuthActions } from '../../../store/auth/auth.actions';
 import {
   selectVerifyPasswordError,
@@ -66,16 +67,6 @@ export class ReauthDialogComponent {
   }
 
   protected passwordError(): string | null {
-    const control = this.form.controls.password;
-    if (!control.touched || !control.errors) {
-      return null;
-    }
-    if (control.errors['required']) {
-      return 'Password is required.';
-    }
-    if (control.errors['minlength'] || control.errors['maxlength']) {
-      return `Password must be ${PASSWORD_MIN_LENGTH}–${PASSWORD_MAX_LENGTH} characters.`;
-    }
-    return null;
+    return passwordControlError(this.form.controls.password);
   }
 }

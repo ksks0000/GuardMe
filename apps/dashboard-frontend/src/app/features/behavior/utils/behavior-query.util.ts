@@ -1,10 +1,6 @@
 import { FilterValues } from '../../../shared/models/filter-bar.model';
 import { UebaAnomaliesQuery } from '../../../core/models/ueba.model';
-
-function optionalIsoDate(value: string | undefined): string | undefined {
-  const trimmed = value?.trim();
-  return trimmed ? trimmed : undefined;
-}
+import { buildDateRangeFromFilters } from '../../../core/utils/date-filter.util';
 
 export function buildBehaviorQuery(
   filters: FilterValues,
@@ -12,8 +8,7 @@ export function buildBehaviorQuery(
   pageSize = 15,
 ): UebaAnomaliesQuery {
   return {
-    from: optionalIsoDate(filters['from']),
-    to: optionalIsoDate(filters['to']),
+    ...buildDateRangeFromFilters(filters),
     page,
     pageSize,
   };

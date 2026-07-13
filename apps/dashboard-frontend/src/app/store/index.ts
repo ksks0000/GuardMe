@@ -18,6 +18,7 @@ import { systemStatusFeatureKey, systemStatusReducer } from './system-status/sys
 import { notificationsFeatureKey, notificationsReducer } from './notifications/notifications.reducer';
 import { NotificationsEffects } from './notifications/notifications.effects';
 import { trafficFeatureKey, trafficReducer } from './traffic/traffic.reducer';
+import { sanitizeStoreAction } from './devtools-sanitizer';
 
 export function provideAppStore(): EnvironmentProviders[] {
   return [
@@ -44,7 +45,8 @@ export function provideAppStore(): EnvironmentProviders[] {
       ? [
           provideStoreDevtools({
             maxAge: 50,
-            logOnly: !isDevMode(),
+            logOnly: false,
+            actionSanitizer: sanitizeStoreAction,
           }),
         ]
       : []),

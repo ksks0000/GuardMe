@@ -1,16 +1,11 @@
 import { createSelector } from '@ngrx/store';
 import { maxRiskTrendAverage, maxTimelineCount } from '../../core/utils/ueba-chart.util';
-import {
-  selectAnomalies,
-  selectBaseline,
-} from './behavior.reducer';
+import { selectAnomalies } from './behavior.reducer';
 
 export {
-  selectAnomalies as selectBehaviorAnomalies,
   selectBaseline as selectBehaviorBaseline,
   selectBaselineError as selectBehaviorBaselineError,
   selectBaselineLoading as selectBehaviorBaselineLoading,
-  selectBaselineRefreshing as selectBehaviorBaselineRefreshing,
   selectError as selectBehaviorError,
   selectPeriodLoading as selectBehaviorPeriodLoading,
 } from './behavior.reducer';
@@ -56,17 +51,6 @@ export const selectMaxAnomalyTimelineCount = createSelector(selectAnomalyTimelin
 
 export const selectMaxRiskTrendAverage = createSelector(selectRiskTrend, (riskTrend) =>
   maxRiskTrendAverage(riskTrend),
-);
-
-export const selectBaselineTopHosts = createSelector(
-  selectBaseline,
-  (baseline) => baseline?.snapshot?.topHosts ?? [],
-);
-
-// kept for legacy / future use; template now reads snapshot.activeHours directly
-export const selectBaselineActiveHours = createSelector(
-  selectBaseline,
-  (baseline) => baseline?.snapshot?.activeHours ?? [],
 );
 
 export const selectPeriodRequestCount = createSelector(selectRiskTrend, (points) =>

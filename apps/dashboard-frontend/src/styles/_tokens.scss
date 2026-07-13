@@ -43,6 +43,10 @@
 
   // Severity – high is orange; low=muted, medium=warn, critical=danger
   --gm-severity-high: #fb923c;
+  --gm-severity-low-bg: rgba(148, 163, 184, 0.16);
+  --gm-severity-medium-bg: rgba(251, 191, 36, 0.16);
+  --gm-severity-high-bg: rgba(251, 146, 60, 0.16);
+  --gm-severity-critical-bg: rgba(248, 113, 113, 0.16);
 
   // Chart bar accent – blue for event-type bars
   --gm-chart-bar: rgba(96, 165, 250, 0.75);

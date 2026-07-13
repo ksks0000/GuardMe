@@ -20,11 +20,12 @@ body {
 }
 
 .threat-snackbar--high {
-  --mat-snack-bar-container-color: var(--gm-severity-high-bg, #5c3d00);
+  // Dark amber surface for contrast on snackbars (badge tints use --gm-severity-*-bg)
+  --mat-snack-bar-container-color: #5c3d00;
 }
 
 .threat-snackbar--critical {
-  --mat-snack-bar-container-color: var(--gm-danger-bg, #5c1010);
+  --mat-snack-bar-container-color: #5c1010;
 }
 
 .mat-mdc-menu-panel.notification-bell__menu {

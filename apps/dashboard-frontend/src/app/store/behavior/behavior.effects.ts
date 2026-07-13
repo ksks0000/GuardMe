@@ -44,22 +44,4 @@ export class BehaviorEffects {
       ),
     ),
   );
-
-  readonly refreshBaseline$ = createEffect(() =>
-    this.actions$.pipe(
-      ofType(BehaviorActions.refreshBaseline),
-      switchMap(() =>
-        this.uebaApi.refreshBaseline().pipe(
-          map((baseline) => BehaviorActions.refreshBaselineSuccess({ baseline })),
-          catchError(() =>
-            of(
-              BehaviorActions.refreshBaselineFailure({
-                error: 'Failed to refresh behavior baseline. Please try again.',
-              }),
-            ),
-          ),
-        ),
-      ),
-    ),
-  );
 }

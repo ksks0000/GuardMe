@@ -1,0 +1,37 @@
+// Shared severity color (text + badges)
+
+.severity--low {
+  color: var(--gm-muted);
+}
+
+.severity--medium {
+  color: var(--gm-warn);
+}
+
+.severity--high {
+  color: var(--gm-severity-high);
+}
+
+.severity--critical {
+  color: var(--gm-danger);
+}
+
+.severity--bg-low {
+  background: var(--gm-severity-low-bg);
+  color: var(--gm-muted);
+}
+
+.severity--bg-medium {
+  background: var(--gm-severity-medium-bg);
+  color: var(--gm-warn);
+}
+
+.severity--bg-high {
+  background: var(--gm-severity-high-bg);
+  color: var(--gm-severity-high);
+}
+
+.severity--bg-critical {
+  background: var(--gm-severity-critical-bg);
+  color: var(--gm-danger);
+}

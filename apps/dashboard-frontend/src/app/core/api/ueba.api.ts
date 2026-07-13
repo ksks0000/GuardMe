@@ -4,7 +4,5 @@ import { BehaviorBaselinePayload, UebaAnomaliesPayload, UebaAnomaliesQuery } fro
 export abstract class UebaApi {
   abstract getBaseline(): Observable<BehaviorBaselinePayload>;
 
-  abstract refreshBaseline(): Observable<BehaviorBaselinePayload>;
-
   abstract getAnomalies(query: UebaAnomaliesQuery): Observable<UebaAnomaliesPayload>;
 }

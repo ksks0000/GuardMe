@@ -5,23 +5,13 @@ import { merge } from 'rxjs';
 import { map, mergeMap, switchMap, takeUntil, tap, withLatestFrom } from 'rxjs/operators';
 import { RealtimeApi } from '../../core/api/realtime.api';
 import { SecurityEvent, TrafficLog } from '../../core/models';
-import { AuthActions } from '../auth/auth.actions';
+import { AUTH_END_EVENTS, AUTH_START_EVENTS } from '../auth/auth-lifecycle.events';
 import { SecurityEventsActions } from '../security-events/security-events.actions';
 import { selectSecurityEventEntities } from '../security-events/security-events.selectors';
 import { SystemStatusActions } from '../system-status/system-status.actions';
 import { NotificationsActions } from '../notifications/notifications.actions';
 import { TrafficActions } from '../traffic/traffic.actions';
 import { selectTrafficEntities } from '../traffic/traffic.selectors';
-
-const AUTH_END_EVENTS = [
-  AuthActions.logoutSuccess,
-  AuthActions.sessionExpired,
-] as const;
-
-const AUTH_START_EVENTS = [
-  AuthActions.loginSuccess,
-  AuthActions.loadProfileSuccess,
-] as const;
 
 @Injectable()
 export class RealtimeEffects {
