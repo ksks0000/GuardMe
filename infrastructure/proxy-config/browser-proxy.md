@@ -25,6 +25,19 @@ GuardMe runs two HTTP listeners:
 
 Use `localhost` (not `127.0.0.1`) so dashboard cookies and API calls stay consistent.
 
+### Two-VM VMware lab
+
+When the dashboard and proxy run on the **Gateway VM** and you browse from the **User VM**, point the browser at the gateway IP.
+
+| Setting | Example value |
+|---------|----------------|
+| HTTP proxy host | `192.168.56.10` |
+| Port | `8080` |
+| Also use for HTTPS | Yes |
+| No proxy for | `192.168.56.10, localhost, 127.0.0.1` |
+
+Open the dashboard at `http://192.168.56.10:4200` (not `localhost` on the User VM).
+
 ### Firefox
 
 1. Settings → Network Settings → Manual proxy configuration

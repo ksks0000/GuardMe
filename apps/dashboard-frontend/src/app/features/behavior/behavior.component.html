@@ -363,6 +363,20 @@
           </mat-accordion>
         }
       }
+
+      <div class="behavior-page__toolbar">
+        @if (((anomalyTotal$ | async) ?? 0) > 0) {
+          <mat-paginator
+            class="behavior-page__paginator"
+            [length]="(anomalyTotal$ | async) ?? 0"
+            [pageSize]="(anomalyPageSize$ | async) ?? 15"
+            [pageIndex]="((anomalyPage$ | async) ?? 1) - 1"
+            [hidePageSize]="true"
+            (page)="onPageChange($event)"
+            aria-label="Anomaly pages"
+          />
+        }
+      </div>
     </section>
   }
 

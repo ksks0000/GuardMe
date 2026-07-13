@@ -18,16 +18,16 @@ Set in `apps/gateway-backend/.env` (see `.env.example`).
 2. **`POST /auth/verify-password`** (session required) re-confirms the password and
    refreshes `last_auth_at` without issuing a new JWT.
 3. **`ReAuthGuard`** reads `last_auth_at` and rejects requests when the window has
-   expired. The client should prompt for the password again (M4.1b `ReauthDialog`).
+   expired. The client should prompt for the password again (`ReauthDialog`).
 
 ```
 Client                    API
-  |-- POST /vault/... ---->|  JwtSessionGuard OK
-  |                        |  ReAuthGuard: last_auth_at stale → 401
-  |<-- 401 ----------------|
-  |-- POST /auth/verify-password (password) -->|
-  |<-- 200 { lastAuthAt } -|
-  |-- POST /vault/... ---->|  ReAuthGuard OK
+  |-- POST /vault/... ----------------------->|  JwtSessionGuard OK
+  |                                           |  ReAuthGuard: last_auth_at stale → 401
+  |<-- 401 -----------------------------------|
+  |-- POST /auth/verify-password (password) ->|
+  |<-- 200 { lastAuthAt } --------------------|
+  |-- POST /vault/... ----------------------->|  ReAuthGuard OK
 ```
 
 ## Endpoint: `POST /auth/verify-password`
@@ -54,7 +54,7 @@ createCredential(@CurrentUser() user: AuthenticatedUser, @Body() dto: CreateDto)
 `ReAuthGuard` is provided globally via `CommonModule`. It must run **after**
 `JwtSessionGuard` so `request.user` is populated.
 
-Planned consumers (M4.2+):
+Active consumers:
 
 | Module | Routes |
 |--------|--------|
@@ -82,7 +82,7 @@ Both are visible on the dashboard Security history page.
 - Re-auth refreshes `last_auth_at` only; it does **not** rotate the session JWT.
 - Fingerprint checks still apply via the existing session on all authenticated routes.
 
-## Dashboard (M4.1b)
+## Dashboard
 
 - **Stale indicator:** toolbar shows a “Re-auth needed” chip when `lastAuthAt` is older than `REAUTH_TIMEOUT_MINUTES` (frontend `environment.reAuthTimeoutMinutes`, default 15).
 - **Reauth dialog:** opens automatically on API `401` with message “Re-authentication required”, or when the user clicks the chip.

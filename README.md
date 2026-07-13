@@ -33,14 +33,16 @@ The first version prioritizes a working MVP security platform that can be increm
 
 ```
 apps/
-├── gateway-backend/     # NestJS API, proxy, SIEM, WebSocket (:3000 / :8080)
+├── gateway-backend/     # NestJS API, proxy, SIEM, WebSocket, UEBA (:3000 / :8080)
 └── dashboard-frontend/  # Angular dashboard (:4200)
 
 infrastructure/
-└── docker/              # PostgreSQL 
+├── docker/              # PostgreSQL (Docker Compose)
+├── proxy-config/        # Browser proxy setup
+└── vmware/              # Two-VM lab diagram + setup guide
 ```
 
-## Quick start — backend (gateway)
+## Quick start 
 
 ### 1. Start PostgreSQL
 
@@ -65,11 +67,9 @@ The backend exposes:
 | Port | Service |
 |------|---------|
 | `3000` | Management API (`/auth/*`, `/health`, WebSocket `/events`) |
-| `8080` | HTTP forward proxy (requires login session cookie) |
+| `8080` | HTTP forward proxy (proxy Basic auth after dashboard login) |
 
-## Quick start — dashboard frontend
-
-Start the backend first then:
+### 3. Dashboard frontend
 
 ```bash
 cd apps/dashboard-frontend
@@ -79,15 +79,11 @@ npm start
 
 Open [http://localhost:4200](http://localhost:4200). The app expects the API at `http://localhost:3000` (see `src/environments/environment.ts`).
 
-## Full local stack
+## VMware lab (two VMs)
 
-```bash
-#  database
-cd infrastructure/docker && docker compose --profile dev up -d
+1. [Network diagram](infrastructure/vmware/network-diagram.md) — User VM ↔ Gateway VM ↔ Internet
+2. [Setup guide](infrastructure/vmware/setup-guide.md) — host-only IPs, CORS, firewall, single-machine fallback
 
-#  backend
-cd apps/gateway-backend && cp .env.example .env && npm install && npm run prisma:migrate && npm run start:dev
+Example addresses: Gateway `192.168.56.10`, User `192.168.56.20`; browser proxy `192.168.56.10:8080`.
 
-#  frontend
-cd apps/dashboard-frontend && npm install && npm start
-```
+

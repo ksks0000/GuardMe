@@ -1,7 +1,6 @@
 # GuardMe — Security Event Types Testing Guide
 
-Manual checklist for verifying all security event types appear on the
-dashboard **Security** page (`/security`) for the **currently logged-in user**.
+Manual checklist for verifying all security event types appear on the **Security** page (`/security`) for the **currently logged-in user**.
 
 Events are scoped by the `user_id` column. The live feed and
 history API only show events for user account. 
@@ -28,7 +27,7 @@ after each step. Expand a row to inspect metadata.
 
 ## Event types reference
 
-All **15** types defined in `siem.config.ts`:
+All **14** types defined in `siem.config.ts`:
 
 | # | Type | Severity | Key metadata |
 |---|------|----------|--------------|
@@ -119,11 +118,11 @@ failure). Not a normal user action — lab test only.
 
 1. Unlock vault and **add a credential** (note its id from the list or network
    tab).
-2. Lock the vault, then corrupt the row in PostgreSQL (replace `id`):
+2. Lock the vault, then corrupt the row in PostgreSQL:
 
    ```sql
    UPDATE vault_credentials
-   SET auth_tag = 'AAAAAAAAAAAAAAAAAAAAAA=='
+   SET iv = '...'
    WHERE id = 'your-credential-uuid';
    ```
 
