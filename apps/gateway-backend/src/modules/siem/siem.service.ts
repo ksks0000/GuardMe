@@ -46,7 +46,7 @@ export class SiemService {
       this.emitEvent(SIEM_EMIT_EVENTS.TRAFFIC_LOG, row);
       this.emitEvent(DOMAIN_EVENTS.TRAFFIC_LOG_CREATED, row);
     } catch (error) {
-      this.logPersistenceFallback('traffic log', input, error);
+      this.logPersistenceFallback('traffic log', error);
     }
   }
 
@@ -68,11 +68,7 @@ export class SiemService {
       this.emitEvent(SIEM_EMIT_EVENTS.SECURITY_EVENT, row);
       this.emitEvent(DOMAIN_EVENTS.SECURITY_EVENT_CREATED, row);
     } catch (error) {
-      this.logPersistenceFallback(
-        'security event',
-        { ...input, severity },
-        error
-      );
+      this.logPersistenceFallback('security event', error);
     }
   }
 
@@ -208,10 +204,8 @@ export class SiemService {
     return typeof value === 'string' ? value : null;
   }
 
-  private logPersistenceFallback(label: string, payload: unknown, error: unknown): void {
-
+  private logPersistenceFallback(label: string, error: unknown): void {
     const message = error instanceof Error ? error.message : 'Unknown database error';
-
-    this.logger.warn(`Failed to persist ${label}: ${message}`, JSON.stringify(payload));
+    this.logger.warn(`Failed to persist ${label}: ${message}`);
   }
 }

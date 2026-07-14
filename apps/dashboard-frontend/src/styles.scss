@@ -1,5 +1,8 @@
 @use 'styles/theme' as theme;
 @use 'styles/tokens';
+@use 'app/shared/styles/history-page';
+@use 'app/shared/styles/time-chart';
+@use 'app/shared/styles/severity';
 
 html {
   height: 100%;
@@ -20,7 +23,6 @@ body {
 }
 
 .threat-snackbar--high {
-  // Dark amber surface for contrast on snackbars (badge tints use --gm-severity-*-bg)
   --mat-snack-bar-container-color: #5c3d00;
 }
 

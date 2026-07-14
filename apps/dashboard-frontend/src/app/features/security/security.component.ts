@@ -1,7 +1,7 @@
 import { AsyncPipe, DatePipe, LowerCasePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, ParamMap } from '@angular/router';
+import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import { PageEvent } from '@angular/material/paginator';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatExpansionModule } from '@angular/material/expansion';
@@ -71,6 +71,7 @@ type SecurityViewState =
 export class SecurityComponent {
   private readonly siemApi = inject(SiemApi);
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
 
   readonly pageSize = PAGE_SIZE;
 
@@ -150,8 +151,16 @@ export class SecurityComponent {
   );
 
   onFiltersApply(filters: FilterValues): void {
-    this.page$.next(1);
-    this.filters$.next(filters);
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: {
+        type: filters['type'] || null,
+        severity: filters['severity'] || null,
+        from: filters['from'] || null,
+        to: filters['to'] || null,
+      },
+      queryParamsHandling: 'merge',
+    });
   }
 
   onPageChange(event: PageEvent): void {

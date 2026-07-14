@@ -179,7 +179,7 @@ npm run prisma:migrate
 npm run start:dev
 
 # 3) Frontend (second terminal)
-cd apps/dashboard-frontend
+cd ../dashboard-frontend
 npm install
 npm start
 ```

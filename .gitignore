@@ -10,6 +10,7 @@ apps/gateway-backend/.env
 
 # --- Build outputs ---
 dist/
+*.tsbuildinfo
 
 # --- NestJS (gateway-backend) ---
 apps/gateway-backend/coverage/

@@ -11,18 +11,15 @@ import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { Store } from '@ngrx/store';
 import { combineLatest, map } from 'rxjs';
-import {
-  CreateVaultCredentialInput,
-  UpdateVaultCredentialInput,
-  VaultCredentialSummary,
-} from '../../core/models';
-import {
-  PASSWORD_MAX_LENGTH,
-  PASSWORD_MIN_LENGTH,
-  passwordValidators,
-} from '../../core/validators/auth.validators';
+import { CreateVaultCredentialInput, UpdateVaultCredentialInput, VaultCredentialSummary } from '../../core/models';
+import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH, passwordValidators } from '../../core/validators/auth.validators';
+import { passwordControlError } from '../../core/utils/auth-form-errors.util';
 import { EmptyStateComponent } from '../../shared/components/empty-state/empty-state.component';
 import { VaultActions } from '../../store/vault/vault.actions';
+import { CredentialFormDialogComponent,
+   CredentialFormDialogData,
+   CredentialFormDialogResult
+} from './credential-form-dialog/credential-form-dialog.component';
 import {
   selectAllCredentials,
   selectVaultError,
@@ -33,11 +30,7 @@ import {
   selectVaultUnlockError,
   selectVaultUnlocking,
 } from '../../store/vault/vault.selectors';
-import {
-  CredentialFormDialogComponent,
-  CredentialFormDialogData,
-  CredentialFormDialogResult,
-} from './credential-form-dialog/credential-form-dialog.component';
+
 
 @Component({
   selector: 'app-vault',
@@ -84,6 +77,10 @@ export class VaultComponent implements OnInit {
 
   readonly passwordMin = PASSWORD_MIN_LENGTH;
   readonly passwordMax = PASSWORD_MAX_LENGTH;
+
+  protected unlockPasswordError(): string | null {
+    return passwordControlError(this.unlockForm.controls.password);
+  }
 
   ngOnInit(): void {
     this.store.dispatch(VaultActions.loadStatus());

@@ -73,6 +73,7 @@
               <td mat-cell *matCellDef="let row">
                 <mat-slide-toggle
                   [checked]="row.enabled"
+                  [disabled]="(saving$ | async) === true"
                   [attr.aria-label]="'Toggle rule ' + ruleLabel(row)"
                   (change)="onEnabledToggle(row, $event.checked)"
                 />

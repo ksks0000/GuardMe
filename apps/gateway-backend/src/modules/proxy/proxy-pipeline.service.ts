@@ -23,7 +23,7 @@ import { PolicyDecision } from './dto/policy-decision.enum';
 import { PolicyResult } from './dto/policy.result';
 import { buildThreatSummary } from './utils/threat-summary.util';
 import { buildProceedUrl } from './utils/proceed-url.util';
-import { resolveDestinationIp } from './utils/dns.util';
+import { BlockedDestinationError, resolveDestinationIp } from './utils/dns.util';
 
 @Injectable()
 export class ProxyPipelineService {
@@ -141,6 +141,20 @@ export class ProxyPipelineService {
 
       await this.proxyForwardService.forward(req, res, inspection);
     } catch (error) {
+      if (error instanceof BlockedDestinationError) {
+        this.respondHtml(
+          res,
+          403,
+          this.blockPageService.render({
+            url: req.url,
+            reason: error.message,
+            timestamp: new Date(),
+            riskScore: 100,
+          }),
+        );
+        return;
+      }
+
       this.logger.error(
         'Proxy pipeline failed',
         error instanceof Error ? error.stack : undefined,

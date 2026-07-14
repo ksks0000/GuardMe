@@ -22,7 +22,7 @@ The system is deployed inside a local VMware lab environment with a single prote
 The goal is a realistic, implementable security architecture demonstrating defensive design using:
 - Angular + RxJS (frontend & reactive monitoring)
 - NestJS (backend services)
-- Dockerized infrastructure
+- Dockerized PostgreSQL infrastructure
 - Database-backed services
 - Secure communication principles
 
@@ -62,6 +62,9 @@ npm run prisma:migrate
 npm run start:dev
 ```
 
+Before starting the API, replace the example `JWT_SECRET` with a long random
+value. Set `VIRUSTOTAL_API_KEY` to enable reputation scans.
+
 The backend exposes:
 
 | Port | Service |
@@ -86,4 +89,10 @@ Open [http://localhost:4200](http://localhost:4200). The app expects the API at 
 
 Example addresses: Gateway `192.168.56.10`, User `192.168.56.20`; browser proxy `192.168.56.10:8080`.
 
+## Documentation
+
+- [API specification](Documentation/api-spec.md)
+- [Re-authentication behavior](Documentation/re-auth.md)
+- [Security event testing](Documentation/security-events-testing.md)
+- [Gathering results](Documentation/gathering-results.md)
 

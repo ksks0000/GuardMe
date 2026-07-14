@@ -45,6 +45,9 @@
             formControlName="password"
             autocomplete="current-password"
           />
+          @if (unlockPasswordError(); as error) {
+            <mat-error>{{ error }}</mat-error>
+          }
         </mat-form-field>
         <button
           mat-flat-button

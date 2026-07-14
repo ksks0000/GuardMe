@@ -1,11 +1,12 @@
 import { HttpService } from '@nestjs/axios';
 import { Injectable, Logger } from '@nestjs/common';
 import { Request, Response } from 'express';
+import { Agent as HttpsAgent } from 'node:https';
 import { firstValueFrom } from 'rxjs';
 import { proxyConfig } from '../../config/proxy.config';
 import { InspectionResult } from './dto/inspection.result';
-import { sanitizeForwardRequestHeaders,
-   sanitizeForwardResponseHeaders } from './utils/hop-by-hop-headers.util';
+import { resolveAllowedDestination } from './utils/dns.util';
+import { sanitizeForwardRequestHeaders, sanitizeForwardResponseHeaders } from './utils/hop-by-hop-headers.util';
 
 @Injectable()
 export class ProxyForwardService {
@@ -21,16 +22,30 @@ export class ProxyForwardService {
     const headers = sanitizeForwardRequestHeaders(
       req.headers as Record<string, string | string[] | undefined>,
     );
+    const destination = await resolveAllowedDestination(
+      inspection.destinationHost,
+    );
+    const targetUrl = new URL(inspection.normalizedUrl);
+    headers.host = targetUrl.host;
+    targetUrl.hostname =
+      destination.family === 6
+        ? `[${destination.address}]`
+        : destination.address;
 
     const response = await firstValueFrom(
       this.httpService.request({
         method: inspection.method,
-        url: inspection.normalizedUrl,
+        url: targetUrl.toString(),
         headers,
         data: this.shouldForwardBody(inspection.method) ? req : undefined,
         responseType: 'stream',
         timeout: proxyConfig.forwardTimeoutMs(),
         maxRedirects: 0,
+        proxy: false,
+        httpsAgent:
+          targetUrl.protocol === 'https:'
+            ? new HttpsAgent({ servername: inspection.destinationHost })
+            : undefined,
         validateStatus: () => true,
       }),
     );

@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import { INestApplication, Logger, ValidationPipe } from '@nestjs/common';
+import { HttpException, HttpStatus, INestApplication, Logger, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import cookieParser from 'cookie-parser';
 import express, { Request, Response } from 'express';
@@ -34,6 +34,16 @@ function respondProxyAuthRequired(res: Response, realm: string): void {
 </html>`);
 }
 
+function proxyErrorStatus(error: unknown): number {
+  if (!(error instanceof HttpException)) {
+    return HttpStatus.INTERNAL_SERVER_ERROR;
+  }
+
+  return error.getStatus() === HttpStatus.UNAUTHORIZED
+    ? HttpStatus.PROXY_AUTHENTICATION_REQUIRED
+    : error.getStatus();
+}
+
 function createProxyServer(app: INestApplication): Server {
   const proxyAuth = app.get(ProxyAuthService);
   const proxyPipeline = app.get(ProxyPipelineService);
@@ -48,8 +58,18 @@ function createProxyServer(app: INestApplication): Server {
       let user;
       try {
         user = await proxyAuth.authenticate(req);
-      } catch {
-        respondProxyAuthRequired(res, proxyRealm.getRealm());
+      } catch (error) {
+        const status = proxyErrorStatus(error);
+        if (status === HttpStatus.PROXY_AUTHENTICATION_REQUIRED) {
+          respondProxyAuthRequired(res, proxyRealm.getRealm());
+          return;
+        }
+
+        logger.error(
+          'HTTP proxy authentication failed unexpectedly',
+          error instanceof Error ? error.stack : undefined,
+        );
+        res.sendStatus(status);
         return;
       }
 
@@ -64,7 +84,18 @@ function createProxyServer(app: INestApplication): Server {
       try {
         const user = await proxyAuth.authenticate(req);
         await connectTunnel.handle(req, clientSocket, user);
-      } catch {
+      } catch (error) {
+        const status = proxyErrorStatus(error);
+        if (status !== HttpStatus.PROXY_AUTHENTICATION_REQUIRED) {
+          logger.error(
+            'CONNECT proxy authentication failed unexpectedly',
+            error instanceof Error ? error.stack : undefined,
+          );
+          clientSocket.write(`HTTP/1.1 ${status} Proxy Error\r\n\r\n`);
+          clientSocket.destroy();
+          return;
+        }
+
         const realm = proxyRealm.getRealm();
         clientSocket.write(
           'HTTP/1.1 407 Proxy Authentication Required\r\n' +
@@ -82,7 +113,7 @@ async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule);
   app.use(helmet());
   app.enableCors({
-    origin: corsConfig.allowedOrigins(),
+    origin: corsConfig.apiOrigins(),
     credentials: true,
   });
   app.use(cookieParser());

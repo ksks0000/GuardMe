@@ -33,15 +33,7 @@ export function isBlockedDestinationHost(host: string): boolean {
     return isPrivateOrLocalIpv6(normalized);
   }
 
-  if (
-    normalized.startsWith('10.') ||
-    normalized.startsWith('192.168.') ||
-    normalized.startsWith('169.254.')
-  ) {
-    return true;
-  }
-
-  return /^172\.(1[6-9]|2\d|3[01])\./.test(normalized);
+  return false;
 }
 
 export function defaultPortForScheme(scheme: string): number {

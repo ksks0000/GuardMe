@@ -9,14 +9,14 @@ export const selectActivityFeed = createSelector(
   (trafficLogs, securityEvents): ActivityItem[] => {
     const trafficItems: ActivityItem[] = trafficLogs.map((log) => ({
       kind: 'traffic',
-      id: log.id,
+      id: `traffic:${log.id}`,
       timestamp: log.timestamp,
       data: log,
     }));
 
     const securityItems: ActivityItem[] = securityEvents.map((event) => ({
       kind: 'security',
-      id: event.id,
+      id: `security:${event.id}`,
       timestamp: event.createdAt,
       data: event,
     }));

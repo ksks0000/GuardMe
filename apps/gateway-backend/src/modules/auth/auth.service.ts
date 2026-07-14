@@ -83,9 +83,7 @@ export class AuthService {
       const payload = await verifyJwtPayload(this.jwtService, token, {
         ignoreExpiration: true
       });
-      if (payload?.jti && payload?.sub) {
-        await this.sessionsService.revokeAllForUser(payload.sub);
-      } else if (payload?.jti) {
+      if (payload?.jti) {
         await this.sessionsService.revokeByJwtId(payload.jti);
       }
       if (payload?.sub) {

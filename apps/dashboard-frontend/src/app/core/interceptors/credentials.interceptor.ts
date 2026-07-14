@@ -1,12 +1,9 @@
 import { HttpInterceptorFn } from '@angular/common/http';
-import { environment } from '../../../environments/environment';
+import { isApiRequest } from '../utils/api-request.util';
 
 // Sends HttpOnly session cookies on API requests only (not other URLs)
 export const credentialsInterceptor: HttpInterceptorFn = (req, next) => {
-  const isApiRequest =
-    req.url.startsWith(environment.apiBaseUrl) || req.url.startsWith('/api/');
-
-  if (!isApiRequest) {
+  if (!isApiRequest(req.url)) {
     return next(req);
   }
 

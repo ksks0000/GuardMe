@@ -27,7 +27,7 @@ after each step. Expand a row to inspect metadata.
 
 ## Event types reference
 
-All **14** types defined in `siem.config.ts`:
+All **15** types defined in `apps/gateway-backend/src/config/siem.config.ts`:
 
 | # | Type | Severity | Key metadata |
 |---|------|----------|--------------|
@@ -45,6 +45,7 @@ All **14** types defined in `siem.config.ts`:
 | 12 | `FINGERPRINT_MISMATCH` | HIGH | `expectedIp`, `actualIp` |
 | 13 | `SESSION_REVOKED` | MEDIUM | `sessionId`, `jwtId` |
 | 14 | `PROXY_ERROR` | CRITICAL | `path`, `error` |
+| 15 | `ANOMALY_DETECTED` | MEDIUM (HIGH if score ≥ 85) | `anomalyScore`, `signals`, `destinationHost`, `trafficLogId` |
 
 ## 1. `AUTH_FAILURE` — Authentication failed
 
@@ -305,3 +306,94 @@ Examples:
 **Expect:** **CRITICAL** severity “Internal proxy error”, metadata includes
 `path` and `error`. Traffic may already be logged as ALLOW before forward
 fails.
+
+---
+
+## 15. `ANOMALY_DETECTED` — Behavioral anomaly detected
+
+**Trigger:** Proxied traffic is scored against the user’s **behavior baseline**
+and the anomaly score reaches `UEBA_ALERT_THRESHOLD` (default `60`).
+
+UEBA runs after each traffic log is persisted. Scoring only happens when a
+baseline already exists for the user. Alerts are rate-limited by
+`UEBA_ALERT_COOLDOWN_MS` (default `120000` = 2 minutes).
+
+Possible signals (weights shown):
+
+| Signal | Weight | Meaning |
+|--------|--------|---------|
+| `new_host` | 30 | Destination host not in baseline |
+| `volume_spike` | 25 | Current-hour volume > baseline average × multiplier |
+| `off_hours_activity` | 20 | Request in a normally quiet hour for this user |
+| `high_risk_cluster` | 25 | Recent average risk score is high |
+| `repeated_blocks` | 15 | Several blocks/malicious hits in a short window |
+
+Score is the sum of signal weights (capped at 100). Default severity is
+**MEDIUM**; **HIGH** when score ≥ 85.
+
+### Prerequisites
+
+1. Sign in on the dashboard.
+2. Build enough proxied traffic so a baseline exists (default
+   `BASELINE_MIN_SAMPLE_SIZE=50`), **or** temporarily lower it for the lab:
+
+   ```env
+   BASELINE_MIN_SAMPLE_SIZE=10
+   ```
+
+3. Restart the backend, browse several HTTP sites through the proxy, then open
+   **Behavior** (`/behavior`) and confirm a baseline is shown (sample size and
+   known hosts filled).
+4. Optional for a faster lab test — lower the alert threshold:
+
+   ```env
+   UEBA_ALERT_THRESHOLD=30
+   UEBA_ALERT_COOLDOWN_MS=5000
+   ```
+
+   Restart the backend after changing env values. Restore defaults
+   (`60` / `120000`) when finished.
+
+### Lab steps (reliable “new host” story)
+
+1. Note which hosts already appear under baseline **Top hosts** / known hosts
+   on **Behavior**.
+2. Through the proxy, visit a host you have **never** used before in this
+   account, for example:
+
+   ```
+   http://example.org
+   ```
+
+   or any other fresh HTTP site not in known hosts.
+3. Refresh **Security** (`/security`) and filter Event type =
+   `ANOMALY_DETECTED`.
+4. If nothing appears with the default threshold `60`, either:
+   - keep using `UEBA_ALERT_THRESHOLD=30` from the optional step above, **or**
+   - generate extra volume in the same hour (browse many distinct HTTP URLs
+     quickly) so `new_host` + `volume_spike` (and possibly `off_hours_activity`)
+     push the score over `60`.
+
+**Expect:**
+
+- Security row with type `ANOMALY_DETECTED`.
+- Message like **“Behavioral anomaly detected (score XX)”**.
+- Severity **MEDIUM** (or **HIGH** if score ≥ 85).
+- Metadata includes:
+  - `trafficLogId`
+  - `destinationHost` (the new / anomalous host)
+  - `policyDecision`, `threatVerdict`, `riskScore` from that traffic log
+  - `anomalyScore` (number)
+  - `signals` (array, e.g. `["new_host"]` or `["new_host","volume_spike"]`)
+  - `baselineComputedAt`
+- A threat notification may also appear in the dashboard bell (“Unusual activity
+  detected”) when notifications are enabled for this type.
+- Opening **Behavior → Anomaly history** should list the same detection.
+
+**Notes:**
+
+- No baseline ⇒ no `ANOMALY_DETECTED` event (scoring is skipped).
+- Repeat visits within the cooldown window may be scored but **not** re-alerted
+  until cooldown expires.
+- If VirusTotal fail-open is active, traffic may still be ALLOW /
+  UNVERIFIED; anomaly detection is independent of the threat verdict.

@@ -5,6 +5,7 @@ import { AuthenticatedUser } from '../../common/types/auth.types';
 import { PolicyDecision } from './dto/policy-decision.enum';
 import { parseConnectTarget } from './utils/connect-target.util';
 import { ProxyPipelineService } from './proxy-pipeline.service';
+import { BlockedDestinationError, resolveAllowedDestination } from './utils/dns.util';
 
 @Injectable()
 export class ConnectTunnelService {
@@ -36,8 +37,14 @@ export class ConnectTunnelService {
         return;
       }
 
-      this.openTunnel(target.host, target.port, clientSocket);
+      const destination = await resolveAllowedDestination(target.host);
+      this.openTunnel(destination.address, target.port, clientSocket);
     } catch (error) {
+      if (error instanceof BlockedDestinationError) {
+        this.reject(clientSocket, 403, 'Forbidden');
+        return;
+      }
+
       this.logger.error(
         'CONNECT handling failed',
         error instanceof Error ? error.stack : undefined,
@@ -46,9 +53,9 @@ export class ConnectTunnelService {
     }
   }
 
-  private openTunnel(host: string, port: number, clientSocket: Socket): void {
+  private openTunnel(address: string, port: number, clientSocket: Socket): void {
     const serverSocket = new Socket();
-    serverSocket.connect(port, host, () => {
+    serverSocket.connect(port, address, () => {
       clientSocket.write('HTTP/1.1 200 Connection Established\r\n\r\n');
       serverSocket.pipe(clientSocket);
       clientSocket.pipe(serverSocket);

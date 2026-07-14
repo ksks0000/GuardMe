@@ -15,7 +15,6 @@ export const WEBSOCKET_INTERNAL_EVENTS = {
 
 export const websocketConfig = {
   namespace: () => process.env.WS_NAMESPACE ?? '/events',
-  corsOrigins: () => corsConfig.allowedOrigins(),
-  systemStatusIntervalMs: () =>
-    parsePositiveNumber(process.env.WS_SYSTEM_STATUS_INTERVAL_MS, 60000),
+  corsOrigins: () => corsConfig.websocketOrigins(),
+  systemStatusIntervalMs: () => parsePositiveNumber(process.env.WS_SYSTEM_STATUS_INTERVAL_MS, 60000),
 };

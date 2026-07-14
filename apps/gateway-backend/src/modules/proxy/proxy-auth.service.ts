@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { IncomingMessage } from 'node:http';
 import { Request } from 'express';
@@ -85,7 +85,7 @@ export class ProxyAuthService {
   ): Promise<AuthenticatedUser> {
     const rateKey = extractClientIp(req as Request);
     if (this.rateLimit.isBlocked(rateKey)) {
-      throw new UnauthorizedException(PROXY_RATE_LIMITED);
+      throw new HttpException(PROXY_RATE_LIMITED, HttpStatus.TOO_MANY_REQUESTS);
     }
 
     const user = await this.usersService.findByUsername(credentials.username);
@@ -122,6 +122,11 @@ export class ProxyAuthService {
       throw new UnauthorizedException(PROXY_SESSION_REQUIRED);
     }
 
+    const { fingerprintMatched } =
+      await this.sessionsService.verifySessionForRequest(
+        session,
+        req as Request,
+      );
     this.rateLimit.recordSuccess(rateKey);
     await this.sessionsService.updateLastVerifiedAt(session.id);
 
@@ -130,7 +135,7 @@ export class ProxyAuthService {
       sessionId: session.id,
       jwtId: session.jwtId,
       username: user.username,
-      fingerprintMatched: true,
+      fingerprintMatched,
     };
   }
 

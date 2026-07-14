@@ -27,40 +27,42 @@
     <p class="notification-bell__empty">No recent alerts.</p>
   } @else {
     @for (notification of notifications(); track notification.id) {
-      <button
-        mat-menu-item
-        type="button"
-        class="notification-bell__item"
+      <div
+        class="notification-bell__row"
         [class.notification-bell__item--unread]="!notification.read"
-        (click)="openNotification(notification)"
       >
-        <div class="notification-bell__item-main">
-          <div class="notification-bell__item-top">
-            <mat-chip
-              class="notification-bell__severity"
-              [class]="'severity--' + (notification.severity | lowercase)"
-            >
-              {{ notification.severity }}
-            </mat-chip>
-            <time class="notification-bell__time" [attr.datetime]="notification.timestamp">
-              {{ notification.timestamp | date: 'short' }}
-            </time>
+        <button
+          mat-menu-item
+          type="button"
+          class="notification-bell__item"
+          (click)="openNotification(notification)"
+        >
+          <div class="notification-bell__item-main">
+            <div class="notification-bell__item-top">
+              <mat-chip
+                class="notification-bell__severity"
+                [class]="'severity--' + (notification.severity | lowercase)"
+              >
+                {{ notification.severity }}
+              </mat-chip>
+              <time class="notification-bell__time" [attr.datetime]="notification.timestamp">
+                {{ notification.timestamp | date: 'short' }}
+              </time>
+            </div>
+            <span class="notification-bell__title">{{ notification.title }}</span>
+            <span class="notification-bell__message">{{ notification.message }}</span>
           </div>
-          <span class="notification-bell__title">{{ notification.title }}</span>
-          <span class="notification-bell__message">{{ notification.message }}</span>
-        </div>
-        <mat-icon
+        </button>
+        <button
+          mat-icon-button
+          type="button"
           class="notification-bell__dismiss"
-          role="button"
-          tabindex="0"
           aria-label="Dismiss notification"
           (click)="dismiss($event, notification.id)"
-          (keydown.enter)="dismiss($event, notification.id)"
-          (keydown.space)="dismiss($event, notification.id)"
         >
-          close
-        </mat-icon>
-      </button>
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
     }
   }
 

@@ -1,5 +1,5 @@
 import { AsyncPipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, inject, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Store } from '@ngrx/store';
@@ -39,7 +39,7 @@ import { selectAuthError, selectAuthLoading } from '../../../store/auth/auth.sel
   styleUrl: './login.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class LoginComponent implements OnInit {
+export class LoginComponent {
   private readonly fb = inject(FormBuilder);
   private readonly store = inject(Store);
   private readonly route = inject(ActivatedRoute);
@@ -56,10 +56,6 @@ export class LoginComponent implements OnInit {
     username: ['', usernameValidators],
     password: ['', passwordValidators],
   });
-
-  ngOnInit(): void {
-    this.store.dispatch(AuthActions.clearError());
-  }
 
   submit(): void {
     if (this.form.invalid) {

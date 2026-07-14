@@ -1,8 +1,4 @@
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { FirewallRule } from '@prisma/client';
 import { policyConfig } from '../../config/policy.config';
 import { PrismaService } from '../../database/prisma.service';
@@ -60,12 +56,18 @@ export class RulesService {
     ruleId: string,
     dto: UpdateFirewallRuleDto
   ): Promise<FirewallRulePayload> {
-    await this.assertRuleOwnedByUser(userId, ruleId);
+    const existingRule = await this.prisma.firewallRule.findFirst({
+      where: { id: ruleId, userId },
+      select: { ruleType: true, pattern: true }
+    });
+    if (!existingRule) {
+      throw new NotFoundException('Firewall rule not found');
+    }
 
-    const ruleType = dto.ruleType;
+    const ruleType = dto.ruleType ?? existingRule.ruleType;
     const pattern =
-      dto.pattern !== undefined
-        ? this.resolvePattern(ruleType ?? (await this.getRuleType(userId, ruleId)), dto.pattern)
+      dto.pattern !== undefined || dto.ruleType !== undefined
+        ? this.resolvePattern(ruleType, dto.pattern ?? existingRule.pattern)
         : undefined;
 
     const row = await this.prisma.firewallRule.update({
@@ -153,19 +155,6 @@ export class RulesService {
     if (!rule) {
       throw new NotFoundException('Firewall rule not found');
     }
-  }
-
-  private async getRuleType(userId: string, ruleId: string): Promise<string> {
-    const rule = await this.prisma.firewallRule.findFirst({
-      where: { id: ruleId, userId },
-      select: { ruleType: true }
-    });
-
-    if (!rule) {
-      throw new NotFoundException('Firewall rule not found');
-    }
-
-    return rule.ruleType;
   }
 
   private resolvePattern(ruleType: string, pattern: string): string {

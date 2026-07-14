@@ -69,7 +69,6 @@ type TrafficViewState =
     HistoryRefreshButtonComponent,
   ],
   templateUrl: './traffic.component.html',
-  styleUrl: './traffic.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TrafficComponent {
