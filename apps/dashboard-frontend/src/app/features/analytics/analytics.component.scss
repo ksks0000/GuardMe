@@ -278,7 +278,7 @@
   margin: 2rem auto 0;
   padding: 0.5rem;
   background:
-    radial-gradient(circle, #191c19 38%, transparent 38%),
+    radial-gradient(circle, var(--gm-pie-hole) 38%, transparent 38%),
     conic-gradient(
       from -90deg,
       var(--gm-muted) var(--sev-low-start, 0%)           var(--sev-low-end, 0%),

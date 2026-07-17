@@ -7,6 +7,13 @@
   border: 1px solid var(--gm-border);
 }
 
+:host-context([data-theme='light']) .filter-bar {
+  background: var(--gm-filter-bar-bg);
+  border-color: var(--gm-filter-bar-border);
+  border-left: 3px solid var(--gm-filter-bar-accent);
+  padding-left: calc(1rem - 2px);
+}
+
 .filter-bar__fields {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));

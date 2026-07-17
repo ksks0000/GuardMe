@@ -6,11 +6,26 @@
 
 html {
   height: 100%;
-  @include theme.guardme-material-theme();
+  color-scheme: dark;
+  @include theme.guardme-material-theme-dark();
+}
+
+html[data-theme='light'] {
+  color-scheme: light;
+  @include theme.guardme-material-theme-light();
+
+  --mat-sys-surface: #ffffff;
+  --mat-sys-surface-bright: #ffffff;
+  --mat-sys-surface-dim: #dde3ea;
+  --mat-sys-surface-container-lowest: #ffffff;
+  --mat-sys-surface-container-low: #f8fafc;
+  --mat-sys-surface-container: #f1f5f9;
+  --mat-sys-surface-container-high: #eaeff4;
+  --mat-sys-surface-container-highest: #e2e8f0;
 }
 
 body {
-  color-scheme: dark;
+  color-scheme: inherit;
   background-color: var(--gm-bg);
   color: var(--gm-text);
   font: var(--mat-sys-body-medium);
@@ -23,11 +38,11 @@ body {
 }
 
 .threat-snackbar--high {
-  --mat-snack-bar-container-color: #5c3d00;
+  --mat-snack-bar-container-color: var(--gm-snackbar-high);
 }
 
 .threat-snackbar--critical {
-  --mat-snack-bar-container-color: #5c1010;
+  --mat-snack-bar-container-color: var(--gm-snackbar-critical);
 }
 
 .mat-mdc-menu-panel.notification-bell__menu {

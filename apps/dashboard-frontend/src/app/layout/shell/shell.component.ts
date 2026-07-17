@@ -7,6 +7,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatListModule } from '@angular/material/list';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatToolbarModule } from '@angular/material/toolbar';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { ThemeService } from '../../core/theme/theme.service';
 import { NotificationBellComponent } from '../../shared/components/notification-bell/notification-bell.component';
 import { AuthActions } from '../../store/auth/auth.actions';
 import { selectIsReAuthStale, selectUsername } from '../../store/auth/auth.selectors';
@@ -35,6 +37,7 @@ const NAV_LINK_ACTIVE_OPTIONS = {
     MatSidenavModule,
     MatListModule,
     MatIconModule,
+    MatTooltipModule,
     NotificationBellComponent,
   ],
   templateUrl: './shell.component.html',
@@ -43,10 +46,13 @@ const NAV_LINK_ACTIVE_OPTIONS = {
 })
 export class ShellComponent {
   private readonly store = inject(Store);
+  private readonly themeService = inject(ThemeService);
 
   readonly username = toSignal(this.store.select(selectUsername), { initialValue: null });
 
   readonly reAuthStale = toSignal(this.store.select(selectIsReAuthStale), { initialValue: false });
+
+  readonly themeMode = this.themeService.mode;
 
   readonly navLinkActiveOptions = NAV_LINK_ACTIVE_OPTIONS;
 
@@ -59,6 +65,10 @@ export class ShellComponent {
     { label: 'Behavior', route: '/behavior', icon: 'psychology' },
     { label: 'Vault', route: '/vault', icon: 'key' },
   ];
+
+  toggleTheme(): void {
+    this.themeService.toggle();
+  }
 
   openReAuthDialog(): void {
     this.store.dispatch(AuthActions.reauthRequired());

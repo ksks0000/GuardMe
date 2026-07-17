@@ -1,12 +1,26 @@
 @use '@angular/material' as mat;
 
-@mixin guardme-material-theme() {
+@mixin guardme-material-theme-dark() {
   @include mat.theme(
     (
       color: (
         primary: mat.$spring-green-palette,
         tertiary: mat.$orange-palette,
         theme-type: dark,
+      ),
+      typography: Roboto,
+      density: 0,
+    )
+  );
+}
+
+@mixin guardme-material-theme-light() {
+  @include mat.theme(
+    (
+      color: (
+        primary: mat.$spring-green-palette,
+        tertiary: mat.$cyan-palette,
+        theme-type: light,
       ),
       typography: Roboto,
       density: 0,

@@ -14,6 +14,7 @@ import { Store } from '@ngrx/store';
 import { routes } from './app.routes';
 import { provideGuardMeApi } from './core/api';
 import { httpInterceptors } from './core/interceptors';
+import { ThemeService } from './core/theme/theme.service';
 import { provideAppStore } from './store';
 import { AuthActions } from './store/auth/auth.actions';
 
@@ -29,6 +30,7 @@ export const appConfig: ApplicationConfig = {
     ...provideAppStore(),
     provideGuardMeApi(),
     provideAppInitializer(() => {
+      inject(ThemeService);
       inject(Store).dispatch(AuthActions.appInit());
     }),
   ],

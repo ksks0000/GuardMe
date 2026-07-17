@@ -148,7 +148,7 @@
                   <ul class="severity-list">
                     @for (segment of series; track segment.key) {
                       <li>
-                        <span class="severity-list__label severity--{{ segment.cssClass }}">
+                        <span class="severity--{{ segment.cssClass }}">
                           {{ segment.label }}
                         </span>
                         <span class="severity-list__value">{{ segment.value }}</span>
@@ -179,7 +179,7 @@
                   <div class="event-type-list">
                     @for (segment of series; track segment.key) {
                       <div class="event-type-list__row">
-                        <span class="event-type-list__label">{{ segment.label }}</span>
+                        <span>{{ segment.label }}</span>
                         <span class="event-type-list__bar-wrap">
                           <span
                             class="event-type-list__bar"

@@ -2,7 +2,6 @@
   <form
     [formGroup]="form"
     class="filter-bar"
-    [class.filter-bar--split]="layout() === 'split'"
     [class.filter-bar--compact]="layout() === 'compact'"
     (ngSubmit)="apply()"
   >

@@ -16,7 +16,7 @@
   </mat-sidenav>
 
   <mat-sidenav-content>
-    <mat-toolbar color="primary" class="guardme-toolbar">
+    <mat-toolbar class="guardme-toolbar">
       <span class="guardme-brand">
         <mat-icon>shield</mat-icon>
         GuardMe
@@ -37,6 +37,18 @@
         }
         <span class="user-label">{{ name }}</span>
         <app-notification-bell />
+        <button
+        mat-icon-button
+        type="button"
+        class="theme-toggle"
+        (click)="toggleTheme()"
+        [matTooltip]="themeMode() === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'"
+        [attr.aria-label]="
+          themeMode() === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'
+        "
+        >
+          <mat-icon>{{ themeMode() === 'dark' ? 'light_mode' : 'dark_mode' }}</mat-icon>
+        </button>
         <button mat-button type="button" (click)="logout()">Sign out</button>
       }
     </mat-toolbar>
